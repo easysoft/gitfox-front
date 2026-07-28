@@ -11,14 +11,6 @@ $fields->field('product')
     ->itemBegin('product')->control('picker')->required(true)->items(data('products'))->value(data('bug.productID'))->itemEnd()
     ->item((data('product.type') !== 'normal' && isset(data('products')[data('bug.productID')])) ? field('branch')->control('picker')->required(true)->boxClass('flex-none')->width('100px')->name('branch')->items(data('branches'))->value(data('bug.branch')) : null);
 
-$fields->field('module')
-    ->control(array('control' => 'modulePicker', 'required' => true, 'manageLink' => createLink('tree', 'browse', 'rootID=' . data('bug.productID') . '&view=bug&currentModuleID=0&branch=' . data('bug.branch'))))
-    ->items(data('moduleOptionMenu'))
-    ->value(data('bug.moduleID'));
-
-$fields->field('deadline')
-    ->control('datePicker');
-
 $fields->field('project')
     ->control(array('control' => 'picker', 'required' => !empty(data('product.shadow'))))
     ->items(data('projects'))
@@ -30,6 +22,11 @@ $fields->field('execution')
     ->items(data('executions'))
     ->value(data('executionID'));
 
+$fields->field('module')
+    ->control(array('control' => 'modulePicker', 'required' => true, 'manageLink' => createLink('tree', 'browse', 'rootID=' . data('bug.productID') . '&view=bug&currentModuleID=0&branch=' . data('bug.branch'))))
+    ->items(data('moduleOptionMenu'))
+    ->value(data('bug.moduleID'));
+
 $fields->field('openedBuild')
     ->checkbox(array('text' => $lang->bug->allBugs, 'name' => 'allBuilds', 'checked' => data('allBuilds') ? true : false))
     ->control('inputGroup')
@@ -39,6 +36,9 @@ $fields->field('assignedTo')
     ->checkbox(array('text' => $lang->bug->loadAll, 'name' => 'allUsers', 'checked' => data('allUsers') ? true : false))
     ->control('inputGroup')
     ->itemBegin('assignedTo')->control('picker')->items(data('productMembers'))->value(data('bug.assignedTo'))->itemEnd();
+
+$fields->field('deadline')
+    ->control('datePicker');
 
 if(data('executionType') && data('executionType') == 'kanban')
 {

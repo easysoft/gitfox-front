@@ -11,7 +11,6 @@ declare(strict_types=1);
 namespace zin;
 
 jsVar('isTutorialMode', common::isTutorialMode());
-aiFormInject(set::module('doc'), set::method('create'));
 
 include 'lefttree.html.php';
 

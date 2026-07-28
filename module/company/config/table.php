@@ -31,8 +31,6 @@ $config->company->user->actionList['delete']['url']         = array('module' => 
 $config->company->user->actionList['delete']['data-toggle'] = 'modal';
 
 $config->company->user->dtable = new stdclass();
-$config->company->user->dtable->requiredFields = array();
-$config->company->user->dtable->defaultField   = array();
 $config->company->user->dtable->fieldList['id']['name']     = 'id';
 $config->company->user->dtable->fieldList['id']['title']    = $lang->idAB;
 $config->company->user->dtable->fieldList['id']['type']     = 'checkID';

@@ -31,8 +31,6 @@ $lang->message->all    = 'All Messages';
 $lang->message->timeLabel['minute'] = '%s minutes ago';
 $lang->message->timeLabel['hour']   = '1 hour ago';
 
-$lang->message->mention = '%s mentioned you in %s. Please check it in time.';
-
 $lang->message->notice = new stdclass();
 $lang->message->notice->allMarkRead = 'Mark All as Read';
 $lang->message->notice->clearRead   = 'Clear read';
@@ -75,4 +73,3 @@ $lang->message->label->moved        = 'Move';
 $lang->message->label->nearing      = 'Due Reminder';
 $lang->message->label->published    = 'Release';
 $lang->message->label->changestatus = 'Change Release Status';
-$lang->message->label->mentioned    = '@Mention';

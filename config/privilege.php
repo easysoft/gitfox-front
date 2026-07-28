@@ -252,8 +252,6 @@ $config->logonMethods[] = 'artifact.downloadartifact';
 $config->logonMethods[] = 'artifact.history';
 $config->logonMethods[] = 'artifact.moveartifact';
 $config->logonMethods[] = 'artifact.copycmd';
-$config->logonMethods[] = 'zai.ajaxgettoken';
-$config->logonMethods[] = 'zai.ajaxgetuseragent';
 $config->logonMethods[] = 'repo.import';
 
 /* Ajax 方法依赖的方法。The methods that Ajax methods depend on. */
@@ -431,7 +429,6 @@ $config->ajaxDependencies['programplan.ajaxgetstageattr']                     = 
 $config->ajaxDependencies['programplan.ajaxresponseganttdeleterelationevent'] = ['programplan.browse', 'execution.gantt'];
 $config->ajaxDependencies['programplan.ajaxresponseganttdragevent']           = ['programplan.browse', 'execution.gantt'];
 $config->ajaxDependencies['programplan.ajaxresponseganttmoveevent']           = ['programplan.browse', 'execution.gantt'];
-$config->ajaxDependencies['programplan.ajaxsetshowversion']                   = 'programplan.browse';
 $config->ajaxDependencies['project.ajaxcheckhasstagedata']                    = ['programplan.create', 'project.execution'];
 $config->ajaxDependencies['project.ajaxgetdropmenu']                          = ['api.createlib', 'doc.selectapi', 'doc.setdocbasic', 'doc.selectproject'];
 $config->ajaxDependencies['project.ajaxgetexecutions']                        = ['doc.create', 'doc.uploaddocs', 'doc.setdocbasic', 'risk.edit', 'issue.edit'];
@@ -492,8 +489,6 @@ $config->ajaxDependencies['story.ajaxgetproductstories']                      = 
 $config->ajaxDependencies['story.ajaxgetcasestories']                         = ['testcase.create', 'testcase.edit'];
 $config->ajaxDependencies['story.ajaxgetuserstories']                         = ['todo.create', 'todo.edit', 'todo.batchcreate'];
 $config->ajaxDependencies['story.ajaxrelievetwins']                           = 'story.edit';
-$config->ajaxDependencies['story.ajaxcheckbatchsubmitreview']                 = ['story.batchsubmitreview', 'requirement.batchsubmitreview', 'epic.batchsubmitreview', 'projectstory.batchsubmitreview'];
-$config->ajaxDependencies['story.ajaxgetparentstoryinfo']                     = 'story.create';
 $config->ajaxDependencies['system.ajaxcnemetrics']                            = 'system.dashboard';
 $config->ajaxDependencies['system.ajaxdbauthurl']                             = 'system.dblist';
 $config->ajaxDependencies['system.ajaxgetbackupprogress']                     = ['system.backupplatform', 'backup.index'];

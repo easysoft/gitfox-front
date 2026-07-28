@@ -598,8 +598,7 @@ class productModelTest extends baseTest
     public function closeTest(int $productID): array|false
     {
         $data = new stdclass();
-        $data->status  = 'closed';
-        $data->comment = '';
+        $data->status = 'closed';
 
         $changes = $this->instance->close($productID, $data);
 
@@ -1290,8 +1289,7 @@ class productModelTest extends baseTest
         if(!$oldProduct) return false;
 
         $product = new stdClass();
-        $product->status  = 'normal';
-        $product->comment = '';
+        $product->status = 'normal';
         $changes = $this->instance->activate($productID, $product);
         if(dao::isError()) return dao::getError();
 
@@ -3290,20 +3288,6 @@ class productModelTest extends baseTest
         if(dao::isError()) return dao::getError();
 
         return $result;
-    }
-
-    /**
-     * Test create system.
-     *
-     * @param  int    $productID
-     * @param  string $productName
-     * @access public
-     * @return object
-     */
-    public function createSystemTest(int $productID, string $productName)
-    {
-        $this->instance->createSystem($productID, $productName);
-        return $this->instance->dao->select('*')->from(TABLE_SYSTEM)->fetchAll('id');
     }
 }
 

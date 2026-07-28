@@ -261,7 +261,7 @@ class executionZen extends execution
         }
 
         $project = $this->loadModel('project')->getByID($execution->project);
-        if($execution->type != 'stage' && $project->multiple) $project->storyType = 'story';
+        if(!($execution->type == 'stage' && in_array($execution->attribute, array('mix', 'request', 'design'))) && $project->multiple) $project->storyType = 'story';
 
         $productPairs = $this->loadModel('product')->getProductPairsByProject($execution->id); // Get execution's product.
         if(empty($productID)) $productID = (int)key($productPairs);
@@ -2077,8 +2077,7 @@ class executionZen extends execution
                     foreach(explode(',', $project->storyType) as $type) $storyType .= $this->lang->story->typeList[$type] . ', ';
                 }
                 if(empty($storyType)) $storyType = $this->lang->story->common;
-                if($execution->type == 'sprint') $storyType = $this->lang->SRCommon;
-                $importPlanStoryTips = sprintf($multiBranchProduct ? $this->lang->execution->importBranchPlanStory : $this->lang->execution->importPlanStory, trim($storyType, ', '), $execution->type == 'sprint' ? $this->lang->SRCommon : $this->lang->common->story);
+                $importPlanStoryTips = sprintf($multiBranchProduct ? $this->lang->execution->importBranchPlanStory : $this->lang->execution->importPlanStory, trim($storyType, ', '));
                 if($execution->type == 'stage') $importPlanStoryTips = str_replace($this->lang->executionCommon, $this->lang->execution->stage, $importPlanStoryTips);
                 $confirmURL = inlink('create', "projectID=$projectID&executionID=$executionID&copyExecutionID=&planID=$planID&confirm=yes");
                 $cancelURL  = inlink('create', "projectID=$projectID&executionID=$executionID");
@@ -2135,9 +2134,7 @@ class executionZen extends execution
                 foreach(explode(',', $project->storyType) as $type) $storyType .= $this->lang->story->typeList[$type] . ', ';
             }
             if(empty($storyType)) $storyType = $this->lang->story->common;
-            $execution = $this->execution->fetchByID($executionID);
-            if($execution->type == 'sprint') $storyType = $this->lang->SRCommon;
-            $linkPlanMsg = sprintf($multiBranchProduct ? $this->lang->execution->importBranchEditPlanStory : $this->lang->execution->importEditPlanStory, trim($storyType, ', '), $execution->type == 'sprint' ? $this->lang->SRCommon : $this->lang->common->story);
+            $linkPlanMsg = sprintf($multiBranchProduct ? $this->lang->execution->importBranchEditPlanStory : $this->lang->execution->importEditPlanStory, trim($storyType, ', '));
             $confirmURL  = inlink('edit', "executionID=$executionID&action=edit&extra=&newPlans=$newPlans&confirm=yes");
             $cancelURL   = inlink('view', "executionID=$executionID");
             return $this->send(array('result' => 'success', 'load' => array('confirm' => $linkPlanMsg, 'confirmed' => $confirmURL, 'canceled' => $cancelURL)));

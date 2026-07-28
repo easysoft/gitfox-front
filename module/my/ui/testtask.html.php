@@ -15,8 +15,7 @@ include 'header.html.php';
 featureBar
 (
     set::current($browseType),
-    set::linkParams("mode=testtask&browseType={key}&param=&orderBy={$orderBy}"),
-    li(searchToggle(set::module('myTesttask'),set::open($browseType == 'bySearch')))
+    set::linkParams("mode=testtask&browseType={key}&param=&orderBy={$orderBy}")
 );
 
 foreach($config->my->testtask->dtable->fieldList['actions']['list'] as $actionKey => $action)

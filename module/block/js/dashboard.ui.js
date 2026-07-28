@@ -1,6 +1,6 @@
 $(function()
 {
-    if($('#featureNoticeModal').length) zui.Modal.open({id: 'featureNoticeModal'});
+    if($('#upgradeModal').length) zui.Modal.open({id: 'upgradeModal'});
     else if($('#expiredModal').length) zui.Modal.open({id: 'expiredModal'});
     else if($('#metriclibModal').length) zui.Modal.open({id: 'metriclibModal'});
 });
@@ -92,6 +92,6 @@ window.handleClickBlockMenu = function(info, block)
  */
 window.togglePage = function(target)
 {
-    $('#featureNoticeModal .page-block').addClass('hidden');
-    $(`#featureNoticeModal .${target}`).removeClass('hidden');
+    $('#upgradeModal .page-block').addClass('hidden');
+    $(`#upgradeModal .${target}`).removeClass('hidden');
 }

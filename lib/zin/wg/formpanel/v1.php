@@ -65,8 +65,7 @@ class formPanel extends panel
         'pinnedItems?: array|string',                  // 固定显示的表单项。
         'customBtn?: array|bool',                      // 是否显示表单自定义按钮。
         'customFields?: array=[]',                     // @deprecated 自定义表单项。
-        'showExtra?: bool=true',                       // 是否显示工作流字段。
-        'autoAIEntry?: bool=true'                      // 是否自动注入 AI 入口。
+        'showExtra?: bool=true'                        // 是否显示工作流字段。
     );
 
     public static function getPageJS(): ?string
@@ -227,18 +226,6 @@ class formPanel extends panel
                 $customFields = array('list' => $listFields, 'show' => $showFields, 'key' => $key);
                 $this->setProp('customFields', $customFields);
             }
-        }
-
-        list($moduleName, $methodName) = $this->getModuleAndMethodForExtend();
-
-        if($this->prop('autoAIEntry'))
-        {
-            $this->addToBlock('headingActions', aiAgentEntry
-            (
-                set::type('form'),
-                set::module($moduleName),
-                set::method($methodName)
-            ));
         }
 
         if($this->prop('modeSwitcher'))
@@ -447,11 +434,6 @@ class formPanel extends panel
             setClass('panel-body ' . $this->prop('bodyClass')),
             set($this->prop('bodyProps')),
             $this->buildContainer($this->buildForm()),
-            aiFormInject
-            (
-                set::module($moduleName),
-                set::method($methodName)
-            ),
             html($app->control->appendExtendCssAndJS($moduleName, $methodName, $this->getData()))
         );
     }

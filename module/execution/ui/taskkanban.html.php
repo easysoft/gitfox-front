@@ -153,7 +153,7 @@ jsVar('canImportBug', $features['qa']);
 jsVar('canChangeObject', common::canModify('execution', $execution));
 
 $canCreateObject = ($canCreateTask or $canBatchCreateTask or $canCreateRisk or $canBatchCreateRisk or $canImportBug or $canCreateBug or $canBatchCreateBug or $canCreateStory or $canBatchCreateStory or $canLinkStory or $canLinkStoryByPlan);
-if($execution->type != 'stage')
+if($execution->type != 'stage' || !in_array($execution->attribute, array('mix', 'request', 'design')))
 {
     unset($lang->kanban->type['epic'], $lang->kanban->type['requirement']);
 }

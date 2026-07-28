@@ -10,6 +10,8 @@ declare(strict_types=1);
  */
 namespace zin;
 
+include($this->app->getModuleRoot() . 'ai/ui/inputinject.html.php');
+
 foreach($reports as $report)
 {
     $taskName = '';
@@ -28,9 +30,8 @@ featureBar
 (
     set::module('testreport'),
     set::method('browse'),
-    set::current($browseType),
-    set::linkParams("objectID={$objectID}&objectType={$objectType}&extra={$extra}&browseType={key}&queryID={$queryID}&orderBy={$orderBy}&recTotal={$pager->recTotal}&recPerPage={$pager->recPerPage}&pageID={$pager->pageID}"),
-    li(searchToggle(set::module('testreport'), set::open($browseType == 'bysearch')))
+    set::current('all'),
+    set::linkParams("objectID={$objectID}&objectType={$objectType}&extra={$extra}&orderBy={$orderBy}&recTotal={$pager->recTotal}&recPerPage={$pager->recPerPage}&pageID={$pager->pageID}")
 );
 
 toolbar

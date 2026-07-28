@@ -117,13 +117,11 @@ class customZenTest extends baseTest
      */
     public function checkInvalidKeysTest(string $module = 'story', string $field = 'priList', string $lang = 'zh-cn', array $keys = array())
     {
-        dao::$errors = array();
         $_POST['lang'] = $lang;
         $_POST['keys'] = $keys;
-        $this->invokeArgs('checkInvalidKeys', array($module, $field));
+        $result = $this->invokeArgs('checkInvalidKeys', array($module, $field));
         if(dao::isError()) return dao::getError();
-
-        return true;
+        return $result;
     }
 
     /**

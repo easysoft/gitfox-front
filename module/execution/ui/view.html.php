@@ -10,7 +10,7 @@ declare(strict_types=1);
  */
 namespace zin;
 
-require_once dirname(dirname(dirname(__DIR__))) . DS . 'lib' . DS . 'zin' . DS . 'wg' . DS . 'aiagententry' . DS . 'v1.php';
+include($this->app->getModuleRoot() . 'ai/ui/promptmenu.html.php');
 
 $progress = ($execution->totalConsumed + $execution->totalLeft) ? floor($execution->totalConsumed / ($execution->totalConsumed + $execution->totalLeft) * 1000) / 1000 * 100 : 0;
 $isKanban = isset($execution->type) && $execution->type == 'kanban';
@@ -274,18 +274,7 @@ div
                         setClass('ml-2 mt-2 text-gray')
                     )
                 ),
-                div
-                (
-                    setClass('ai-menu-box flex-auto flex justify-end'),
-                    aiAgentEntry
-                    (
-                        set::module('execution'),
-                        set::method('view'),
-                        set::type('detail'),
-                        set::objectID($execution->id),
-                        set::objectVarName('execution')
-                    )
-                )
+                div(setClass('ai-menu-box flex-auto'))
             ),
             div
             (

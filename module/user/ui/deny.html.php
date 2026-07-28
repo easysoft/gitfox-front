@@ -39,6 +39,7 @@ if($denyType == 'noview')
     $denyContent = sprintf($lang->user->errorView, $menuName);
 }
 
+h::css("#header{display:none;}");
 $gobackBtn = null;
 if(!isInModal()) $gobackBtn = $referer ? array('url' => helper::safe64Decode($referer), 'text' => $lang->user->goback) : array('back' => 'APP', 'text' => $lang->user->goback, 'class' => 'go-back-btn');
 panel

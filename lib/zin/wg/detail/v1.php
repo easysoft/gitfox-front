@@ -131,7 +131,7 @@ class detail extends wg
         .detail-sections .history-panel-header > .listitem {padding: 0}
         .important-w-0 {width: 0!important;}
         .no-width {padding: 0!important; width: 0!important; overflow: hidden!important;}
-        .detail-toggle {margin: 0!important; z-index: 1}
+        .detail-toggle {margin: 0!important;}
         .detail-toggle:hover {background-color: rgba(var(--color-border-rgb), var(--tw-bg-opacity)); transition-duration: .15s; transition-property: background-color; transition-timing-function: cubic-bezier(.4,0,.2,1);}
         .article > .files-list > li.file{white-space:normal;}
         .ai-task-status .status-doing {color: #FAAE1A;}
@@ -292,9 +292,6 @@ CSS;
         $className    = isset($item['className']) ? $item['className'] : null;
         if($titleActions) unset($item['titleActions']);
 
-        $titleActionNode = null;
-        if($titleActions) $titleActionNode = div(setClass('ml-auto'), toolbar::create($titleActions));
-
         return div
         (
             setClass('detail-section'),
@@ -303,7 +300,7 @@ CSS;
             (
                 setClass('detail-section-title row items-center gap-2'),
                 span(setClass('text-md py-1 font-bold'), $title),
-                $titleActionNode
+                $titleActions ? toolbar::create($titleActions) : null
             ) : null,
             div
             (
@@ -317,10 +314,9 @@ CSS;
     {
         global $app, $config;
         $sections = $this->prop('sections', []);
-        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading) && $app->moduleName != 'flow') $sections = $app->control->loadModel('flow')->buildExtendZinValue($sections, $this->prop('object'), 'info');
+        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading)) $sections = $app->control->loadModel('flow')->buildExtendZinValue($sections, $this->prop('object'), 'info');
 
-        $list                = array();
-        $firstSectionHandled = false;
+        $list = array();
         foreach($sections as $key => $item)
         {
             if($item === '-')
@@ -328,32 +324,6 @@ CSS;
                 $list[] = hr();
                 continue;
             }
-
-            if(!$firstSectionHandled)
-            {
-                $normalizedItem = $item instanceof setting ? $item->toArray() : $item;
-                $title = is_string($key) ? $key : null;
-
-                if(is_array($normalizedItem) && isset($normalizedItem['title'])) $title = $normalizedItem['title'];
-
-                if($title && is_array($normalizedItem))
-                {
-                    $titleActions   = $normalizedItem['titleActions'] ?? array();
-                    $titleActions[] = aiAgentEntry
-                    (
-                        set::type('detail'),
-                        set::module($this->prop('objectType')),
-                        set::method('view'),
-                        set::objectID((int)$this->prop('objectID')),
-                        set::objectVarName($this->prop('objectType'))
-                    );
-                    $normalizedItem['titleActions'] = $titleActions;
-
-                    $item                = $normalizedItem;
-                    $firstSectionHandled = true;
-                }
-            }
-
             $list[] = $this->buildSection($item, is_string($key) ? $key : null);
         }
 
@@ -513,7 +483,7 @@ CSS;
     {
         global $app, $config;
         $tabs = $this->prop('tabs', []);
-        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading) && $app->moduleName != 'flow') $tabs = $app->control->loadModel('flow')->buildExtendZinValue($tabs, $this->prop('object'), 'basic');
+        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading)) $tabs = $app->control->loadModel('flow')->buildExtendZinValue($tabs, $this->prop('object'), 'basic');
         if(!$tabs) return null;
 
         $groups = array();
@@ -590,17 +560,10 @@ CSS;
         }
         if($prevBtn === true && $preAndNext && $preAndNext->pre && $linkCreator)
         {
-            if(!isset($preAndNext->pre->name)) $preAndNext->pre->name = '';
             $prevBtn  = array();
             $objectID = $preAndNext->pre->$idKey;
             $prevBtn['url']  = str_replace('{id}', "{$objectID}", $linkCreator);
             $prevBtn['hint'] = "#{$objectID} " . (isset($preAndNext->pre->title) ? $preAndNext->pre->title : $preAndNext->pre->name);
-
-            if($objectType == 'testcase' && strpos($prevBtn['url'], '{version}') !== false)
-            {
-                $version = !empty($preAndNext->pre->version) ? $preAndNext->pre->version : 0;
-                $prevBtn['url'] = str_replace('{version}', "{$version}", $prevBtn['url']);
-            }
         }
         elseif(is_string($prevBtn))
         {
@@ -608,17 +571,10 @@ CSS;
         }
         if($nextBtn === true && $preAndNext && $preAndNext->next && $linkCreator)
         {
-            if(!isset($preAndNext->next->name)) $preAndNext->next->name = '';
             $nextBtn  = array();
             $objectID = $preAndNext->next->$idKey;
             $nextBtn['url']  = str_replace('{id}', "{$objectID}", $linkCreator);
             $nextBtn['hint'] = "#{$objectID} " . (isset($preAndNext->next->title) ? $preAndNext->next->title : $preAndNext->next->name);
-
-            if($objectType == 'testcase' && strpos($nextBtn['url'], '{version}') !== false)
-            {
-                $version = !empty($preAndNext->next->version) ? $preAndNext->next->version : 0;
-                $nextBtn['url'] = str_replace('{version}', "{$version}", $nextBtn['url']);
-            }
         }
         elseif(is_string($nextBtn))
         {

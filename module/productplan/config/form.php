@@ -28,4 +28,3 @@ $config->productplan->form->edit['product'] = array('type' => 'int',    'require
 $config->productplan->form->edit['status']  = array('type' => 'string', 'required' => false, 'default' => '');
 
 $config->productplan->form->close = array();
-$config->productplan->form->close['comment'] = array('type' => 'string', 'required' => false, 'default' => '', 'control' => 'editor');

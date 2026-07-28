@@ -603,11 +603,7 @@ class storyModel extends model
         /* Create actions. Record submit review action. */
         $bugAction = empty($storyFrom) ? 'Opened' : 'From' . ucfirst($storyFrom);
         $action    = $bugID == 0 ? $bugAction : 'Frombug';
-        $actionID  = $this->action->create('story', $storyID, $action, '', $extra);
-
-        $story->id = $storyID;
-        $this->loadModel('message')->sendMentionNotice($story->type, 'create', $actionID, $story);
-
+        $this->action->create('story', $storyID, $action, '', $extra);
         if($story->status == 'reviewing') $this->action->create('story', $storyID, 'submitReview');
         if(!empty($story->assignedTo)) $this->action->create('story', $storyID, 'Assigned', '', $story->assignedTo);
 
@@ -839,20 +835,6 @@ class storyModel extends model
         }
 
         $changes = common::createChanges($oldStory, $story);
-
-        if($this->post->comment != '' or !empty($changes))
-        {
-            $action   = !empty($changes) ? 'Changed' : 'Commented';
-            $actionID = $this->loadModel('action')->create('story', $storyID, $action, $this->post->comment);
-            $this->action->logHistory($actionID, $changes);
-
-            $this->loadModel('message')->sendMentionNotice($oldStory->type, 'change', $actionID, $story, $oldStory);
-
-            /* Record submit review action. */
-            $story = $this->fetchByID($storyID);
-            if($story->status == 'reviewing') $this->action->create('story', $storyID, 'submitReview');
-        }
-
         if(isset($story->relievedTwins))
         {
             $this->relieveTwins($oldStory->product, $storyID);
@@ -873,7 +855,7 @@ class storyModel extends model
      * @access public
      * @return bool|int
      */
-    public function update(int $storyID, object $story): bool|int
+    public function update(int $storyID, object $story, string|bool $comment = ''): bool|int
     {
         $oldStory = $this->getByID($storyID);
 
@@ -888,7 +870,7 @@ class storyModel extends model
         if(isset($story->estimate)) $story->estimate = round((float)$story->estimate, 2);
 
         $moduleName = $this->app->rawModule;
-        $this->dao->update(TABLE_STORY)->data($story, 'reviewer,spec,verify,deleteFiles,renameFiles,files,finalResult,oldDocs,docVersions,comment')
+        $this->dao->update(TABLE_STORY)->data($story, 'reviewer,spec,verify,deleteFiles,renameFiles,files,finalResult,oldDocs,docVersions')
             ->autoCheck()
             ->batchCheck($this->config->{$moduleName}->edit->requiredFields, 'notempty')
             ->checkIF(!empty($story->closedBy), 'closedReason', 'notempty')
@@ -992,15 +974,11 @@ class storyModel extends model
 
         $story   = $this->loadModel('file')->replaceImgURL($story, 'spec,verify');
         $changes = common::createChanges($oldStory, $story);
-        if(!empty($story->comment) or !empty($changes))
+        if(!empty($comment) or !empty($changes))
         {
             $action   = !empty($changes) ? 'Edited' : 'Commented';
-            $actionID = $this->action->create('story', $storyID, $action, $story->comment);
+            $actionID = $this->action->create('story', $storyID, $action, $comment);
             $this->action->logHistory($actionID, $changes);
-
-            $story->type = $oldStory->type;
-            $this->loadModel('message')->sendMentionNotice($oldStory->type, 'edit', $actionID, $story, $oldStory);
-
             if(isset($story->finalResult))
             {
                 if($story->finalResult == 'clarify')
@@ -1532,30 +1510,6 @@ class storyModel extends model
         if(!dao::isError()) return $changes;
 
         return false;
-    }
-
-    /**
-     * Batch submit review.
-     *
-     * @param  array $stories
-     * @access public
-     * @return bool
-     */
-    public function batchSubmitReview(array $stories): bool
-    {
-        foreach($stories as $storyID => $story)
-        {
-            $changes = $this->submitReview((int)$storyID, $story);
-            if($changes === false) return false;
-
-            if($changes)
-            {
-                $actionID = $this->loadModel('action')->create('story', (int)$storyID, 'submitReview');
-                $this->action->logHistory($actionID, $changes);
-            }
-        }
-
-        return !dao::isError();
     }
 
     /**

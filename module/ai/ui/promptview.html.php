@@ -29,34 +29,19 @@ detailHeader
         (
             setClass('primary'),
             set::icon('plus'),
-            set::url(createLink('ai', 'promptbasicinfo')),
-            $lang->ai->prompts->create
+            set::url(createLink('ai', 'createprompt')),
+            setData('toggle', 'modal'),
+            setData('size', 'sm'),
+            $lang->ai->prompts->create,
         ) : null
     )
 );
 
-$actionObject = '';
-if(!empty($prompt->actionPurpose))
+$selectTargetForm = '';
+if(!empty($prompt->targetForm))
 {
-    $actionPurposePath = explode('.', $prompt->actionPurpose, 2);
-    if(count($actionPurposePath) == 2)
-    {
-        $actionObjectCommon = $lang->ai->targetForm[$actionPurposePath[0]]['common'] ?? '';
-        $actionObjectName   = $lang->ai->targetForm[$actionPurposePath[0]][$actionPurposePath[1]] ?? '';
-        if(!empty($actionObjectName)) $actionObject = $prompt->actionPurpose == 'empty.empty' || empty($actionObjectCommon) ? $actionObjectName : $actionObjectCommon . ' / ' . $actionObjectName;
-
-        if(empty($actionObject) && method_exists($this->ai, 'getPromptActionPurposeListByModule'))
-        {
-            $moduleItems = isset($lang->ai->prompts->modules) ? $lang->ai->prompts->modules : array();
-            if(method_exists($this->ai, 'getPromptProcessObjectList')) $moduleItems = $this->ai->getPromptProcessObjectList();
-
-            $actionPurposeData  = $this->ai->getPromptActionPurposeListByModule($moduleItems);
-            $nameMap            = isset($actionPurposeData['nameMap']) ? $actionPurposeData['nameMap'] : array();
-            $actionObjectCommon = zget($moduleItems, $actionPurposePath[0], '');
-            $actionObjectName   = zget($nameMap, $prompt->actionPurpose, '');
-            if(!empty($actionObjectName)) $actionObject = $prompt->actionPurpose == 'empty.empty' || empty($actionObjectCommon) ? $actionObjectName : $actionObjectCommon . ' / ' . $actionObjectName;
-        }
-    }
+    $targetForm       = explode('.', $prompt->targetForm);
+    $selectTargetForm = $lang->ai->targetForm[$targetForm[0]][$targetForm[1]];
 }
 
 $fnBuildPublishInfo = function() use ($actions, $prompt, $users, $lang)
@@ -90,85 +75,37 @@ $fnBuildPublishInfo = function() use ($actions, $prompt, $users, $lang)
 if($prompt->status != 'draft' || !$this->ai->isExecutable($prompt)) unset($config->ai->actions->promptview['mainActions'][1]);
 $actionList = $this->loadModel('common')->buildOperateMenu($prompt);
 
-$promptContent = $prompt->purpose;
-if(!empty($prompt->elaboration)) $promptContent .= "\n\n" . $prompt->elaboration;
-
-$skillNames = array();
-if(!empty($skills))
+$fnBuildFieldConfig = function() use ($lang, $fieldConfig)
 {
-    foreach($skills as $skill)
-    {
-        if(!empty($skill->name)) $skillNames[] = $skill->name;
-    }
-}
-$skillName = implode($lang->ai->prompts->fieldSeparator, $skillNames);
+    if(empty($fieldConfig)) return array();
 
-$knowledgeLibNames = array();
-if(!empty($knowledgeLibs))
-{
-    foreach($knowledgeLibs as $knowledgeLib)
-    {
-        if(!empty($knowledgeLib->name)) $knowledgeLibNames[] = $knowledgeLib->name;
-    }
-}
-$knowledgeLibText = implode($lang->ai->prompts->fieldSeparator, $knowledgeLibNames);
-$displayPosition  = isset($prompt->displayPosition) && isset($lang->ai->prompts->displayPositionList[$prompt->displayPosition]) ? $lang->ai->prompts->displayPositionList[$prompt->displayPosition] : '';
-$isFormPosition   = isset($prompt->displayPosition) && $prompt->displayPosition == 'form';
-
-$formConfigItems = array();
-if($isFormPosition && !empty($fieldConfig))
-{
+    $fields = array();
     foreach($fieldConfig as $field)
     {
-        $fieldType    = isset($field->type) ? $field->type : '';
-        $typeLabel    = zget($lang->ai->miniPrograms->field->typeList, $fieldType, $fieldType);
-        $required     = isset($field->required) ? (string)$field->required : '0';
-        $requiredText = zget($lang->ai->requiredList, $required, zget($lang->ai->requiredList, '0'));
-        $fieldName    = isset($field->name) ? $field->name : '';
-        $fieldValue   = '';
-
-        if(in_array($fieldType, array('radio', 'checkbox')))
-        {
-            $fieldValue = !empty($field->options) ? $field->options : '-';
-        }
-        else
-        {
-            $fieldValue = !empty($field->placeholder) ? $field->placeholder : '-';
-        }
-
-        $formConfigItems[] = htmlspecialchars("{$fieldName}（{$typeLabel}, {$requiredText}）{$lang->colon} {$fieldValue}", ENT_QUOTES);
+        $control  = $lang->ai->miniPrograms->field->typeList[$field->type];
+        $required = $lang->ai->requiredList[$field->required];
+        $options  = $field->options ?: '-';
+        $fields[] = div(setClass('mb-1'), $field->name . ' (' . $control . ', ' . $required . ') : ' . $options);
     }
-}
-
-$promptSections = array
-(
-    section
-    (
-        set::title($lang->ai->prompts->processObject),
-        set::content($processObject)
-    ),
-    section(set::title($lang->ai->prompts->actionPurpose), set::content($actionObject)),
-    section(set::title($lang->ai->prompts->displayPosition), set::content($displayPosition))
-);
-if($isFormPosition)
-{
-    $promptSections[] = section
-    (
-        set::title($lang->ai->miniPrograms->field->fields),
-        empty($formConfigItems) ? set::content($lang->noData) : set::content(implode('<br />', $formConfigItems)),
-        empty($formConfigItems) ? null : set::useHtml(true)
-    );
-}
-$promptSections[] = section(set::title($lang->ai->prompts->role), set::content($prompt->role));
-$promptSections[] = section(set::title($lang->ai->prompts->prompt), set::content(wg(p(setClass('pre'), $promptContent))));
-$promptSections[] = section(set::title($lang->ai->prompts->skill), set::content($skillName));
-$promptSections[] = section(set::title($lang->ai->prompts->knowledgeLib), set::content($knowledgeLibText));
+    return section(set::title($lang->ai->miniPrograms->field->fields), $fields);
+};
 
 detailBody
 (
     sectionList
     (
-        ...$promptSections
+        section(set::title($lang->ai->prompts->role), set::content($prompt->role)),
+        section(set::title($lang->ai->prompts->characterization), set::content($prompt->characterization)),
+        section
+        (
+            set::title($lang->ai->prompts->object),
+            set::content($prompt->module ? $lang->ai->dataSource[$prompt->module]['common'] : '')
+        ),
+        section(set::title($lang->ai->prompts->field), set::content($dataPreview)),
+        $fnBuildFieldConfig(),
+        section(set::title($lang->ai->prompts->setPurpose), set::content($prompt->purpose)),
+        section(set::title($lang->ai->prompts->elaboration), set::content($prompt->elaboration)),
+        section(set::title($lang->ai->prompts->selectTargetForm), set::content($selectTargetForm))
     ),
     history
     (
@@ -197,7 +134,7 @@ detailBody
                 set::active(true),
                 tableData
                 (
-                    item(set::name($lang->prompt->module), $processObject),
+                    item(set::name($lang->prompt->module), $prompt->module ? $lang->ai->dataSource[$prompt->module]['common'] : ''),
                     item(set::name($lang->prompt->desc),   div(setClass('w-64 text-clip'), set::title($prompt->desc), $prompt->desc)),
                     item(set::name($lang->prompt->status), $lang->ai->prompts->statuses[$prompt->status]),
                     item(set::name($lang->prompt->model), zui::aiModelName($prompt->model)),

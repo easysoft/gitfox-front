@@ -376,7 +376,7 @@ class docZen extends doc
      * @access protected
      * @return void
      */
-    protected function responseAfterCreate(array $docResult, string $objectType = 'doc', $from = '')
+    protected function responseAfterCreate(array $docResult, string $objectType = 'doc')
     {
         $docID = $docResult['id'];
         $files = zget($docResult, 'files', '');
@@ -387,12 +387,6 @@ class docZen extends doc
         $this->action->create($objectType, $docID, 'Created', $fileAction, '', '', false);
 
         if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $docID));
-
-        if($from == 'deliverable')
-        {
-            $newDoc = $this->dao->select('id,title,version')->from(TABLE_DOC)->where('id')->eq($docID)->fetch();
-            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'closeModal' => true, 'callback' => "selectNewDoc(" . json_encode($newDoc) . ")"));
-        }
 
         $response = array(
             'result'  => 'success',
@@ -572,7 +566,7 @@ class docZen extends doc
         if(!$libID && !empty($libPairs)) $libID = key($libPairs);
         if(empty($lib) && $libID) $lib = $this->doc->getLibByID($libID);
 
-        $this->setObjectsForCreate($objectType, empty($lib) ? null : $lib, $unclosed, $objectID);
+        $this->setObjectsForCreate(empty($lib->type) ? '' : $lib->type, empty($lib) ? null : $lib, $unclosed, $objectID);
 
         $this->view->objectType = $objectType;
         $this->view->spaceType  = $objectType;
@@ -698,7 +692,6 @@ class docZen extends doc
             {
                 $actionID = $this->action->create('doc', $doc->id, $action, $fileAction . $this->post->comment, '', '', false);
                 $this->action->logHistory($actionID, $changes);
-                $this->doc->createAction($doc->id, 'edited');
             }
         }
 
@@ -722,10 +715,10 @@ class docZen extends doc
             $link   = $this->createLink($moduleName, $methodName, $params);
         }
 
-        if(isInModal()) return array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $link, 'actionID' => $actionID ?? 0);
+        if(isInModal()) return array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $link);
 
         $doc->isCollector = strpos($doc->collector, ',' . $this->app->user->account . ',') !== false;
-        return array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $link, 'doc' => $doc, 'actionID' => $actionID ?? 0);
+        return array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $link, 'doc' => $doc);
     }
 
     /**

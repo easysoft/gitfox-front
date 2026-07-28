@@ -2,7 +2,7 @@
 <?php
 include dirname(__FILE__, 5) . '/test/lib/init.php';
 include dirname(__FILE__, 2) . '/lib/model.class.php';
-zenData('entry')->loadYaml('entry', false, 2)->gen(1, true, false);
+include dirname(__FILE__) . '/common.php';
 
 /**
 
@@ -20,6 +20,7 @@ cid=0
 
 su('admin');
 $test = new codescanModelTest();
+initCodescanGitFox($test);
 
 r($test->updateSolutionStatusTest(1)) && p() && e('0');
 r($test->updateSolutionStatusTest(2)) && p() && e('0');

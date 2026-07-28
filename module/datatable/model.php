@@ -145,7 +145,6 @@ class datatableModel extends model
                 }
                 if($module == 'testcase' && $field == 'id') $fieldSetting[$field]['name'] = 'caseID';
                 if($field == 'actions' && empty($fieldSetting[$field]['width'])) $fieldSetting[$field]['width'] = $fieldList[$field]['width'];
-                if(!isset($fieldSetting[$field]['order'])) $fieldSetting[$field]['order'] = $order;
 
                 if($module == 'pipeline')
                 {

@@ -107,14 +107,11 @@ class baseHelper
         }
 
         /* 生成url链接的开始部分。Set the begin parts of the link. */
-        /* API requests use GET internally, but links should keep the original site URL format. */
-        $requestType = isset($config->originRequestType) ? $config->originRequestType : $config->requestType;
-
-        if($requestType == 'PATH_INFO2')
+        if($config->requestType == 'PATH_INFO2')
         {
             $link = '/';
         }
-        elseif($requestType == 'PATH_INFO')
+        elseif($config->requestType == 'PATH_INFO')
         {
             $link = $config->webRoot . $appName;
         }
@@ -132,7 +129,7 @@ class baseHelper
          * Input: moduleName=article&methodName=index&var1=value1. Output: ?m=article&f=index&var1=value1.
          *
          */
-        if($requestType == 'GET')
+        if($config->requestType == 'GET')
         {
             $link .= "?{$config->moduleVar}=$moduleName&{$config->methodVar}=$methodName";
             if($viewType != 'html') $link .= "&{$config->viewVar}=" . $viewType;

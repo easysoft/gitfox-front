@@ -11,6 +11,8 @@ declare(strict_types=1);
  */
 namespace zin;
 
+include($this->app->getModuleRoot() . 'ai/ui/inputinject.html.php');
+
 $fields = useFields('bug.create');
 if(!empty($executionType) && $executionType == 'kanban') $fields->merge('bug.kanban');
 
@@ -23,10 +25,7 @@ $fields->autoLoad('product',   array('items' => 'product,module,assignedTo,story
        ->autoLoad('allUsers',  'assignedTo')
        ->autoLoad('region',    'lane');
 
-$fullModeMainOrder   = $product->shadow ? 'project,execution,module,openedBuild,assignedTo,deadline' : 'module,project,execution,plan,openedBuild,assignedTo,deadline';
-$fullModeSecondOrder = $product->shadow ? 'title,pri' : 'pri,title';
-$fields->fullModeOrders($fullModeMainOrder, $fullModeSecondOrder);
-
+if(!$product->shadow) $fields->fullModeOrders('module,project,execution,plan', 'pri,title');
 $fields->sort('execution,plan');
 
 jsVar('bug',                   $bug);

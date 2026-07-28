@@ -736,12 +736,6 @@ class task extends control
             {
                 $actionID = $this->loadModel('action')->create('task', $taskID, 'Paused', $this->post->comment);
                 $this->action->logHistory($actionID, $changes);
-
-                if($this->post->comment)
-                {
-                    $oldTask->comment = $this->post->comment;
-                    $this->loadModel('message')->sendMentionNotice('task', 'pause', $actionID, $oldTask);
-                }
             }
 
             $message = $this->executeHooks($taskID);
@@ -818,22 +812,11 @@ class task extends control
      *
      * @param  int    $taskID
      * @param  string $cardPosition
-     * @param  string $confirm      no|yes
      * @access public
      * @return void
      */
-    public function close(int $taskID, string $cardPosition = '', string $confirm = 'no')
+    public function close(int $taskID, string $cardPosition = '')
     {
-        if($confirm == 'no')
-        {
-            $childIdList = $this->task->getAllChildId($taskID, false, 'closed');
-            if(!empty($childIdList))
-            {
-                $confirmURL = $this->createLink('task', 'close', "taskID=$taskID&cardPosition=$cardPosition&confirm=yes");
-                return $this->send(array('result' => 'fail', 'callback' => "zui.Modal.confirm({message:'" . sprintf($this->lang->task->closeParentTips, '#' . implode(',#', $childIdList)) . "'}).then((res) => {if(res) openUrl({url: '{$confirmURL}', load: 'modal'});});"));
-            }
-        }
-
         $cardPosition = str_replace(array(',', ' '), array('&', ''), $cardPosition);
         parse_str($cardPosition, $output);
 

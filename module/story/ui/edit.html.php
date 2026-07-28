@@ -231,8 +231,7 @@ detailBody
                         set::items($fields['product']['options']),
                         set::value($fields['product']['default']),
                         on::change('loadProduct'),
-                        set::required(true),
-                        set::disabled($story->parent > 0)
+                        set::required(true)
                     ),
                     span
                     (
@@ -245,11 +244,14 @@ detailBody
                             set::name('branch'),
                             set::items($fields['branch']['options']),
                             set::value($fields['branch']['default']),
-                            set::required(true),
-                            set::disabled($story->parent > 0)
                         ) : null
                     )
                 )
+            ) : null,
+            $story->parent > 0 && $product->type != 'normal' ? item
+            (
+                set::name(sprintf($lang->product->branch, $lang->product->branchName[$product->type])),
+                picker(setID('branch'), set::name('branch'), set::items($fields['branch']['options']), set::value($fields['branch']['default']))
             ) : null,
             item
             (

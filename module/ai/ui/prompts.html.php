@@ -29,7 +29,9 @@ toolbar
         'class'       => 'primary',
         'icon'        => 'plus',
         'text'        => $lang->ai->prompts->create,
-        'url'         => inlink('promptbasicinfo')
+        'url'         => inlink('createprompt'),
+        'data-toggle' => 'modal',
+        'data-size'   => 'sm'
     ))) : null
 );
 
@@ -37,24 +39,10 @@ $cols    = $config->ai->dtable->prompts;
 $prompts = initTableData($prompts, $cols, $this->ai);
 foreach($prompts as $prompt)
 {
-    if($prompt->actionPurpose)
+    if($prompt->targetForm)
     {
-        $targetFormPath = explode('.', $prompt->actionPurpose);
-        if(count($targetFormPath) == 2)
-        {
-            if($prompt->actionPurpose == 'empty.empty')
-            {
-                $prompt->targetFormLabel = isset($lang->ai->prompts->noRedirect) ? $lang->ai->prompts->noRedirect : $prompt->actionPurpose;
-            }
-            elseif(isset($lang->ai->targetForm[$targetFormPath[0]]['common']) && isset($lang->ai->targetForm[$targetFormPath[0]][$targetFormPath[1]]))
-            {
-                $prompt->targetFormLabel = $lang->ai->targetForm[$targetFormPath[0]]['common'] . ' / ' . $lang->ai->targetForm[$targetFormPath[0]][$targetFormPath[1]];
-            }
-            else
-            {
-                $prompt->targetFormLabel = $prompt->actionPurpose;
-            }
-        }
+        $targetFormPath = explode('.', $prompt->targetForm);
+        if(count($targetFormPath) == 2) $prompt->targetFormLabel = $prompt->targetForm == 'empty.empty' ? $lang->ai->targetForm[$targetFormPath[0]][$targetFormPath[1]] : $lang->ai->targetForm[$targetFormPath[0]]['common'] . ' / ' . $lang->ai->targetForm[$targetFormPath[0]][$targetFormPath[1]];
     }
 }
 
@@ -64,11 +52,8 @@ foreach($userList as $user)
     $userListMap[$user->account] = $user;
 }
 
-$promptProcessObjectList = $lang->ai->prompts->modules;
-if(method_exists($this->ai, 'getPromptProcessObjectList')) $promptProcessObjectList = $this->ai->getPromptProcessObjectList();
-unset($promptProcessObjectList['']);
-
-$moduleList = $this->config->edition == 'open' ? array_intersect_key($promptProcessObjectList, array_flip($promptModules)) : $promptProcessObjectList;
+unset($lang->ai->prompts->modules['']);
+$moduleList = $this->config->edition == 'open' ? array_intersect_key($lang->ai->prompts->modules, array_flip($promptModules)) : $lang->ai->prompts->modules;
 $moduleTree = array();
 $index      = 1;
 $activeKey  = 0;
@@ -126,7 +111,7 @@ $buildDropdown = function($prompt) use ($config)
                 {
                     $item['url'] = str_replace(
                         array('{id}', '{module}', '{targetForm}'),
-                        array((string)$prompt->id, $prompt->module, $prompt->actionPurpose),
+                        array((string)$prompt->id, $prompt->module, $prompt->targetForm),
                         $actionConfig['url']
                     );
                 }
@@ -183,18 +168,18 @@ $promptCard = function($prompt) use ($lang, $buildDropdown, $userListMap)
             ),
             div(
                 setClass('card-meta'),
-                span(
-                    setClass('created-date'),
-                    sprintf($lang->ai->prompts->createdDate . '：%s', substr($prompt->createdDate, 0, 10))
-                ),
                 div(
                     setClass('creator'),
-                    set::title($creatorName),
                     avatar(
                         set::size('sm'),
                         set::text($creatorName),
                         $creator && !empty($creator->avatar) ? set::src($creator->avatar) : null
-                    )
+                    ),
+                    span($creatorName)
+                ),
+                span(
+                    setClass('created-date'),
+                    sprintf($lang->ai->prompts->createdDate . '：%s', substr($prompt->createdDate, 0, 10))
                 )
             )
         ),

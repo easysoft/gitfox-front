@@ -850,8 +850,3 @@ $lang->changelog['21.7.1'][] = 'project-template';
 $lang->changelog['21.7.1'][] = 'project-createTemplate';
 
 $lang->changelog['21.7.3'][] = 'reporttemplate-index';
-
-$lang->changelog['22.3'][] = 'story-batchSubmitReview';
-$lang->changelog['22.3'][] = 'requirement-batchSubmitReview';
-$lang->changelog['22.3'][] = 'epic-batchSubmitReview';
-$lang->changelog['22.3'][] = 'projectstory-batchSubmitReview';

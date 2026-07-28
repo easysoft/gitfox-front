@@ -1110,7 +1110,7 @@ class user extends control
      * @access public
      * @return void
      */
-    public function ajaxGetItems(string $params = '', string $search = '', int $maxCount = 0, string $appendUser = '')
+    public function ajaxGetItems(string $params = '', string $search = '', int $maxCount = 0)
     {
         $items  = array();
         $search = empty($search) ? '' : base64_decode($search);
@@ -1122,7 +1122,7 @@ class user extends control
             if(!empty($_POST['params']))   $params   = $_POST['params'];
         }
 
-        $users  = $this->user->getPairs($params, $appendUser);
+        $users  = $this->user->getPairs($params);
         foreach($users as $account => $realname)
         {
             if(!empty($search) && stripos($account, $search) === false and stripos($realname, $search) === false) continue;

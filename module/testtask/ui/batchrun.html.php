@@ -29,12 +29,12 @@ foreach($cases as $caseID => $case)
     if($case->status == 'wait') continue;
 
     $stepItems = array();
-    if(!empty($steps[$case->id]))
+    if(!empty($steps[$caseID]))
     {
         $lastGradeId = array();
         $grades      = array();
         $preGrade    = 0;
-        foreach($steps[$case->id] as $stepID => $step)
+        foreach($steps[$caseID] as $stepID => $step)
         {
             if(empty($step->parent))  $grades[$step->id] = 1;
             if(!empty($step->parent)) $grades[$step->id] = $grades[$step->parent] + 1;
@@ -54,7 +54,7 @@ foreach($cases as $caseID => $case)
             if($grade > 1) $currentID .= '.' . $lastGradeId[2];
             if($grade > 2) $currentID .= '.' . $lastGradeId[3];
             $stepClass  = "step-{$step->type} pl-" . ($grade - 1) * 2;
-            $stepResult = count($steps[$case->id]) == count($stepItems) + 1 ? 'fail' : 'pass';
+            $stepResult = count($steps[$caseID]) == count($stepItems) + 1 ? 'fail' : 'pass';
             $preGrade   = $grade;
 
             $stepItems[] = h::tr
@@ -109,21 +109,14 @@ foreach($cases as $caseID => $case)
     (
         h::td
         (
-            $case->id,
+            $caseID,
             input
             (
                 set::type('hidden'),
                 set::name("version[$caseID]"),
                 set::value($case->version)
-            ),
-            input
-            (
-                set::type('hidden'),
-                set::name("caseID[$caseID]"),
-                set::value($case->id)
             )
         ),
-        $from == 'work' ? h::td(span(set::hint(true), $case->taskName)) : null,
         h::td
         (
             h::span
@@ -163,13 +156,13 @@ foreach($cases as $caseID => $case)
         ),
         h::td
         (
-            set::className(empty($steps[$case->id]) ? 'hidden reals' : 'stepsAndExpect'),
-            !empty($steps[$case->id]) ? h::table
+            set::className(empty($steps[$caseID]) ? 'hidden reals' : 'stepsAndExpect'),
+            !empty($steps[$caseID]) ? h::table
             (
                 set::className('table bordered'),
                 $stepItems
             ) : null,
-            empty($steps[$case->id]) ? input
+            empty($steps[$caseID]) ? input
             (
                 set::name("reals[$caseID][]")
             ) : null
@@ -196,7 +189,6 @@ formPanel
                     setStyle('width', '60px'),
                     $lang->idAB
                 ),
-                $from == 'work' ? h::th(setStyle('width', '80px'), $lang->testtask->common) : null,
                 h::th
                 (
                     setStyle('width', '100px'),

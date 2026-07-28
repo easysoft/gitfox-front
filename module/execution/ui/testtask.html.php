@@ -37,8 +37,7 @@ featureBar
             $lang->testtask->browse
         )
     ),
-    to::before($productDropdown),
-    li(searchToggle(set::module('executionTesttask'), set::open($type == 'bysearch')))
+    to::before($productDropdown)
 );
 
 $canCreate = $canBeChanged && hasPriv('testtask', 'create');

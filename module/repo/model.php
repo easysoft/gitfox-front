@@ -166,23 +166,20 @@ class repoModel extends model
      * Get list by priv.
      *
      * @param  string $type  all|haspriv
-     * @param  string $scmType
-     * @param  bool   $useSCM
      * @access public
      * @return array
      */
-    public function getListByPriv(string $type = 'all', string $scmType = '', bool $useSCM = true)
+    public function getListByPriv(string $type = 'all')
     {
         $repos = $this->dao->select('*,acl')->from(TABLE_REPO)->where('deleted')->eq('0')
             ->andWhere('status')->ne('importing')
-            ->beginIF($scmType)->andWhere('scmType')->eq($scmType)->fi()
             ->andWhere('synced')->eq(1)
             ->fetchAll('id', false);
 
         foreach($repos as $i => $repo)
         {
             if($type == 'haspriv' and !$this->checkPriv($repo)) unset($repos[$i]);
-            if($useSCM) $repo = $this->processGitService($repo);
+            $repo = $this->processGitService($repo);
         }
 
         return $repos;
@@ -3353,7 +3350,6 @@ class repoModel extends model
         return $this->dao->select('*')->from(TABLE_REPO)
             ->where('deleted')->eq(0)
             ->andWhere('status')->ne('importing')
-            ->andWhere('scmType')->eq('git')
             ->fetchAll('id');
     }
 
@@ -3804,9 +3800,9 @@ class repoModel extends model
         {
             $repo->scmType       = 'svn';
             $path                = isset($oldRepo->path) ? $oldRepo->path : '';
-            $route               = $this->extractPathSlug($path);
-            $connector->slug     = $route['path'];
-            $repo->url           = $route['url'];
+            $route                = $this->extractPathSlug($path);
+            $connector->slug      = $route['path'];
+            $repo->url            = $route['url'];
             $connector->user     = isset($oldRepo->account) ? $oldRepo->account : '';
             $connector->password = isset($oldRepo->password) ? $oldRepo->password : '';
         }

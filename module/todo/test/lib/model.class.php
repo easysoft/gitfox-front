@@ -59,9 +59,10 @@ class todoModelTest extends baseTest
      * @access public
      * @return array
      */
-    public function updateTest(int $todoID, array $param): array|string|bool
+    public function updateTest(int $todoID, array $param)
     {
-        $object = $this->instance->dao->select('*')->from(TABLE_TODO)->where('id')->eq($todoID)->fetch();
+        global $tester;
+        $object = $tester->dbh->query("SELECT * FROM " . TABLE_TODO ." WHERE id = $todoID")->fetch();
 
         $todo = new stdclass();
         foreach($object as $field => $value)
@@ -69,15 +70,13 @@ class todoModelTest extends baseTest
             if(in_array($field, array_keys($param))) $todo->$field = $param[$field];
         }
 
-        $result = $this->instance->update($todoID, $todo);
-        if(dao::isError()) return dao::getError();
-        if(!$result) return false;
-
-        $changes = common::createChanges($object, $todo);
-        if($changes == array()) $changes = '没有数据更新';
+        $change = $this->instance->update($todoID, $todo);
+        if($change == array()) $change = '没有数据更新';
 
         unset($_POST);
-        return $changes;
+        if(dao::isError()) return dao::getError();
+
+        return $change;
     }
 
     /**

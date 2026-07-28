@@ -61,9 +61,9 @@ class todoModel extends model
      * @param  int         $todoID
      * @param  object      $todo
      * @access public
-     * @return false
+     * @return array|false
      */
-    public function update(int $todoID, object $todo): bool
+    public function update(int $todoID, object $todo): array|false
     {
         $oldTodo = $this->dao->findByID($todoID)->from(TABLE_TODO)->fetch();
 
@@ -72,19 +72,7 @@ class todoModel extends model
         if(!empty($todo->uid)) $this->loadModel('file')->updateObjectID($todo->uid, $todoID, 'todo');
         if(!empty($oldTodo->cycle)) $this->createByCycle(array($todoID => $todo));
         if($this->config->edition != 'open' && $todo->type == 'feedback' && $todo->objectID) $this->loadModel('feedback')->updateStatus('todo', $todo->objectID, $todo->status, '', $todoID);
-
-        $changes = common::createChanges($oldTodo, (array)$todo);
-
-        if($changes)
-        {
-            $actionID = $this->loadModel('action')->create('todo', $todoID, 'edited');
-            $this->action->logHistory($actionID, $changes);
-
-            $todo->id = $todoID;
-            $this->loadModel('message')->sendMentionNotice('todo', 'edit', $actionID, $todo, $oldTodo);
-        }
-
-        return true;
+        return common::createChanges($oldTodo, (array)$todo);
     }
 
     /**

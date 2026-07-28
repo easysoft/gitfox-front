@@ -356,15 +356,12 @@ class deptModelTest extends baseTest
      * @param  int    $count
      * @param  string $key
      * @param  string $type
-     * @param  string      $params
-     * @param  string|null $showOutside
+     * @param  string $params
      * @access public
      * @return array
      */
-    public function getDeptUserPairsTest($deptID = 0, $count = 0, $key = 'account', $type = 'inside', $params = '', $showOutside = null)
+    public function getDeptUserPairsTest($deptID = 0, $count = 0, $key = 'account', $type = 'inside', $params = '')
     {
-        global $config;
-        if($showOutside !== null) $config->user->showOutside = $showOutside;
         $objects = $this->instance->getDeptUserPairs((int)$deptID, $key, $type, $params);
 
         if(dao::isError()) return dao::getError();

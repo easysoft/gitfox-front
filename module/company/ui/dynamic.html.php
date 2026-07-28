@@ -16,7 +16,7 @@ jsVar('browseType', $browseType);
 featureBar
 (
     set::current($browseType),
-    set::linkParams("browseType={key}&param={$param}&recTotal=0&date=&direction=next&userID={$userID}&productID={$productID}&projectID={$projectID}&executionID={$executionID}"),
+    set::linkParams("browseType={key}&param={$param}&recTotal=0&date=&direction=next&userID={$userID}&productID={$productID}&projectID={$projectID}&executionID={$executionID}&orderBy={$orderBy}"),
     set::labelCount($recTotal < \actionModel::MAXCOUNT ? $recTotal : (\actionModel::MAXCOUNT - 1) . '+'),
     li
     (
