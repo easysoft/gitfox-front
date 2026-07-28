@@ -36,7 +36,7 @@ class productModel extends model
     public function getByID(int $productID): object|false
     {
         if(commonModel::isTutorialMode()) return $this->loadModel('tutorial')->getProduct();
-        $product = $this->dao->findById($productID)->from(TABLE_PRODUCT)->fetch();
+        $product = $this->fetchById($productID);
         if(!$product) return false;
 
         return $this->loadModel('file')->replaceImgURL($product, 'desc');
@@ -56,23 +56,6 @@ class productModel extends model
     }
 
     /**
-     * 获取产品邮件通知的收件人。
-     * Get toList and ccList.
-     *
-     * @param  object $product
-     * @access public
-     * @return bool|array
-     */
-    public function getToAndCcList(object $product): bool|array
-    {
-        $toList = trim($product->createdBy . ',' . $product->PO, ',');
-        $toList = implode(',', array_unique(array_filter(explode(',', $toList))));
-        if(empty($toList)) return false;
-
-        return array($toList, '');
-    }
-
-    /**
      * 根据权限控制范围获取产品。
      * Get products by acl.
      *
@@ -82,7 +65,7 @@ class productModel extends model
      */
     public function getListByAcl(string $acl): array
     {
-        return $this->dao->select('id, program, `PO`, `QD`, `RD`, feedback, ticket, acl, whitelist, reviewer, `PMT`, `createdBy`')->from(TABLE_PRODUCT)->where('acl')->in($acl)->fetchAll('id');
+        return $this->dao->select('id, program, PO, QD, RD, feedback, ticket, acl, whitelist, reviewer, PMT, createdBy')->from(TABLE_PRODUCT)->where('acl')->in($acl)->fetchAll('id');
     }
 
     /**
@@ -539,7 +522,7 @@ class productModel extends model
         $changes = common::createChanges($oldProduct, $product);
         if(!empty($product->comment) or !empty($changes))
         {
-            $actionID = $this->loadModel('action')->create('product', $productID, 'Closed', zget($product, 'comment', ''));
+            $actionID = $this->loadModel('action')->create('product', $productID, 'Closed', $product->comment);
             $this->action->logHistory($actionID, $changes);
 
             if(!empty($product->comment))
@@ -576,7 +559,7 @@ class productModel extends model
         $changes = common::createChanges($oldProduct, $product);
         if(!empty($product->comment) or !empty($changes))
         {
-            $actionID = $this->loadModel('action')->create('product', $productID, 'Activated', zget($product, 'comment', ''));
+            $actionID = $this->loadModel('action')->create('product', $productID, 'Activated', $product->comment);
             $this->action->logHistory($actionID, $changes);
 
             if(!empty($product->comment))
@@ -717,7 +700,14 @@ class productModel extends model
         {
             $unclosedStatus = $this->lang->story->statusList;
             unset($unclosedStatus['closed']);
-            return $this->story->getProductStories($productID, $branch, $modules, array_keys($unclosedStatus), $type, $sort, true, '', $pager);
+            $stories = $this->story->getProductStories($productID, $branch, $modules, array_keys($unclosedStatus), $type, $sort, true, '', $pager);
+            foreach($stories as $storyID => $story)
+            {
+                if($story->type != 'story' && $story->stage == 'closed') unset($stories[$storyID]);
+            }
+            $this->app->loadClass('pager', true);
+            $pager = new pager(count($stories), $pager ? $pager->recPerPage : 20, $pager ? $pager->pageID : 1);
+            return $stories ? current(array_chunk($stories, $pager->recPerPage, true)) : array();
         }
 
         /* Set default function called, when browseType is (draftstory, activestory, changingstory, reviewingstory, closedstory, developingstory, launchedstory). */
@@ -777,8 +767,6 @@ class productModel extends model
         $projectID = ($this->app->tab == 'project' && empty($projectID)) ? $this->session->project : $projectID;
         $searchConfig['params']['module']['values'] = empty($showAll) ? $this->productTao->getModulesForSearchForm($productID, $products, $branch, (int)$projectID) : $this->loadModel('tree')->getAllModulePairs('story');
 
-        if($storyType != 'story') unset($searchConfig['fields']['release'], $searchConfig['params']['release']);
-
         $gradePairs = $this->loadModel('story')->getGradePairs($storyType, 'all');
 
         if($projectID || $storyType == 'all')
@@ -812,13 +800,6 @@ class productModel extends model
         $productIdList = ($this->app->tab == 'project' && empty($productID)) || !empty($showAll) ? array_keys($products) : array($productID);
         $branchParam   = ($this->app->tab == 'project' && empty($productID)) || !empty($showAll) ? '' : $branch;
         $searchConfig['params']['plan']['values'] = $this->loadModel('productplan')->getPairs($productIdList, (empty($branchParam) || $branchParam == 'all') ? '' : $branchParam);
-
-        /* Get product release data. */
-        if(isset($searchConfig['fields']['release']))
-        {
-            $productParam = $this->app->rawMethod == 'relateobject' ? 0 : $productID;
-            $searchConfig['params']['release']['values'] = $this->loadModel('release')->getPairs(array(), $productParam, (empty($branchParam) || $branchParam == 'all') ? '' : $branchParam, $projectID);
-        }
 
         /* Get branch data. */
         if($productID && empty($showAll))
@@ -917,7 +898,7 @@ class productModel extends model
         if(empty($product)) return $this->loadModel('project')->getPairs();
 
         $appendProject = $this->productTao->formatAppendParam($appendProject);
-        $projectPairs  = $this->dao->select('t2.id, t2.name')->from(TABLE_PROJECTPRODUCT)->alias('t1')
+        return $this->dao->select('t2.id, t2.name')->from(TABLE_PROJECTPRODUCT)->alias('t1')
             ->leftJoin(TABLE_PROJECT)->alias('t2')->on('t1.project = t2.id')
             ->where('(t1.product')->eq($productID)
             ->andWhere('t2.type')->eq('project')
@@ -929,28 +910,7 @@ class productModel extends model
             ->beginIF($product->type != 'normal' and $branch !== '' and $branch != 'all')->andWhere('t1.branch')->in($branch)->fi()
             ->markRight(1)
             ->beginIF($appendProject)->orWhere('t2.id')->in($appendProject)->fi()
-            ->orderBy('t2.id_desc')
-            ->fetchPairs('id', 'name');
-        foreach($projectPairs as $id => $name) $projectPairs[$id] = htmlspecialchars_decode((string)$name, ENT_QUOTES);
-        return $projectPairs;
-    }
-
-    /**
-     * 获取关联某产品的未关闭项目列表。
-     * Get unclosed projects linked to a product.
-     *
-     * @param  int    $productID
-     * @access public
-     * @return array
-     */
-    public function getUnclosedProjectsByProduct(int $productID): array
-    {
-        return $this->dao->select('t2.id, t2.name')->from(TABLE_PROJECTPRODUCT)->alias('t1')
-            ->leftJoin(TABLE_PROJECT)->alias('t2')->on('t1.project = t2.id')
-            ->where('t1.product')->eq($productID)
-            ->andWhere('t2.type')->eq('project')
-            ->andWhere('t2.deleted')->eq('0')
-            ->andWhere('t2.status')->ne('closed')
+            ->orderBy('`order`_asc')
             ->fetchPairs('id', 'name');
     }
 
@@ -1230,18 +1190,6 @@ class productModel extends model
         $projectLatestExecutions = array();
         $latestExecutionList     = array();
         $today                   = helper::today();
-
-        /* Get workingDays. */
-        $earliestEnd = $today;
-        foreach($executionList as $executions)
-        {
-            foreach($executions as $execution)
-            {
-                if(!empty($execution->end) && !helper::isZeroDate($execution->end) && $execution->end < $earliestEnd) $earliestEnd = $execution->end;
-            }
-        }
-        $workingDays = $this->loadModel('holiday')->getActualWorkingDays($earliestEnd, $today);
-
         foreach($executionList as $projectID => $executions)
         {
             foreach($executions as &$execution)
@@ -1249,13 +1197,8 @@ class productModel extends model
                 /* Calculate delayed execution. */
                 if($execution->status != 'done' && $execution->status != 'closed' && $execution->status != 'suspended')
                 {
-                    $betweenDays = $this->holiday->getDaysBetween($execution->end, $today);
-                    if($betweenDays)
-                    {
-                        $delayDays = array_intersect($betweenDays, $workingDays);
-                        $delay     = count($delayDays) - 1;
-                        if($delay > 0) $execution->delay = $delay;
-                    }
+                    $delay = helper::diffDate($today, $execution->end);
+                    if($delay > 0) $execution->delay = $delay;
                 }
             }
 
@@ -2320,8 +2263,6 @@ class productModel extends model
      */
     public function createSystem(int $productID, string $productName)
     {
-        if($this->config->vision != 'rnd') return;
-
         $hasSameName = $this->dao->select('name')->from(TABLE_SYSTEM)->where('name')->eq($productName)->fetch('name');
 
         $systemData = new stdClass();

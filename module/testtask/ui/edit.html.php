@@ -10,11 +10,6 @@ declare(strict_types=1);
  */
 namespace zin;
 
-$isOwnerRequired   = strpos(",{$this->config->testtask->edit->requiredFields},", ',owner,') !== false;
-$isTypeRequired    = strpos(",{$this->config->testtask->edit->requiredFields},", ',type,') !== false;
-$isMembersRequired = strpos(",{$this->config->testtask->edit->requiredFields},", ',members,') !== false;
-$isDescRequired    = strpos(",{$this->config->testtask->edit->requiredFields},", ',desc,') !== false;
-
 formPanel
 (
     set::title($lang->testtask->edit),
@@ -51,42 +46,35 @@ formPanel
     ),
     formGroup
     (
-        set::width('1/2'),
-        set::label($lang->testtask->owner),
-        set::required($isOwnerRequired),
-        set::name('owner'),
-        set::value($testtask->owner),
-        set::control(array('control' => 'picker', 'required' => $isOwnerRequired)),
-        set::items($users)
-    ),
-    formGroup
-    (
         setID('typeBox'),
         set::width('1/2'),
         set::label($lang->testtask->type),
-        set::required($isTypeRequired),
-        picker
-        (
-            set::name('type[]'),
-            set::value($testtask->type),
-            set::items($lang->testtask->typeList),
-            set::multiple(true),
-            set::required($isTypeRequired)
-        )
+        set::name('type[]'),
+        set::value($testtask->type),
+        set::control('picker'),
+        set::items($lang->testtask->typeList),
+        set::multiple(true)
     ),
     formGroup
     (
         set::width('1/2'),
+        set::label($lang->testtask->owner),
+        set::name('owner'),
+        set::value($testtask->owner),
+        set::control('picker'),
+        set::items($users)
+    ),
+    formgroup
+    (
+        set::width('1/2'),
         set::label($lang->testtask->members),
-        set::required($isMembersRequired),
         picker
         (
-            setID('members'),
+            setid('members'),
             set::name('members[]'),
             set::items($users),
             set::value($testtask->members),
-            set::multiple(true),
-            set::required($isMembersRequired)
+            set::multiple(true)
         )
     ),
     formGroup
@@ -158,7 +146,7 @@ formPanel
     formGroup
     (
         set::label($lang->testtask->desc),
-        set::required($isDescRequired),
+        set::required(strpos(",{$this->config->testtask->edit->requiredFields},", ",desc,") !== false),
         editor
         (
             set::name('desc'),

@@ -189,8 +189,8 @@ class testsuiteModel extends model
         if(!$suite) return array();
 
         $cases = $this->dao->select('t1.*, t2.version AS version, IF(t2.caseVersion = 0, t1.version, t2.caseVersion) AS caseVersion, t2.suite, t3.title AS caseTitle')->from(TABLE_CASE)->alias('t1')
-            ->leftJoin(TABLE_SUITECASE)->alias('t2')->on('t1.id=t2.`case`')
-            ->leftJoin(TABLE_CASESPEC)->alias('t3')->on('t1.id=t3.`case` AND t2.version=t3.version')
+            ->leftJoin(TABLE_SUITECASE)->alias('t2')->on('t1.id=t2.case')
+            ->leftJoin(TABLE_CASESPEC)->alias('t3')->on('t1.id=t3.case AND t2.version=t3.version')
             ->where('t2.suite')->eq($suiteID)
             ->beginIF($this->lang->navGroup->testsuite != 'qa')->andWhere('t1.project')->eq($this->session->project)->fi()
             ->andWhere('t1.product')->eq($suite->product)
@@ -208,24 +208,7 @@ class testsuiteModel extends model
 
         if(!$append) return $cases;
 
-        $caseBugs = $this->dao->select('COUNT(1) AS count, `case`')->from(TABLE_BUG)->where('`case`')->in(array_keys($cases))->andWhere('deleted')->eq(0)->groupBy('`case`')->fetchPairs('case', 'count');
-        $results  = $this->dao->select('COUNT(1) AS count, `case`')->from(TABLE_TESTRESULT)->where('`case`')->in(array_keys($cases))->groupBy('`case`')->fetchPairs('case', 'count');
-        $steps    = $this->dao->select('COUNT(DISTINCT t1.id) AS count, t1.`case`')->from(TABLE_CASESTEP)->alias('t1')
-            ->leftJoin(TABLE_SUITECASE)->alias('t2')->on('t1.`case`=t2.`case`')
-            ->where('t2.suite')->eq($suiteID)
-            ->andWhere('t1.`case`')->in(array_keys($cases))
-            ->andWhere('t1.type')->ne('group')
-            ->andWhere('t1.version=t2.version')
-            ->groupBy('t1.`case`')
-            ->fetchPairs('case', 'count');
-        foreach($cases as $case)
-        {
-            $case->bugs       = zget($caseBugs, $case->id, 0);
-            $case->results    = zget($results, $case->id, 0);
-            $case->stepNumber = zget($steps, $case->id, 0);
-        }
-
-        return $cases;
+        return $this->loadModel('testcase')->appendData($cases);
     }
 
     /**
@@ -242,7 +225,7 @@ class testsuiteModel extends model
         if(!$suite) return array();
 
         return $this->dao->select('t1.id, t1.title')->from(TABLE_CASE)->alias('t1')
-            ->leftJoin(TABLE_SUITECASE)->alias('t2')->on('t1.id=t2.`case`')
+            ->leftJoin(TABLE_SUITECASE)->alias('t2')->on('t1.id=t2.case')
             ->where('t2.suite')->eq($suiteID)
             ->beginIF($this->lang->navGroup->testsuite != 'qa')->andWhere('t1.project')->eq($this->session->project)->fi()
             ->andWhere('t1.product')->eq($suite->product)
@@ -303,7 +286,7 @@ class testsuiteModel extends model
      */
     public function isClickable(object $report, string $action): bool
     {
-        if($action == 'confirmCaseChange') return $report->status == 'normal' && isset($report->caseVersion) && $report->version < $report->caseVersion;
+        if($action == 'confirmCaseChange')  return isset($report->caseVersion) && $report->version < $report->caseVersion;
         return common::hasPriv('testsuite', $action);
     }
 

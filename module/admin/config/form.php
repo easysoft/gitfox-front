@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 $config->admin->form = new stdclass();
 $config->admin->form->safe = array();
 $config->admin->form->safe['mode']                     = array('type' => 'int',    'required' => false, 'default' => 1);

@@ -66,7 +66,7 @@ $data = initTableData($stakeholders, $cols, $this->stakeholder);
 
 dtable
 (
-    set::customCols(true),
+    set::customCols(false),
     set::cols($cols),
     set::data($data),
     set::orderBy($orderBy),

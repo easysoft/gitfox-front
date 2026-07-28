@@ -24,7 +24,7 @@ class executionEntry extends entry
         $status = $this->param('status', 'all');
 
         $control = $this->loadController('execution', 'view');
-        $control->view((int)$executionID);
+        $control->view($executionID);
 
         $data = $this->getData();
         if(!$data or !isset($data->status)) return $this->send400('error');
@@ -68,7 +68,7 @@ class executionEntry extends entry
             {
                 case 'modules':
                     $control = $this->loadController('tree', 'browsetask');
-                    $control->browsetask((int)$executionID);
+                    $control->browsetask($executionID);
                     $data = $this->getData();
                     if(isset($data->status) and $data->status == 'success')
                     {
@@ -131,7 +131,7 @@ class executionEntry extends entry
         $products = $this->loadModel('product')->getProducts($executionID);
         $this->setPost('products', $this->request('products', array_keys($products)));
 
-        $control->edit((int)$executionID);
+        $control->edit($executionID);
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'fail') return $this->sendError(400, $data->message);
@@ -151,7 +151,7 @@ class executionEntry extends entry
     public function delete($executionID)
     {
         $control = $this->loadController('execution', 'delete');
-        $control->delete((int)$executionID, 'true');
+        $control->delete($executionID, 'true');
 
         $this->getData();
         return $this->sendSuccess(200, 'success');

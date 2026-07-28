@@ -43,7 +43,7 @@ class programEntry extends entry
         $this->batchSetPost($fields, $oldProgram);
         $this->setPost('parent', $this->request('parent', 0));
 
-        $control->edit((int)$programID);
+        $control->edit($programID);
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'fail') return $this->sendError(400, $data->message);
@@ -62,7 +62,7 @@ class programEntry extends entry
     public function delete($programID)
     {
         $control = $this->loadController('program', 'delete');
-        $control->delete((int)$programID, 'true');
+        $control->delete($programID, 'true');
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'fail') return $this->sendError(400, $data->message);

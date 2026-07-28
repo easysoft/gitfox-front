@@ -28,7 +28,7 @@ class taskStartEntry extends entry
 
         $this->setPost('realStarted', $this->request('realStarted', helper::now()));
 
-        $control->start((int)$taskID);
+        $control->start($taskID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

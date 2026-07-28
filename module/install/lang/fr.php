@@ -129,8 +129,6 @@ $lang->install->dbEncoding     = 'Database Charset';
 $lang->install->dbUser         = 'Database Username';
 $lang->install->dbPassword     = 'Database Password';
 $lang->install->dbName         = 'Database Name';
-$lang->install->dbSchema       = 'Database Schema';
-$lang->install->dbSchemaNote   = 'Schema for Gauss/PostgreSQL; ignored by MySQL.';
 $lang->install->dbPrefix       = 'Table Prefix';
 $lang->install->clearDB        = 'Nettoyer les données existantes';
 $lang->install->importDemoData = 'Importer données de Démo';
@@ -148,7 +146,6 @@ $lang->install->workingList['full']      = 'Application Lifecycle Management';
 
 $lang->install->errorConnectDB      = 'Echec de connexion à la base. ';
 $lang->install->errorDBName         = 'Le nom de la base ne doit pas contenir de “.” ';
-$lang->install->errorDBSchema       = 'Nom de schéma invalide.';
 $lang->install->errorCreateDB       = 'Echec de création de la base.';
 $lang->install->errorTableExists    = "La base existe. Si ZenTao a été installé précédemment, revenez à l'étape précédente et supprimez les données. Ensuite continuez l'installation.";
 $lang->install->errorCreateTable    = 'Echec en création de la base.';
@@ -295,7 +292,6 @@ $lang->install->cronList['moduleName=backup&methodName=backup']         = 'Sauve
 $lang->install->cronList['moduleName=mail&methodName=asyncSend']        = 'Désynchroniser envoi Messages';
 $lang->install->cronList['moduleName=webhook&methodName=asyncSend']     = 'Désynchroniser envoi Webhooks';
 $lang->install->cronList['moduleName=admin&methodName=deleteLog']       = 'Suppression Logs échus';
-$lang->install->cronList['moduleName=errorlog&methodName=deleteLog']    = 'Suppression Logs d\'erreurs échus';
 $lang->install->cronList['moduleName=todo&methodName=createCycle']      = 'Créer tâches récurrentes';
 $lang->install->cronList['moduleName=ci&methodName=initQueue']          = 'Créer des Jenkins récurrents';
 $lang->install->cronList['moduleName=ci&methodName=checkCompileStatus'] = 'Synchroniser le statut Jenkins';

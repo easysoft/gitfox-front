@@ -135,12 +135,25 @@ class datatableModel extends model
                     }
                 }
 
-                if(!isset($fieldSetting[$field]['name'])) $fieldSetting[$field]['name'] = $field;
+                if($module == 'pipeline')
+                {
+                    if(!isset($fieldSetting[$field]['name'])) $fieldSetting[$field]['name'] = $field;
+                }
+                else
+                {
+                    if(!isset($set['name'])) $fieldSetting[$field]['name'] = $field;
+                }
                 if($module == 'testcase' && $field == 'id') $fieldSetting[$field]['name'] = 'caseID';
                 if($field == 'actions' && empty($fieldSetting[$field]['width'])) $fieldSetting[$field]['width'] = $fieldList[$field]['width'];
-                if(!isset($fieldSetting[$field]['order'])) $fieldSetting[$field]['order'] = $order;
 
-                if(!isset($fieldSetting[$field]['order'])) $fieldSetting[$field]['order'] = $order;
+                if($module == 'pipeline')
+                {
+                    if(!isset($fieldSetting[$field]['order'])) $fieldSetting[$field]['order'] = $order;
+                }
+                else
+                {
+                    if(!isset($set['order'])) $fieldSetting[$field]['order'] = $order;
+                }
                 $order++;
             }
 
@@ -158,16 +171,6 @@ class datatableModel extends model
         }
 
         uasort($fieldSetting, array('datatableModel', 'sortCols'));
-
-        /* 产品-项目列表增加项目集字段，显示在ID字段之后。 */
-        if($datatableId == 'productProject' && in_array($this->config->systemMode, array('ALM', 'PLM')))
-        {
-            $this->app->loadLang('project');
-            $programField = array('name' => 'programName', 'title' => $this->lang->project->program, 'type' => 'shortTitle', 'required' => false, 'show' => true, 'group' => 0);
-            if(isset($setting['programName'])) $programField = array_merge($programField, $setting['programName']);
-            if($showAll || !empty($programField['show'])) $fieldSetting = array('id' => $fieldSetting['id'], 'programName' => $programField) + $fieldSetting;
-        }
-
         return $fieldSetting;
     }
 

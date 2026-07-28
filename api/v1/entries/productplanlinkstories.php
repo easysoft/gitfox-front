@@ -25,13 +25,13 @@ class productplanLinkStoriesEntry extends entry
         $fields = 'stories';
         $this->batchSetPost($fields);
 
-        $control->linkStory((int)$planID);
+        $control->linkStory($planID);
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'success')
         {
             $control = $this->loadController('productplan', 'view');
-            $control->view((int)$planID);
+            $control->view($planID);
 
             $data = $this->getData();
             if(!$data or !isset($data->status)) return $this->send400('error');

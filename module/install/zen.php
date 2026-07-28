@@ -260,16 +260,6 @@ class installZen extends install
             $return->error  = $this->lang->install->errorDBName;
             return $return;
         }
-        if(in_array($data->dbDriver, $this->config->pgsqlDriverList))
-        {
-            $schema = trim($data->dbSchema ?? 'public');
-            if(!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $schema))
-            {
-                $return->result = 'fail';
-                $return->error  = $this->lang->install->errorDBSchema;
-                return $return;
-            }
-        }
         if(!is_object($this->install->dbh))
         {
             /* 没有成功连接数据库的话，则提示错误信息。 */
@@ -326,10 +316,6 @@ class installZen extends install
 
         /* Set the session save path when the session save path is null. */
         $customSession = $this->setSessionPath();
-
-        $dbSchema          = trim((string)getEnvData('ZT_DB_SCHEMA', 'public'));
-        $schemaConfig      = $dbSchema != 'public' ? "\$config->db->schema = getEnvData('ZT_DB_SCHEMA');" : '';
-        $slaveSchemaConfig = $dbSchema != 'public' ? "    \$slaveDB->schema      = getEnvData('ZT_DB_SCHEMA');" : '';
         $configContent = <<<EOT
 <?php
 \$config->installed     = getEnvData('ZT_INSTALLED', true, 'bool');
@@ -344,7 +330,6 @@ class installZen extends install
 \$config->db->encoding  = getEnvData('ZT_DB_ENCODING', 'UTF8');
 \$config->db->password  = getEnvData('ZT_DB_PASSWORD');
 \$config->db->prefix    = getEnvData('ZT_DB_PREFIX');
-$schemaConfig
 \$config->webRoot       = getWebRoot();
 \$config->default->lang = getEnvData('ZT_DEFAULT_LANG', 'zh-cn');
 
@@ -360,7 +345,6 @@ if(\$hasSlaveDB && \$hasSlaveDB != 'false')
     \$slaveDB->driver      = getEnvData('ZT_DB_DRIVER');
     \$slaveDB->encoding    = getEnvData('ZT_DB_ENCODING');
     \$slaveDB->prefix      = getEnvData('ZT_DB_PREFIX');
-$slaveSchemaConfig
     \$config->slaveDBList  = array(\$slaveDB);
 }
 EOT;
@@ -401,7 +385,6 @@ EOT;
             $this->config->db->port     = $data->dbPort;
         }
         $this->config->db->name   = $data->dbName;
-        $this->config->db->schema = in_array($this->config->db->driver, $this->config->pgsqlDriverList) ? trim($data->dbSchema ?? 'public') : 'public';
         $this->config->db->prefix = $data->dbPrefix;
 
         return true;
@@ -492,33 +475,9 @@ EOT;
 
         $changes = [];
         $clearDB = $this->session->myConfig['clearDB'] ?? 0;
+        $dbFile  = $this->app->getAppRoot() . 'db' . DS . $file;
+        $sqls    = explode(';', file_get_contents($dbFile));
 
-        /* 主 SQL 之后追加执行数据库视图 SQL，保证先建表后建视图。*/
-        $sqls = array_merge
-        (
-            $this->getInstallSQLs($file, $changes, $clearDB),
-            $this->getInstallSQLs('dbviews.sql', $changes, $clearDB)
-        );
-
-        return ['sqls' => $sqls, 'changes' => $changes];
-    }
-
-    /**
-     * 读取安装 SQL 文件并生成语义化变更。
-     * Read an install SQL file and generate semantic changes.
-     *
-     * @param  string $file
-     * @param  array  $changes
-     * @param  int    $clearDB
-     * @access private
-     * @return array
-     */
-    private function getInstallSQLs(string $file, array &$changes, int $clearDB): array
-    {
-        $dbFile = $this->app->getAppRoot() . 'db' . DS . $file;
-        if(!file_exists($dbFile)) return array();
-
-        $sqls = explode(';', file_get_contents($dbFile));
         foreach($sqls as $key => $sql)
         {
             $sql = trim($sql);
@@ -541,6 +500,6 @@ EOT;
 
             $sqls[$key] = $sql;
         }
-        return array_values($sqls);
+        return ['sqls' => array_values($sqls), 'changes' => $changes];
     }
 }

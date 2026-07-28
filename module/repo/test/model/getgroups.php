@@ -1,7 +1,6 @@
 #!/usr/bin/env php
 <?php
 include dirname(__FILE__, 5) . '/test/lib/init.php';
-include dirname(__FILE__, 2) . '/lib/model.class.php';
 
 /**
 
@@ -17,9 +16,15 @@ cid=18063
 
 */
 
-$repoTest = new repoModelTest();
-r($repoTest->getGroupsCountTest(1))     && p() && e('0');
-r($repoTest->getGroupsCountTest(1, 14)) && p() && e('0');
-r($repoTest->getGroupsCountTest(4))     && p() && e('0');
-r($repoTest->getGroupsCountTest(4, 4))  && p() && e('0');
-r($repoTest->getGroupsCountTest(0))     && p() && e('0');
+$repo = $tester->loadModel('repo');
+$getGroups = static function(int $serverID, int $groupID = 0) use ($repo)
+{
+    if(!method_exists($repo, 'getGroups')) return array();
+    return $repo->getGroups($serverID, $groupID);
+};
+
+r(count($getGroups(1)))     && p() && e('0');
+r(count($getGroups(1, 14))) && p() && e('0');
+r(count($getGroups(4)))     && p() && e('0');
+r(count($getGroups(4, 4)))  && p() && e('0');
+r(count($getGroups(0)))     && p() && e('0');

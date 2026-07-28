@@ -28,7 +28,7 @@ $fnGenerateFilters = function() use($pivot, $showOrigin, $lang)
         $value  = zget($filter, 'default', '');
         $from   = zget($filter, 'from');
 
-        $items = $this->getFilterOptionUrl($filter, $pivot->sql, (array)$pivot->fieldSettings, $pivot->id);
+        $items = $this->getFilterOptionUrl($filter, $pivot->sql, (array)$pivot->fieldSettings);
         if($showOrigin)
         {
             $filters[] = filter(set(array('title' => $name, 'type' => 'input', 'name' => $field, 'value' => $value)));

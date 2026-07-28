@@ -21,7 +21,7 @@ class buildEntry extends entry
     public function get($buildID)
     {
         $control = $this->loadController('build', 'view');
-        $control->view((int)$buildID);
+        $control->view($buildID);
 
         $data = $this->getData();
         if(isset($data->status) and $data->status == 'success') return $this->send(200, $this->format($data->data->build, 'builder:user,stories:idList,bugs:idList,deleted:bool'));
@@ -48,7 +48,7 @@ class buildEntry extends entry
         $fields = 'execution,product,branch,name,builder,date,scmPath,filePath,desc';
         $this->batchSetPost($fields, $oldBuild);
 
-        $control->edit((int)$buildID);
+        $control->edit($buildID);
 
         $data = $this->getData();
         if(!$data or (isset($data->message) and $data->message == '404 Not found')) return $this->send404();
@@ -68,7 +68,7 @@ class buildEntry extends entry
     public function delete($buildID)
     {
         $control = $this->loadController('build', 'delete');
-        $control->delete((int)$buildID, 'true');
+        $control->delete($buildID, 'true');
 
         $this->getData();
         return $this->sendSuccess(200, 'success');

@@ -82,7 +82,7 @@ class productplan extends control
 
             $actionID = $this->loadModel('action')->create('productplan', $planID, 'opened');
 
-            $planData->id = (int)$planID;
+            $planData->id = $planID;
             $this->loadModel('message')->sendMentionNotice('productplan', 'create', $actionID, $planData);
 
             $message = $this->executeHooks($planID);
@@ -91,13 +91,12 @@ class productplan extends control
             if($parent > 0) $this->productplan->updateParentStatus($parent);
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
-            $objectChanges = array('type' => 'add', 'objectType' => 'productplan', 'objectList' => array($planID));
-            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $planID, 'changes' => $objectChanges));
+            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $planID));
             if(isInModal())
             {
-                return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'closeModal' => true, 'callback' => "loadProductPlans($productID, $branchID);", 'changes' => $objectChanges));
+                return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'closeModal' => true, 'callback' => "loadProductPlans($productID, $branchID);"));
             }
-            return $this->sendSuccess(array('load' => $this->createLink($this->app->rawModule, 'browse', "productID=$productID"), 'changes' => $objectChanges));
+            return $this->sendSuccess(array('load' => $this->createLink($this->app->rawModule, 'browse', "productID=$productID")));
         }
 
         $this->commonAction($productID, $branchID);
@@ -156,12 +155,12 @@ class productplan extends control
                 $actionID = $this->loadModel('action')->create('productplan', $planID, 'edited');
                 $this->action->logHistory($actionID, $changes);
 
-                $planData->id = (int)$planID;
+                $planData->id = $planID;
                 $this->loadModel('message')->sendMentionNotice('productplan', 'edit', $actionID, $planData, $plan);
             }
             $message = $this->executeHooks($planID);
             if($message) $this->lang->saveSuccess = $message;
-            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $this->createLink($this->app->rawModule, 'view', "planID=$planID"), 'changes' => array('type' => 'update', 'objectType' => 'productplan', 'objectList' => array($planID))));
+            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $this->createLink($this->app->rawModule, 'view', "planID=$planID")));
         }
 
         $oldBranch = array($planID => $plan->branch);
@@ -391,7 +390,7 @@ class productplan extends control
         $plan = $this->productplan->getByID($planID, true);
         if(!$plan)
         {
-            if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
+            if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
             return $this->sendError($this->lang->notFound, $this->createLink('product', 'index'));
         }
 
@@ -575,8 +574,6 @@ class productplan extends control
 
         /* Get story id list. */
         $storyIdList = json_decode($this->post->storyIdList, true);
-        if(empty($storyIdList)) return true;
-
         asort($storyIdList);
         $storyIdList = array_flip($storyIdList);
 

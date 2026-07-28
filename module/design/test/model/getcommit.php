@@ -1,10 +1,8 @@
 #!/usr/bin/env php
 <?php
-
 /**
 
 title=测试 designModel->getCommit();
-timeout=0
 cid=15989
 
 - 测试空数据 @0
@@ -26,7 +24,7 @@ $designTable = zenData('design')->loadYaml('design');
 $designTable->commit->range('[]{2},`1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20`');
 $designTable->gen(3);
 
-zenData('ops_repohistory')->loadYaml('repohistory')->gen(20);
+zenData('repohistory')->loadYaml('repohistory')->gen(20);
 zenData('user')->gen(5);
 
 $idList      = array(0, 1, 3, 4);

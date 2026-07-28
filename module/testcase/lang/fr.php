@@ -105,6 +105,7 @@ $lang->testcase->allType          = 'All Types';
 $lang->testcase->automated        = 'Automated';
 $lang->testcase->automation       = 'Automation Test';
 $lang->testcase->runCase          = 'Run';
+$lang->testcase->expects          = 'Résultat Attendu';
 
 $lang->case = $lang->testcase;  // For dao checking using. Because 'case' is a php keywords, so the module name is testcase, table name is still case.
 
@@ -114,6 +115,7 @@ $lang->testcase->stepExpect        = 'Résultat Attendu';
 $lang->testcase->stepVersion       = 'Version';
 $lang->testcase->stepSameLevel     = 'Sib';
 $lang->testcase->stepSubLevel      = 'Sub';
+$lang->testcase->stepTable         = 'Execution Steps';
 $lang->testcase->expectDisabledTip = 'Expect disabled when has sub steps.';
 $lang->testcase->deleteStepTip     = 'This step contains levels and cannot be deleted';
 $lang->testcase->dragNestedTip     = 'Supports up to three levels of nesting, cannot be dragged here';

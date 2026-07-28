@@ -21,12 +21,6 @@ $config->testtask->dtable->fieldList['pri']['title'] = $lang->priAB;
 $config->testtask->dtable->fieldList['pri']['type']  = 'pri';
 $config->testtask->dtable->fieldList['pri']['show']  = true;
 
-$config->testtask->dtable->fieldList['type']['name']  = 'type';
-$config->testtask->dtable->fieldList['type']['title'] = $lang->testtask->type;
-$config->testtask->dtable->fieldList['type']['type']  = 'category';
-$config->testtask->dtable->fieldList['type']['map']   = $lang->testtask->typeList;
-$config->testtask->dtable->fieldList['type']['show']  = true;
-
 $config->testtask->dtable->fieldList['productName']['name']  = 'productName';
 $config->testtask->dtable->fieldList['productName']['title'] = $lang->testtask->product;
 $config->testtask->dtable->fieldList['productName']['type']  = 'text';
@@ -71,18 +65,6 @@ $config->testtask->dtable->fieldList['end']['type']  = 'date';
 $config->testtask->dtable->fieldList['end']['group'] = 'user';
 $config->testtask->dtable->fieldList['end']['show']  = true;
 
-$config->testtask->dtable->fieldList['realBegan']['name']  = 'realBegan';
-$config->testtask->dtable->fieldList['realBegan']['title'] = $lang->testtask->realBegan;
-$config->testtask->dtable->fieldList['realBegan']['type']  = 'date';
-$config->testtask->dtable->fieldList['realBegan']['group'] = 'user';
-$config->testtask->dtable->fieldList['realBegan']['show']  = true;
-
-$config->testtask->dtable->fieldList['realFinishedDate']['name']  = 'realFinishedDate';
-$config->testtask->dtable->fieldList['realFinishedDate']['title'] = $lang->testtask->realFinishedDate;
-$config->testtask->dtable->fieldList['realFinishedDate']['type']  = 'date';
-$config->testtask->dtable->fieldList['realFinishedDate']['group'] = 'user';
-$config->testtask->dtable->fieldList['realFinishedDate']['show']  = true;
-
 $config->testtask->dtable->fieldList['status']['name']      = 'status';
 $config->testtask->dtable->fieldList['status']['title']     = $lang->testtask->status;
 $config->testtask->dtable->fieldList['status']['type']      = 'status';
@@ -124,37 +106,6 @@ $config->testtask->cases->dtable->fieldList['actions']['type']  = 'actions';
 $config->testtask->cases->dtable->fieldList['actions']['width'] = 'auto';
 $config->testtask->cases->dtable->fieldList['actions']['list']  = $config->testtask->cases->actionList;
 $config->testtask->cases->dtable->fieldList['actions']['menu']  = array(array('confirmChange'), array('createBug', 'runCase', 'results', 'unlinkCase'));
-
-$config->testtask->groupCase = new stdclass();
-$config->testtask->groupCase->dtable = new stdclass();
-$config->testtask->groupCase->dtable->fieldList = $config->testcase->group->dtable->fieldList;
-foreach($config->testtask->groupCase->dtable->fieldList as $field => $setting) $config->testtask->groupCase->dtable->fieldList[$field]['show'] = true;
-
-/* 复用测试单用例列表的列定义，保证分组视图自定义列的可选字段与用例列表一致。*/
-/* Reuse the testtask case list columns so the group view offers the same customizable fields. */
-$groupActions = $config->testtask->groupCase->dtable->fieldList['actions'];
-unset($config->testtask->groupCase->dtable->fieldList['actions']);
-foreach($config->testtask->cases->dtable->fieldList as $field => $setting)
-{
-    if($field == 'story' || isset($config->testtask->groupCase->dtable->fieldList[$field])) continue;
-
-    $setting['show'] = false;
-    $config->testtask->groupCase->dtable->fieldList[$field] = $setting;
-}
-$config->testtask->groupCase->dtable->fieldList['actions'] = $groupActions;
-
-$config->testtask->groupCase->actionList = $config->testcase->actionList;
-$config->testtask->groupCase->actionList['runCase']['url']             = array('module' => 'testtask', 'method' => 'runCase', 'params' => 'runID={id}&caseID={case}&version={version}');
-$config->testtask->groupCase->actionList['edit']['url']                = array('module' => 'testcase', 'method' => 'edit', 'params' => 'caseID={case}&comment=false&executionID={execution}');
-$config->testtask->groupCase->actionList['unlinkCase']['url']          = array('module' => 'testtask', 'method' => 'unlinkCase', 'params' => 'caseID={id}');
-$config->testtask->groupCase->actionList['unlinkCase']['class']        = 'ajax-submit';
-$config->testtask->groupCase->actionList['unlinkCase']['data-confirm'] = $lang->testtask->confirmUnlinkCase;
-
-$config->testtask->groupCase->dtable->fieldList['actions']['list']         = $config->testtask->groupCase->actionList;
-$config->testtask->groupCase->dtable->fieldList['id']['name']              = 'id';
-$config->testtask->groupCase->dtable->fieldList['actions']['menu']         = array('runCase', 'edit', 'unlinkCase');
-$config->testtask->groupCase->dtable->fieldList['title']['link']['params'] = 'caseID={case}';
-$config->testtask->groupCase->dtable->fieldList['bugs']['link']['params']  = 'runID={id}&caseID={case}';
 
 $config->testtask->linkcase = new stdclass();
 $config->testtask->linkcase->dtable = new stdclass();

@@ -121,7 +121,6 @@ class detail extends wg
         .detail-section-title, .detail-section.panel .panel-heading {background: var(--color-canvas); position: sticky; top: 0; z-index: 2}
         .detail-section.panel .panel-heading {z-index: 1}
         .detail-section .detail-section .detail-section-title {z-index: 0}
-        .detail-section .toolbar:has(button.ai-styled) {margin-left: auto}
         .detail-side > * + * {margin-top: 8px}
         .detail-side .tabs {padding: 12px 8px 12px 16px}
         .detail-side .tabs-header {position: sticky; top: 0;}
@@ -132,15 +131,13 @@ class detail extends wg
         .detail-sections .history-panel-header > .listitem {padding: 0}
         .important-w-0 {width: 0!important;}
         .no-width {padding: 0!important; width: 0!important; overflow: hidden!important;}
-        .detail-toggle {margin: 0!important; z-index: 1}
+        .detail-toggle {margin: 0!important;}
         .detail-toggle:hover {background-color: rgba(var(--color-border-rgb), var(--tw-bg-opacity)); transition-duration: .15s; transition-property: background-color; transition-timing-function: cubic-bezier(.4,0,.2,1);}
-        .detail-toggle > .btn {position: relative; top: min(calc((100% - 3px) / 2), calc((100vh - 142px) / 2))}
         .article > .files-list > li.file{white-space:normal;}
         .ai-task-status .status-doing {color: #FAAE1A;}
         .ai-task-status .status-done {color: #3883FA;}
         .ai-task-status .status-cancel, .ai-task-status .status-closed {color: #9EA3B0;}
-        .detail-actions {pointer-events: none}
-        .detail-actions > div {margin-inline: auto; pointer-events: auto}
+        .detail-actions > div {margin-inline: auto; }
 CSS;
     }
 
@@ -229,11 +226,11 @@ CSS;
             set::id($objectID),
             set::object($object),
             set::title($title),
-            set::titleClass('text-lg font-bold'),
+            set::titleClass('text-lg text-clip font-bold'),
             set::titleProps(array('title' => empty($titleProps) ? $title : $titleProps)),
             set::type($objectType),
             set::color($color),
-            set::parentTitleClass('text-lg font-bold'),
+            set::parentTitleClass('text-lg text-clip font-bold'),
             set::parent($parent),
             set::parentID($parentID),
             set::parentUrl($parentUrl),
@@ -296,7 +293,7 @@ CSS;
         if($titleActions) unset($item['titleActions']);
 
         $titleActionNode = null;
-        if($titleActions) $titleActionNode = toolbar::create($titleActions);
+        if($titleActions) $titleActionNode = div(setClass('ml-auto'), toolbar::create($titleActions));
 
         return div
         (
@@ -320,7 +317,7 @@ CSS;
     {
         global $app, $config;
         $sections = $this->prop('sections', []);
-        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading) && $app->moduleName != 'flow') $sections = $app->control->loadModel('flow')->buildExtendZinValue($sections, $this->prop('object'), 'info');
+        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading)) $sections = $app->control->loadModel('flow')->buildExtendZinValue($sections, $this->prop('object'), 'info');
 
         $list                = array();
         $firstSectionHandled = false;
@@ -465,8 +462,7 @@ CSS;
     {
         global $config;
 
-        $mainSections    = $this->buildMainSections();
-        $enableProcedure = !empty($config->enableAITeammate) && $config->edition != 'open';
+        $mainSections = $this->buildMainSections();
         return div
         (
             setClass('detail-main flex-auto col gap-2 min-w-0'),
@@ -480,14 +476,6 @@ CSS;
             $this->block('sections'),
             !empty($config->enableAITeammate) && hasPriv('aitask', 'browse') ? $this->buildAITasks() : null,
             $this->children(),
-            $enableProcedure ? createWg
-            (
-                'aiprocedureentry',
-                [
-                    set::objectType($this->prop('objectType')),
-                    set::objectID((int)$this->prop('objectID'))
-                ]
-            ) : null,
             $this->buildHistory(),
             $this->buildActions()
         );
@@ -525,7 +513,7 @@ CSS;
     {
         global $app, $config;
         $tabs = $this->prop('tabs', []);
-        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading) && $app->moduleName != 'flow') $tabs = $app->control->loadModel('flow')->buildExtendZinValue($tabs, $this->prop('object'), 'basic');
+        if($config->edition != 'open' && empty($app->installing) && empty($app->upgrading)) $tabs = $app->control->loadModel('flow')->buildExtendZinValue($tabs, $this->prop('object'), 'basic');
         if(!$tabs) return null;
 
         $groups = array();
@@ -556,7 +544,7 @@ CSS;
             $this->buildTabsList(),
             $this->block('side'),
             div(
-                setClass('detail-toggle h-full w-2 absolute top-0 flex justify-center'),
+                setClass('detail-toggle h-full w-2 absolute top-0 flex justify-center items-center'),
                 setStyle('left', '-.5rem'),
                 btn(
                     setClass('w-4 rounded-lg'),
@@ -602,16 +590,24 @@ CSS;
         }
         if($prevBtn === true && $preAndNext && $preAndNext->pre && $linkCreator)
         {
-            if(!isset($preAndNext->pre->name)) $preAndNext->pre->name = '';
             $prevBtn  = array();
             $objectID = $preAndNext->pre->$idKey;
             $prevBtn['url']  = str_replace('{id}', "{$objectID}", $linkCreator);
             $prevBtn['hint'] = "#{$objectID} " . (isset($preAndNext->pre->title) ? $preAndNext->pre->title : $preAndNext->pre->name);
 
-            if($objectType == 'testcase' && strpos($prevBtn['url'], '{version}') !== false)
+            if($objectType == 'testcase')
             {
-                $version = !empty($preAndNext->pre->version) ? $preAndNext->pre->version : 0;
-                $prevBtn['url'] = str_replace('{version}', "{$version}", $prevBtn['url']);
+                if(strpos($prevBtn['url'], '{caseVersion}') !== false)
+                {
+                    $caseVersion = !empty($preAndNext->pre->caseVersion) ? $preAndNext->pre->caseVersion : 0;
+                    $prevBtn['url'] = str_replace('{caseVersion}', "{$caseVersion}", $prevBtn['url']);
+                }
+
+                if(strpos($prevBtn['url'], '{version}') !== false)
+                {
+                    $version = !empty($preAndNext->pre->version) ? $preAndNext->pre->version : 0;
+                    $prevBtn['url'] = str_replace('{version}', "{$version}", $prevBtn['url']);
+                }
             }
         }
         elseif(is_string($prevBtn))
@@ -620,16 +616,24 @@ CSS;
         }
         if($nextBtn === true && $preAndNext && $preAndNext->next && $linkCreator)
         {
-            if(!isset($preAndNext->next->name)) $preAndNext->next->name = '';
             $nextBtn  = array();
             $objectID = $preAndNext->next->$idKey;
             $nextBtn['url']  = str_replace('{id}', "{$objectID}", $linkCreator);
             $nextBtn['hint'] = "#{$objectID} " . (isset($preAndNext->next->title) ? $preAndNext->next->title : $preAndNext->next->name);
 
-            if($objectType == 'testcase' && strpos($nextBtn['url'], '{version}') !== false)
+            if($objectType == 'testcase')
             {
-                $version = !empty($preAndNext->next->version) ? $preAndNext->next->version : 0;
-                $nextBtn['url'] = str_replace('{version}', "{$version}", $nextBtn['url']);
+                if(strpos($nextBtn['url'], '{caseVersion}')!== false)
+                {
+                    $caseVersion = !empty($preAndNext->next->caseVersion) ? $preAndNext->next->caseVersion : 0;
+                    $nextBtn['url'] = str_replace('{caseVersion}', "{$caseVersion}", $nextBtn['url']);
+                }
+
+                if(strpos($nextBtn['url'], '{version}') !== false)
+                {
+                    $version = !empty($preAndNext->next->version) ? $preAndNext->next->version : 0;
+                    $nextBtn['url'] = str_replace('{version}', "{$version}", $nextBtn['url']);
+                }
             }
         }
         elseif(is_string($nextBtn))

@@ -21,16 +21,6 @@ window.refreshProvider = function(providerType)
         {
             $providerPicker.$.setValue(data.value);
         }
-        if(type == 'Subversion')
-        {
-            $('[name=mirror]').closest('.form-group').addClass('hidden');
-            $('#mirrorwritable').prop('checked', false);
-            $('#mirrorreadonly').prop('checked', true);
-        }
-        else
-        {
-            $('[name=mirror]').closest('.form-group').removeClass('hidden');
-        }
     });
 }
 
@@ -49,24 +39,6 @@ window.loadName = function()
 
     $nameInput.val(repoName);
 }
-
-window.setMembers = function()
-{
-    const $members = $('[name^=members]');
-    const checkAcl = $('[name=acl]:checked').val();
-    if(typeof $members == 'undefined' || $members.length == 0) return;
-
-    $members.zui('picker').$.clear();
-    if(checkAcl == 'private')
-    {
-        $members.closest('.form-group').removeClass('hidden');
-    }
-    else
-    {
-        $members.closest('.form-group').addClass('hidden');
-    }
-}
-window.waitDom('[name=acl]', setMembers);
 
 $(function()
 {

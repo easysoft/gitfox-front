@@ -22,7 +22,6 @@ su('admin');
 
 $metric = new metricTest();
 
-zenData('project')->gen(0);
 zenData('user')->loadYaml('user', true)->gen(30);
 zenData('product')->loadYaml('product', true)->gen(10);
 

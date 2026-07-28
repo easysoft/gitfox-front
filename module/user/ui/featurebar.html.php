@@ -13,7 +13,7 @@ featureBar
         (
             width('120px'),
             set::items($deptUsers),
-            set::value((string)$user->id),
+            set::value($user->id),
             set::required(true),
             set::onChange(jsRaw("(value) => switchAccount(value)"))
         )

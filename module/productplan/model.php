@@ -52,28 +52,6 @@ class productplanModel extends model
     }
 
     /**
-     * 获取产品计划邮件通知的收件人。
-     * Get toList and ccList.
-     *
-     * 与产品计划webhook通知人保持一致：创建人 + 产品负责人。
-     * @param  object $plan
-     * @access public
-     * @return bool|array
-     */
-    public function getToAndCcList(object $plan): bool|array
-    {
-        $toList = trim($plan->createdBy, ',');
-
-        $product = $this->loadModel('product')->fetchByID((int)$plan->product);
-        if($product) $toList .= ',' . $product->PO;
-
-        $toList = implode(',', array_unique(array_filter(explode(',', $toList))));
-        if(empty($toList)) return false;
-
-        return array($toList, '');
-    }
-
-    /**
      * 获取创建的最后一个计划。
      * Get last plan.
      *
@@ -167,7 +145,7 @@ class productplanModel extends model
             {
                 $storyPairs    = $this->story->getPairs(0, $plan->id, 'estimate', true);
                 $plan->stories = count($storyPairs);
-                $isParentPairs = $this->dao->select('id,`isParent`')->from(TABLE_STORY)->where('id')->in(array_keys($storyPairs))->fetchPairs('id');
+                $isParentPairs = $this->dao->select('id,isParent')->from(TABLE_STORY)->where('id')->in(array_keys($storyPairs))->fetchPairs('id');
                 foreach(array_keys($storyPairs) as $storyID)
                 {
                     if(isset($isParentPairs[$storyID]) && $isParentPairs[$storyID] == '1') unset($storyPairs[$storyID]);
@@ -928,7 +906,7 @@ class productplanModel extends model
             $this->story->updateStoryOrderOfPlan($storyID, (string)$planID, $oldPlanID);
 
             $this->action->create('story', $storyID, 'linked2plan', '', $planID);
-            $this->story->setStage($storyID, array('type' => 'linkPlan', 'objectID' => $planID));
+            $this->story->setStage($storyID);
 
             /* If the story was linked to another plan of type 'story', record the unlink action on the old plan. */
             if($oldPlanID !== '' && (int)$oldPlanID !== $planID)
@@ -963,8 +941,8 @@ class productplanModel extends model
         /* Delete the story in the sort of the plan. */
         $this->loadModel('story')->updateStoryOrderOfPlan($storyID, '', (string)$planID);
 
+        $this->story->setStage($storyID);
         $this->loadModel('action')->create('story', $storyID, 'unlinkedfromplan', '', $planID);
-        $this->story->setStage($storyID, array('type' => 'unlinkPlan', 'objectID' => $planID));
 
         return !dao::isError();
     }

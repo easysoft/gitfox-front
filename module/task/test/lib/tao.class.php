@@ -99,20 +99,9 @@ class taskTaoTest extends baseTest
         $task = $this->instance->getByID($taskID);
 
         $installing = $this->instance->app->installing;
-        $edition    = $this->instance->config->edition;
         $this->instance->app->installing = true;
-        $this->instance->config->edition = 'open';
         $result = $this->invokeArgs('buildTaskForEffort', [$record, $task, $lastDate, $isFinishTask]);
         $this->instance->app->installing = $installing;
-        $this->instance->config->edition = $edition;
-
-        if(isset($result[0]))
-        {
-            $newTask = $result[0];
-            if(!isset($newTask->subStatus)) $newTask->subStatus = '';
-            if(isset($newTask->estimate)) $newTask->estimate = sprintf('%.2f', (float)$newTask->estimate);
-            if(isset($newTask->left) && !is_int($newTask->left)) $newTask->left = sprintf('%.2f', (float)$newTask->left);
-        }
 
         return $result;
     }
@@ -587,7 +576,7 @@ class taskTaoTest extends baseTest
      * @access public
      * @return array
      */
-    public function updateTeamByEffortTest(int $effortID, object $record, int $taskID, mixed $task = null, string $lastDate): array
+    public function updateTeamByEffortTest(int $effortID, object $record, int $taskID, mix $task = null, string $lastDate): array
     {
         $task        = $this->instance->getByID($taskID);
         $currentTeam = $this->instance->getTeamByAccount($task->team);

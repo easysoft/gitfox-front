@@ -348,7 +348,6 @@ $lang->doc->zentaoData      = 'Zentao Data';
 $lang->doc->emptyError      = 'Cannot be empty.';
 $lang->doc->caselib         = 'Test Case Library';
 $lang->doc->customSearch    = 'Custom Search';
-$lang->doc->versionRelation = 'Version Relation Details';
 
 $lang->doc->addChapter     = 'Add chapter';
 $lang->doc->editChapter    = 'Edit chapter';

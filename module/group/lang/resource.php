@@ -72,7 +72,6 @@ $lang->moduleOrder[190] = 'file';
 $lang->moduleOrder[195] = 'misc';
 $lang->moduleOrder[200] = 'backup';
 $lang->moduleOrder[205] = 'cron';
-$lang->moduleOrder[206] = 'errorlog';
 $lang->moduleOrder[210] = 'dev';
 $lang->moduleOrder[215] = 'editor';
 $lang->moduleOrder[220] = 'message';
@@ -1467,6 +1466,7 @@ $lang->resource->repo->linkStory    = 'linkStory';
 $lang->resource->repo->linkBug      = 'linkBug';
 $lang->resource->repo->linkTask     = 'linkTask';
 $lang->resource->repo->unlink       = 'unlink';
+$lang->resource->repo->import       = 'importAction';
 $lang->resource->repo->createRepo   = 'createRepoAction';
 $lang->resource->repo->browseTag    = 'browseTag';
 $lang->resource->repo->browseBranch = 'browseBranch';
@@ -1573,7 +1573,6 @@ $lang->resource->pipeline->browse    = 'browse';
 $lang->resource->pipeline->execution = 'executionAction';
 $lang->resource->pipeline->create    = 'create';
 $lang->resource->pipeline->edit      = 'edit';
-$lang->resource->pipeline->arrange   = 'arrange';
 $lang->resource->pipeline->delete    = 'delete';
 $lang->resource->pipeline->exec      = 'exec';
 $lang->resource->pipeline->execView  = 'execViewAction';
@@ -1642,20 +1641,9 @@ $lang->resource->codescan->resend         = 'resend';
 $lang->resource->codescan->overview     = 'overview';
 $lang->resource->codescan->issue        = 'issue';
 $lang->resource->codescan->issueView    = 'issueView';
-
-$lang->resource->runner = new stdclass();
-$lang->resource->runner->browse      = 'browse';
-$lang->resource->runner->create      = 'create';
-$lang->resource->runner->changeState = 'changeState';
-$lang->resource->runner->edit        = 'edit';
-$lang->resource->runner->delete      = 'delete';
-
-$lang->runner->methodOrder[5]  = 'browse';
-$lang->runner->methodOrder[10] = 'create';
-$lang->runner->methodOrder[15] = 'changeState';
-$lang->runner->methodOrder[20] = 'edit';
-$lang->runner->methodOrder[25] = 'delete';
-
+$lang->resource->codescan->ignoreIssue  = 'ignoreIssue';
+$lang->resource->codescan->confirmIssue = 'confirmIssue';
+$lang->resource->codescan->activeIssue  = 'activeIssue';
 /* Doc. */
 $lang->resource->doc = new stdclass();
 $lang->resource->doc->index                = 'index';
@@ -2015,8 +2003,6 @@ $lang->resource->admin->sso             = 'ssoAction';
 $lang->resource->admin->register        = 'register';
 $lang->resource->admin->resetPWDSetting = 'resetPWDSetting';
 $lang->resource->admin->tableEngine     = 'tableEngine';
-$lang->resource->admin->charset         = 'charset';
-$lang->resource->admin->dbview          = 'dbView';
 
 $lang->admin->methodOrder[0]  = 'index';
 $lang->admin->methodOrder[10] = 'safeIndex';
@@ -2025,16 +2011,6 @@ $lang->admin->methodOrder[20] = 'sso';
 $lang->admin->methodOrder[25] = 'register';
 $lang->admin->methodOrder[35] = 'resetPWDSetting';
 $lang->admin->methodOrder[40] = 'tableEngine';
-$lang->admin->methodOrder[45] = 'charset';
-$lang->admin->methodOrder[50] = 'dbview';
-
-/* Errorlog. */
-$lang->resource->errorlog = new stdclass();
-$lang->resource->errorlog->browse      = 'browseAbbr';
-$lang->resource->errorlog->view        = 'viewAbbr';
-$lang->resource->errorlog->delete      = 'delete';
-$lang->resource->errorlog->batchDelete = 'batchDelete';
-$lang->resource->errorlog->setting     = 'setting';
 
 /* Cache. */
 $lang->resource->cache = new stdclass();

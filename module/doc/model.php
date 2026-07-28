@@ -589,14 +589,14 @@ class docModel extends model
 
         $query     = $this->getDocQuery($this->session->contributeDocQuery);
         $query     = preg_replace('/(`\w+`)/', 't1.$1', $query);
-        $docIDList = $this->dao->select('`objectID`')->from(TABLE_ACTION)
+        $docIDList = $this->dao->select('objectID')->from(TABLE_ACTION)
             ->where('objectType')->eq('doc')
             ->andWhere('objectID')->in($hasPrivDocIdList)
             ->andWhere('actor')->eq($this->app->user->account)
             ->andWhere('action')->eq('edited')
             ->fetchAll('objectID');
 
-        return $this->dao->select('t1.*, t2.name as libName, t2.type as `objectType`')->from(TABLE_DOC)->alias('t1')
+        return $this->dao->select('t1.*, t2.name as libName, t2.type as objectType')->from(TABLE_DOC)->alias('t1')
             ->leftJoin(TABLE_DOCLIB)->alias('t2')->on("t1.lib=t2.id")
             ->where('t1.deleted')->eq(0)
             ->andWhere($query)
@@ -747,7 +747,7 @@ class docModel extends model
             ->andWhere('vision')->eq($this->config->vision)
             ->andWhere('templateType')->eq('')
             ->andWhere('id')->in($docIdList)
-            ->beginIF($browseType == 'all')->andWhere("(status = 'normal' or (status = 'draft' and `addedBy`='{$this->app->user->account}'))")->fi()
+            ->beginIF($browseType == 'all')->andWhere("(status = 'normal' or (status = 'draft' and addedBy='{$this->app->user->account}'))")->fi()
             ->beginIF($browseType == 'draft')->andWhere('status')->eq('draft')->andWhere('addedBy')->eq($this->app->user->account)->fi()
             ->orderBy($orderBy)
             ->page($pager)
@@ -1214,7 +1214,7 @@ class docModel extends model
                 ->groupBy('doc')
                 ->get();
 
-            $dao = $this->dao->select('t1.*,t2.date,t3.name as libName,t3.type as `objectType`')->from(TABLE_DOC)->alias('t1')
+            $dao = $this->dao->select('t1.*,t2.date,t3.name as libName,t3.type as objectType')->from(TABLE_DOC)->alias('t1')
                 ->leftJoin(TABLE_DOCACTION)->alias('t2')->on("t1.id=t2.doc")
                 ->leftJoin(TABLE_DOCLIB)->alias('t3')->on("t1.lib=t3.id")
                 ->where('t1.deleted')->eq(0)
@@ -1232,7 +1232,7 @@ class docModel extends model
         }
         else
         {
-            $dao = $this->dao->select('t1.*,t2.name as libName,t2.type as `objectType`')->from(TABLE_DOC)->alias('t1')->leftJoin(TABLE_DOCLIB)->alias('t2')->on("t1.lib=t2.id")
+            $dao = $this->dao->select('t1.*,t2.name as libName,t2.type as objectType')->from(TABLE_DOC)->alias('t1')->leftJoin(TABLE_DOCLIB)->alias('t2')->on("t1.lib=t2.id")
                 ->where('t1.deleted')->eq(0)
                 ->andWhere('t1.lib')->ne(0)
                 ->andWhere('t1.`templateType`')->eq('')
@@ -1355,100 +1355,6 @@ class docModel extends model
     }
 
     /**
-     * Get deliverable and baseline markers for document versions.
-     *
-     * @param  int    $docID
-     * @access public
-     * @return array
-     */
-    public function getVersionMarkers(int $docID): array
-    {
-        if(!in_array($this->config->edition, array('max', 'ipd')) || !$docID) return array();
-
-        $markers = array();
-        $versionList = $this->dao->select('t1.`docVersion`, t1.`submittedBy`, t2.`isBaseline`')
-            ->from(TABLE_PROJECTDELIVERABLE)->alias('t1')
-            ->leftJoin(TABLE_REVIEW)->alias('t2')->on('t1.review = t2.id')
-            ->where('t1.doc')->eq($docID)
-            ->fetchAll();
-
-        foreach($versionList as $version)
-        {
-            if(empty($version->docVersion)) continue;
-            if(!isset($markers[$version->docVersion])) $markers[$version->docVersion] = array();
-            if(!empty($version->submittedBy)) $markers[$version->docVersion]['deliverable'] = true;
-            if($version->isBaseline) $markers[$version->docVersion]['baseline'] = true;
-        }
-
-        return $markers;
-    }
-
-    /**
-     * Get deliverable and baseline relations of a document version.
-     *
-     * @param  int    $docID
-     * @param  int    $version
-     * @access public
-     * @return array
-     */
-    public function getVersionRelations(int $docID, int $version): array
-    {
-        if(!in_array($this->config->edition, array('max', 'ipd')) || !$docID || !$version) return array();
-
-        $deliverables = $this->dao->select('t1.id, t1.project, t1.review, t1.version AS `deliverableVersion`, t2.name AS `deliverableType`, t3.version AS `reviewVersion`, t3.`isBaseline`')
-            ->from(TABLE_PROJECTDELIVERABLE)->alias('t1')
-            ->leftJoin(TABLE_DELIVERABLE)->alias('t2')->on('t1.deliverable = t2.id')
-            ->leftJoin(TABLE_REVIEW)->alias('t3')->on('t1.review = t3.id')
-            ->where('t1.doc')->eq($docID)
-            ->andWhere('t1.`docVersion`')->eq($version)
-            ->andWhere('(t1.`submittedBy`')->ne('')->orWhere('t3.`isBaseline`')->eq(1)->markRight()
-            ->andWhere('t2.deleted')->eq(0)
-            ->fetchAll('id');
-        if(!$deliverables) return array();
-
-        $projectIdList = array_unique(array_column($deliverables, 'project'));
-        $baselines = $this->dao->select('id, project, title, version, `categoryVersion`')
-            ->from(TABLE_OBJECT)
-            ->where('project')->in($projectIdList)
-            ->andWhere('type')->eq('taged')
-            ->andWhere('status')->eq('pass')
-            ->andWhere('deleted')->eq(0)
-            ->fetchAll();
-
-        $relations = array();
-        foreach($deliverables as $deliverable)
-        {
-            $relation = new stdclass();
-            $relation->deliverableID      = $deliverable->id;
-            $relation->reviewID           = $deliverable->review;
-            $relation->deliverableType    = $deliverable->deliverableType;
-            $relation->deliverableVersion = $deliverable->reviewVersion ?: $deliverable->deliverableVersion;
-            $relation->baselineID         = 0;
-            $relation->baseline           = '';
-            $relation->baselineVersion    = '';
-
-            $hasBaseline = false;
-            foreach($baselines as $baseline)
-            {
-                if($baseline->project != $deliverable->project) continue;
-                $categoryVersion = json_decode($baseline->categoryVersion, true);
-                if(!isset($categoryVersion[$deliverable->id]) || $categoryVersion[$deliverable->id] != $deliverable->review) continue;
-
-                $baselineRelation = clone $relation;
-                $baselineRelation->baselineID      = $baseline->id;
-                $baselineRelation->baseline        = $baseline->title;
-                $baselineRelation->baselineVersion = $baseline->version;
-                $relations[] = $baselineRelation;
-                $hasBaseline = true;
-            }
-
-            if(!$hasBaseline) $relations[] = $relation;
-        }
-
-        return $relations;
-    }
-
-    /**
      * 处理文档数据。
      * Process doc data.
      *
@@ -1460,7 +1366,7 @@ class docModel extends model
     public function processDoc(object $doc, int $version, bool $setImgSize = false): object
     {
         /* When file change then version add one. */
-        $files      = $this->loadModel('file')->getByObject('doc', $doc->id, '', !empty($doc->deleted));
+        $files      = $this->loadModel('file')->getByObject('doc', $doc->id);
         $docFiles   = array();
         $docContent = $this->getContent($doc->id, $version);
         if($docContent)
@@ -1527,7 +1433,7 @@ class docModel extends model
      */
     public function getByIdList(array $docIdList = array()): array
     {
-        return $this->dao->select('*,t1.id as docID,t1.type as docType,t1.version as `docVersion`,t2.type as `contentType`')->from(TABLE_DOC)->alias('t1')
+        return $this->dao->select('*,t1.id as docID,t1.type as docType,t1.version as docVersion,t2.type as contentType')->from(TABLE_DOC)->alias('t1')
             ->leftJoin(TABLE_DOCCONTENT)->alias('t2')->on('t1.id=t2.doc and t1.version=t2.version')
             ->where('t1.id')->in($docIdList)
             ->andWhere('deleted')->eq(0)
@@ -2027,21 +1933,8 @@ class docModel extends model
             $docContent->files       = (!empty($docData->files) && is_string($docData->files)) ? (',' . $docData->files) : implode(',', $files);
             $docContent->fromVersion = isset($docData->fromVersion) ? $docData->fromVersion : max(0, ($version - 1));
 
-            /* 目标版本已存在（如上次编辑校验失败残留），更新该版本而不是重复插入，避免唯一索引冲突。 */
-            /* If the target version already exists, update it instead of inserting to avoid unique index conflicts. */
-            $existedContent = $this->getContent($docID, $version);
-            if($existedContent)
-            {
-                $docContent->id    = $existedContent->id;
-                $mergedFiles       = array_unique(array_filter(explode(',', trim((string)$existedContent->files, ',') . ',' . trim((string)$docContent->files, ','))));
-                $docContent->files = implode(',', $mergedFiles);
-                $this->dao->update(TABLE_DOCCONTENT)->data($docContent)->where('id')->eq($docContent->id)->exec();
-            }
-            else
-            {
-                $this->dao->insert(TABLE_DOCCONTENT)->data($docContent)->exec();
-                $docContent->id    = $this->dao->lastInsertID();
-            }
+            $this->dao->insert(TABLE_DOCCONTENT)->data($docContent)->exec();
+            $docContent->id          = $this->dao->lastInsertID();
         }
         /* 如果有草稿内容，则直接将草稿内容作为新的版本内容。 */
         /* If current doc has draft data,update the draft data as new version. */
@@ -2080,22 +1973,7 @@ class docModel extends model
         $deletedFiles = !empty($doc->deleteFiles) ? explode(',', $doc->deleteFiles) : array();
         unset($doc->deleteFiles);
 
-        $oldDoc = $this->getByID($docID);
-        if(!empty($doc->renameFiles))
-        {
-            foreach($doc->renameFiles as $fileID => $fileName)
-            {
-                if(!isset($oldDoc->files[$fileID])) continue;
-                if(!validater::checkLength($fileName, 80, 1)) continue;
-                $this->dao->update(TABLE_FILE)->set('title')->eq($fileName)
-                    ->where('id')->eq((int)$fileID)
-                    ->andWhere('objectType')->eq('doc')
-                    ->andWhere('objectID')->eq($docID)
-                    ->exec();
-            }
-        }
-        unset($doc->renameFiles);
-
+        $oldDoc           = $this->getByID($docID);
         $changes          = common::createChanges($oldDoc, $doc);
         $oldRawContent    = isset($oldDoc->rawContent) ? $oldDoc->rawContent : '';
         $newRawContent    = isset($doc->rawContent) ? $doc->rawContent : '';
@@ -2139,7 +2017,7 @@ class docModel extends model
         }
 
         unset($doc->files);
-        $this->dao->update(TABLE_DOC)->data($doc, 'content,contentType,rawContent,fromVersion,deleteFiles,renameFiles')
+        $this->dao->update(TABLE_DOC)->data($doc, 'content,contentType,rawContent,fromVersion,deleteFiles')
             ->autoCheck()
             ->batchCheck($requiredFields, 'notempty')
             ->where('id')->eq($docID)
@@ -2396,7 +2274,7 @@ class docModel extends model
     public function batchCheckPrivDoc(array $docs): array
     {
         $libIdList = array_column($docs, 'lib');
-        $libs      = $this->dao->select('id,type,product,project,execution,`addedBy`,acl,users,`groups`')->from(TABLE_DOCLIB)->where('id')->in($libIdList)->fetchAll('id');
+        $libs      = $this->dao->select('id,type,product,project,execution,addedBy,acl,users,`groups`')->from(TABLE_DOCLIB)->where('id')->in($libIdList)->fetchAll('id');
 
         $hasPrivDocs = array();
         foreach($docs as $doc)
@@ -2582,7 +2460,6 @@ class docModel extends model
 
             foreach($executionLibs as $executionID => &$libList)
             {
-                if(!isset($executionPairs[$executionID])) continue;
                 foreach($libList as &$lib)
                 {
                     $lib->originName    = $lib->name;
@@ -2739,10 +2616,7 @@ class docModel extends model
             ->fetchAll('id', false);
         foreach($objects as $objectID => $object)
         {
-            /* 移除自身ID得到父级path，取顶级项目集作为父级。Remove self from path to get the top program. */
-            $objectParentPath = str_replace(",{$objectID},", ',', ',' . trim($object->path, ',') . ',');
-            $object->parent   = $this->program->getTopByPath($objectParentPath);
-
+            $object->parent             = $this->program->getTopByID($object->parent);
             $orderedProjects[$objectID] = $object;
             unset($objects[$object->id]);
         }
@@ -2837,52 +2711,32 @@ class docModel extends model
 
         list($bugIdList, $testReportIdList, $caseIdList, $docIdList, $storyIdList, $epicIdList, $requirementIdList, $planIdList, $releaseIdList, $issueIdList, $meetingIdList, $reviewIdList, $designIdList, $executionIdList, $taskIdList, $buildIdList, $testtaskIdList, $resultIdList) = $this->getLinkedObjectData($type, $objectID);
 
-        /* 获取文档当前版本中的附件，只展示未删除文档的当前附件。Get files of the current version of docs. */
-        $docFileIdList = 0;
-        if($docIdList)
-        {
-            $docContentList = $this->dao->select('t1.doc, t1.files')->from(TABLE_DOCCONTENT)->alias('t1')
-                ->leftJoin(TABLE_DOC)->alias('t2')->on('t1.doc = t2.id and t1.version = t2.version')
-                ->where("t2.id in($docIdList)")
-                ->fetchPairs('doc', 'files');
-
-            $docFileIdList = array();
-            foreach($docContentList as $docFiles)
-            {
-                foreach(explode(',', trim((string)$docFiles, ',')) as $fileID)
-                {
-                    if($fileID !== '') $docFileIdList[$fileID] = $fileID;
-                }
-            }
-            $docFileIdList = empty($docFileIdList) ? 0 : implode(',', $docFileIdList);
-        }
-
         $files = $this->dao->select('*')->from(TABLE_FILE)
             ->where('size')->gt('0')
             ->andWhere('deleted')->eq('0')
-            ->andWhere("(`objectType` = '$type' and `objectID` = $objectID)", true)
-            ->beginIF($docFileIdList)->orWhere("(`objectType` = 'doc' and `id` in ($docFileIdList))")->fi()
-            ->orWhere("(`objectType` = 'bug' and `objectID` in ($bugIdList))")
-            ->orWhere("(`objectType` = 'testreport' and `objectID` in ($testReportIdList))")
-            ->orWhere("(`objectType` = 'testcase' and `objectID` in ($caseIdList))")
+            ->andWhere("(objectType = '$type' and objectID = $objectID)", true)
+            ->beginIF($docIdList)->orWhere("(objectType = 'doc' and objectID in ($docIdList))")->fi()
+            ->orWhere("(objectType = 'bug' and objectID in ($bugIdList))")
+            ->orWhere("(objectType = 'testreport' and objectID in ($testReportIdList))")
+            ->orWhere("(objectType = 'testcase' and objectID in ($caseIdList))")
             ->beginIF($type == 'product')
-            ->orWhere("(`objectType` in ('story', 'requirement', 'epic') and `objectID` in ($storyIdList))")
-            ->orWhere("(`objectType` = 'release' and `objectID` in ($releaseIdList))")
-            ->orWhere("(`objectType` = 'productplan' and `objectID` in ($planIdList))")
-            ->orWhere("(`objectType` = 'stepResult' and `objectID` in ($resultIdList))")
+            ->orWhere("(objectType in ('story', 'requirement', 'epic') and objectID in ($storyIdList))")
+            ->orWhere("(objectType = 'release' and objectID in ($releaseIdList))")
+            ->orWhere("(objectType = 'productplan' and objectID in ($planIdList))")
+            ->orWhere("(objectType = 'stepResult' and objectID in ($resultIdList))")
             ->fi()
             ->beginIF($type == 'project')
-            ->orWhere("(`objectType` = 'execution' and `objectID` in ($executionIdList))")
-            ->orWhere("(`objectType` = 'issue' and `objectID` in ($issueIdList))")
-            ->orWhere("(`objectType` = 'review' and `objectID` in ($reviewIdList))")
-            ->orWhere("(`objectType` = 'meeting' and `objectID` in ($meetingIdList))")
-            ->orWhere("(`objectType` = 'design' and `objectID` in ($designIdList))")
+            ->orWhere("(objectType = 'execution' and objectID in ($executionIdList))")
+            ->orWhere("(objectType = 'issue' and objectID in ($issueIdList))")
+            ->orWhere("(objectType = 'review' and objectID in ($reviewIdList))")
+            ->orWhere("(objectType = 'meeting' and objectID in ($meetingIdList))")
+            ->orWhere("(objectType = 'design' and objectID in ($designIdList))")
             ->fi()
             ->beginIF($type == 'project' || $type == 'execution')
-            ->orWhere("(`objectType` = 'task' and `objectID` in ($taskIdList))")
-            ->orWhere("(`objectType` = 'build' and `objectID` in ($buildIdList))")
-            ->orWhere("(`objectType` = 'testtask' and `objectID` in ($testtaskIdList))")
-            ->beginIF($storyIdList)->orWhere("(`objectType` = 'story' and `objectID` in ($storyIdList))")->fi()
+            ->orWhere("(objectType = 'task' and objectID in ($taskIdList))")
+            ->orWhere("(objectType = 'build' and objectID in ($buildIdList))")
+            ->orWhere("(objectType = 'testtask' and objectID in ($testtaskIdList))")
+            ->beginIF($storyIdList)->orWhere("(objectType = 'story' and objectID in ($storyIdList))")->fi()
             ->fi()
             ->markRight(1)
             ->beginIF($browseType == 'bysearch')->andWhere("($docFileQuery)")->fi()
@@ -2939,11 +2793,10 @@ class docModel extends model
         $casePairs = $this->dao->select('`case`')->from(TABLE_PROJECTCASE)->where($field)->eq($objectID)->beginIF(!$this->app->user->admin)->andWhere($field)->in($userView)->fi()->fetchPairs('case');
         if(!empty($casePairs)) $caseIdList = implode(',', $casePairs);
 
-        /* 已删除文档的附件不同步显示，文档恢复后自动显示。 Files of deleted docs are hidden, and shown again after the doc is restored. */
-        $docs = $this->dao->select('*')->from(TABLE_DOC)->where($type)->eq($objectID)->andWhere('deleted')->eq('0')->fetchAll('id', false);
+        $docs = $this->dao->select('*')->from(TABLE_DOC)->where($type)->eq($objectID)->fetchAll('id', false);
         $docs = $this->batchCheckPrivDoc($docs);
 
-        $docIdList = empty($docs) ? 0 : $this->dao->select('id')->from(TABLE_DOC)->where($type)->eq($objectID)->andWhere('vision')->eq($this->config->vision)->andWhere('deleted')->eq('0')->andWhere('id')->in(array_keys($docs))->get();
+        $docIdList = empty($docs) ? 0 : $this->dao->select('id')->from(TABLE_DOC)->where($type)->eq($objectID)->andWhere('vision')->eq($this->config->vision)->andWhere('id')->in(array_keys($docs))->get();
 
         if($type == 'product')
         {
@@ -3501,7 +3354,7 @@ class docModel extends model
             ->andWhere('vision')->eq($this->config->vision)
             ->beginIF($this->config->doc->notArticleType)->andWhere('type')->notIN($this->config->doc->notArticleType)->fi()
             ->beginIF(!empty($docIdList))->andWhere('id')->in($docIdList)->fi()
-            ->andWhere("(status = 'normal' or (status = 'draft' and `addedBy`='{$this->app->user->account}'))")
+            ->andWhere("(status = 'normal' or (status = 'draft' and addedBy='{$this->app->user->account}'))")
             ->orderBy($orderBy)
             ->page($pager)
             ->fetchAll('id', false);
@@ -3765,7 +3618,7 @@ class docModel extends model
             $docIDList = $this->getPrivDocs(array($lib->id));
             $docs      = $this->dao->select('*, title as name')->from(TABLE_DOC)
                 ->where('id')->in($docIDList)
-                ->andWhere("(status = 'normal' or (status = 'draft' && `addedBy`='{$this->app->user->account}'))")
+                ->andWhere("(status = 'normal' or (status = 'draft' && addedBy='{$this->app->user->account}'))")
                 ->andWhere('deleted')->eq(0)
                 ->andWhere('module')->eq(0)
                 ->fetchAll('id', false);
@@ -3993,7 +3846,7 @@ class docModel extends model
         $now     = time();
         $account = $this->app->user->account;
         $docID   = (int)$docID;
-        $doc     = $this->dao->select('id,`editingDate`')->from(TABLE_DOC)->where('id')->eq($docID)->fetch();
+        $doc     = $this->dao->select('id,editingDate')->from(TABLE_DOC)->where('id')->eq($docID)->fetch();
         if(empty($doc)) return false;
 
         $editingDate  = $doc->editingDate ? json_decode($doc->editingDate, true) : array();
@@ -4030,13 +3883,13 @@ class docModel extends model
 
         $actions = $this->dao->select('*')->from(TABLE_ACTION)
             ->where('vision')->eq($this->config->vision)
-            ->andWhere('((`objectType`')->eq('doclib')
+            ->andWhere('((objectType')->eq('doclib')
             ->andWhere('objectID')->in(array_keys($allLibs))
             ->markRight(1)
-            ->orWhere('(`objectType`')->eq('doc')
+            ->orWhere('(objectType')->eq('doc')
             ->andWhere('objectID')->in($hasPrivDocIdList)
             ->markRight(1)
-            ->orWhere('(`objectType`')->eq('api')
+            ->orWhere('(objectType')->eq('api')
             ->andWhere('objectID')->in(array_keys($apiList))
             ->markRight(2)
             ->beginIF($actionCondition)->andWhere("($actionCondition)")->fi()
@@ -4275,7 +4128,7 @@ class docModel extends model
             ->where('t2.id')->eq($docID)
             ->fetch();
 
-        unset($docContent->id, $docContent->editedDate, $docContent->editedBy);
+        unset($docContent->id);
         $docContent->files    = trim(str_replace(",{$fileID},", ',', ",{$docContent->files},"), ',');
         $docContent->version += 1;
         $this->dao->insert(TABLE_DOCCONTENT)->data($docContent)->exec();
@@ -4283,40 +4136,6 @@ class docModel extends model
 
         $this->dao->update(TABLE_DOC)->set('version')->eq($docContent->version)->where('id')->eq($docID)->exec();
         return !dao::isError();
-    }
-
-    /**
-     * 重命名文档附件。
-     * Rename doc file.
-     *
-     * @param  int    $docID
-     * @param  int    $fileID
-     * @param  string $fileName
-     * @param  string $extension
-     * @access public
-     * @return array
-     */
-    public function renameFile(int $docID, int $fileID, string $fileName, string $extension = ''): array
-    {
-        $file = $this->dao->select('*')->from(TABLE_FILE)
-            ->where('id')->eq($fileID)
-            ->andWhere('objectType')->eq('doc')
-            ->andWhere('objectID')->eq($docID)
-            ->fetch();
-        if(!$file) return array('result' => 'fail', 'message' => $this->lang->file->fileNotFound);
-        if(!validater::checkLength($fileName, 80, 1)) return array('result' => 'fail', 'message' => sprintf($this->lang->error->length[1], $this->lang->file->title, 80, 1));
-
-        $this->dao->update(TABLE_FILE)
-            ->set('title')->eq($fileName)
-            ->beginIF($extension)->set('extension')->eq($extension)->fi()
-            ->where('id')->eq($fileID)
-            ->exec();
-        if(dao::isError()) return array('result' => 'fail', 'message' => dao::getError());
-
-        $actionID = $this->loadModel('action')->create('doc', $docID, 'editfile', '', $fileName);
-        $changes  = array(array('field' => 'fileName', 'old' => $file->title, 'new' => $fileName, 'diff' => ''));
-        $this->action->logHistory($actionID, $changes);
-        return array('result' => 'success');
     }
 
     /**
@@ -4944,13 +4763,13 @@ class docModel extends model
     {
         if(!defined('CONFLUENCE_TMPRELATION')) define('CONFLUENCE_TMPRELATION', '`confluencetmprelation`');
 
-        $docID     = $this->dao->dbh($this->dbh)->select('`BID`')->from(CONFLUENCE_TMPRELATION)->where('BType')->eq('zdoc')->andWhere('AID')->eq($originPageID)->fetch('BID');
+        $docID     = $this->dao->dbh($this->dbh)->select('BID')->from(CONFLUENCE_TMPRELATION)->where('BType')->eq('zdoc')->andWhere('AID')->eq($originPageID)->fetch('BID');
         $doc       = $this->getByID((int)$docID);
         $docIdList = $this->dao->select('id')->from(TABLE_DOC)->where('lib')->eq($doc->lib)->andWhere('title')->eq($title)->andWhere('status')->eq('normal')->andWhere('deleted')->eq(0)->fetchAll();
 
         $idList = array();
         foreach($docIdList as $item) $idList[] = $item->id;
-        $parentID = $this->dao->dbh($this->dbh)->select('`BID`')->from(CONFLUENCE_TMPRELATION)->where('BType')->eq('zdoc')->andWhere('BID')->in($idList)->fetch('BID');
+        $parentID = $this->dao->dbh($this->dbh)->select('BID')->from(CONFLUENCE_TMPRELATION)->where('BType')->eq('zdoc')->andWhere('BID')->in($idList)->fetch('BID');
         return $parentID ? (int)$parentID : 0;
     }
 

@@ -26,7 +26,7 @@ class storyActiveEntry extends entry
         $fields = 'assignedTo,status,comment';
         $this->batchSetPost($fields);
 
-        $control->activate((int)$storyID);
+        $control->activate($storyID);
 
         $data = $this->getData();
         if(!$data || !isset($data->result)) return $this->send400('error');

@@ -12,25 +12,25 @@ cid=18083
 
 - 处理push事件的webhook
  - 属性status @doing
- - 属性consumed @10.00
- - 属性left @7.00
-- 处理Merge Request Hook事件的webhook @1
-- 处理branch_updated事件的webhook @1
-- 处理branch_created事件的webhook @1
+ - 属性consumed @11
+ - 属性left @3
+- 处理merge request事件的webhook
+ - 属性status @doing
+ - 属性consumed @12
+ - 属性left @3
 - 处理不支持的事件webhook @0
 
 */
 
-zenData('task')->loadYaml('task', false, 2)->gen(1, true, false);
-zenData('effort')->gen(0);
-zenData('ops_repo')->gen(1, true, false);
+zenData('task')->gen(10);
+$bug = zenData('bug');
+$bug->execution->range('0');
+$bug->gen(10);
 
 $repoID = 1;
 $event  = 'Push Hook';
 $event2 = 'Merge Request Hook';
-$event3 = 'branch_updated';
-$event4 = 'branch_created';
-$event5 = 'Else Hook';
+$event3 = 'Else Hook';
 $data   = '{
   "object_kind": "push",
   "event_name": "push",
@@ -66,8 +66,8 @@ $data   = '{
   "commits": [
     {
       "id": "ae774776f37ae02ad04fc54a252fc1f1be1eef4a",
-      "message": "Effort Task #8 Cost:0h Left:7h",
-      "title": "Effort Task #8 Cost:0h Left:7h",
+      "message": "Effort Task #8 Cost:1h Left:3h",
+      "title": "Effort Task #8 Cost:1h Left:3h",
       "timestamp": "2023-09-20T15:51:53+08:00",
       "url": "http://10.0.7.242:9980/BJ/zentao-casescripts/-/commit/8c69a6c51d04ad80cd18b4845dc147b32bcf20c7",
       "author": {
@@ -140,8 +140,12 @@ $data   = '{
 }';
 
 $repo = new repoModelTest();
-r($repo->handleWebhookTaskTest($event, json_decode($data), $repoID, 8)) && p('status,consumed,left') && e('doing,10.00,7.00'); // 处理push事件的webhook
-r($repo->handleWebhookTest($event2, json_decode($data), $repoID)) && p() && e('1'); // 处理Merge Request Hook事件的webhook
-r($repo->handleWebhookTest($event3, json_decode($data), $repoID)) && p() && e('1'); // 处理branch_updated事件的webhook
-r($repo->handleWebhookTest($event4, json_decode($data), $repoID)) && p() && e('1'); // 处理branch_created事件的webhook
-r($repo->handleWebhookTest($event5, json_decode($data), $repoID)) && p() && e('0'); // 处理不支持的事件webhook
+$repo->handleWebhookTest($event, json_decode($data), $repoID);
+$result = $tester->loadModel('task')->getById(8);
+r($result) && p('status,consumed,left') && e('doing,11.00,3.00'); //处理push事件的webhook
+
+$repo->handleWebhookTest($event2, json_decode($data), $repoID);
+$result = $tester->loadModel('task')->getById(8);
+r($result) && p('status,consumed,left') && e('doing,12.00,3.00'); //处理merge request事件的webhook
+
+r($repo->handleWebhookTest($event3, json_decode($data), $repoID)) && p() && e('0'); //处理不支持的事件webhook

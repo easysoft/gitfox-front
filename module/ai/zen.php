@@ -14,10 +14,10 @@ class aiZen extends ai
      * Get post data from form post or JSON request body.
      *
      * @param  string $error
-     * @access public
+     * @access protected
      * @return mixed
      */
-    public function getPostData(&$error = '')
+    protected function getPostData(&$error = '')
     {
         if(!empty($_POST)) return fixer::input('post')->get();
 

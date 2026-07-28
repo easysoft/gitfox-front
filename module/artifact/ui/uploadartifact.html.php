@@ -22,6 +22,7 @@ formPanel
             set::multiple(false),
             set::renameBtn(false),
             set::removeBtn(false),
+            set::maxFileSize('2G'),
             set::maxFileCount(1)
         )
     )

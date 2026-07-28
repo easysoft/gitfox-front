@@ -74,7 +74,7 @@ class taskBatchCreateEntry extends entry
         $this->setPost('pri',        $pri);
         $this->setPost('story',      $stories);
 
-        $control->batchCreate((int)$executionID, (int)$storyID, (int)$moduleID, (int)$taskID);
+        $control->batchCreate($executionID, $storyID, $moduleID, $taskID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

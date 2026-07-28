@@ -55,7 +55,6 @@ panel
         set::checkable(false),
         set::cols($cols),
         set::data($data),
-        set::onRenderCell(jsRaw('window.renderCell')),
         set::sortLink(createLink('webhook', 'log', "id={$webhook->id}&orderBy={name}_{sortType}&recTotal={$pager->recTotal}&recPerPage={$pager->recPerPage}&pageID={$pager->pageID}")),
         set::orderBy($orderBy),
         set::footPager(usePager())

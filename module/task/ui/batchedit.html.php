@@ -71,7 +71,6 @@ formBatchPanel
     set::onRenderRow(jsRaw('renderRowData')),
     set::customFields(array('list' => $customFields, 'show' => explode(',', $showFields), 'key' => 'batchEditFields')),
     set::ajax(array('beforeSubmit' =>  jsRaw('clickSubmit'))),
-    on::change('[data-name="type"]', 'changeType'),
     on::change('[data-name="status"]', 'statusChange'),
     on::change('[data-name="estStarted"], [data-name="deadline"]', 'checkBatchEstStartedAndDeadline'),
     on::change('[data-name="module"]', 'setStories'),
@@ -80,7 +79,6 @@ formBatchPanel
     on::click('[data-name=story] [data-type=ditto]', 'setStoryRelated'),
     set::formID('taskBatchEditForm' . $executionID),
     set::items($items)
-
 );
 /* ====== Render page ====== */
 render();

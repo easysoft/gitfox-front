@@ -25,7 +25,7 @@ class storyCloseEntry extends entry
         $fields = 'closedReason,duplicateStory,comment';
         $this->batchSetPost($fields);
 
-        $control->close((int)$storyID);
+        $control->close($storyID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

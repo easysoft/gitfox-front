@@ -43,7 +43,7 @@ class execution extends control
         if($this->app->upgrading || !isset($this->app->user)) return false;
 
         $mode = $this->app->tab == 'execution' ? 'multiple' : '';
-        if((helper::isApiRequest()) or $this->viewType == 'json') $mode = '';
+        if((defined('RUN_MODE') and RUN_MODE == 'api') or $this->viewType == 'json') $mode = '';
 
         $this->executions = $this->execution->getPairs(0, 'all', "nocode,noprefix,{$mode}");
         $skipCreateStep   = array('computeburn', 'ajaxgetdropmenu', 'executionkanban', 'ajaxgetteammembers', 'all', 'ajaxgetcopyprojectexecutions');
@@ -466,7 +466,6 @@ class execution extends control
             $this->config->product->search['fields']['title'] = $this->lang->story->title;
             unset($this->config->product->search['fields']['plan']);
             unset($this->config->product->search['params']['plan']);
-            unset($this->config->product->search['fields']['release'], $this->config->product->search['params']['release']);
             unset($this->config->product->search['fields']['stage']);
             unset($this->config->product->search['params']['stage']);
         }
@@ -645,11 +644,9 @@ class execution extends control
      * @access public
      * @return void
      */
-    public function testcase(int $executionID = 0, int $productID = 0, string $branchID = 'all', string $browseType = 'all', int $param = 0, int $moduleID = 0, string $orderBy = 'sort_asc,id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    public function testcase(int $executionID = 0, int $productID = 0, string $branchID = 'all', string $browseType = 'all', int $param = 0, int $moduleID = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
     {
-        $execution   = $this->commonAction($executionID);
-        $executionID = $execution->id;
-
+        $this->commonAction($executionID);
         $uri = $this->app->getURI(true);
         $this->session->set('caseList', $uri, 'execution');
         $this->session->set('bugList',  $uri, 'execution');
@@ -657,6 +654,7 @@ class execution extends control
         $products = $this->product->getProducts($executionID);
         if(count($products) == 1) $productID = key($products);
 
+        $execution     = $this->execution->getByID($executionID);
         $productOption = array();
         $branchOption  = array();
         if($execution->hasProduct)
@@ -669,6 +667,7 @@ class execution extends control
         $pager = pager::init($recTotal, $recPerPage, $pageID);
 
         unset($this->config->testcase->dtable->fieldList['title']['nestedToggle']);
+        if($productID && $products[$productID]->type == 'normal') unset($this->config->testcase->dtable->fieldList['branch']);
 
         /* Build the search form. */
         $actionURL = $this->createLink('execution', 'testcase', "executionID=$executionID&productID=$productID&branchID=$branchID&browseType=bysearch&queryID=myQueryID&moduleID=0&orderBy=$orderBy");
@@ -809,7 +808,6 @@ class execution extends control
         $this->view->productID     = $productID;
         $this->view->executionName = $this->executions[$executionID];
         $this->view->pager         = $pager;
-        $this->view->param         = $param;
         $this->view->type          = $type;
         $this->view->orderBy       = $orderBy;
         $this->view->users         = $this->loadModel('user')->getPairs('noclosed|noletter');
@@ -1106,9 +1104,7 @@ class execution extends control
             $executionID = $this->execution->create($execution, isset($_POST['teamMembers']) ? $_POST['teamMembers'] : array());
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
-            $actionID = $this->loadModel('action')->create($this->objectType, $executionID, 'opened', '', $project->hasProduct ? implode(',', $_POST['products']) : '');
-            $execution->id = $executionID;
-            $this->loadModel('message')->sendMentionNotice('execution', 'create', $actionID, $execution);
+            $this->loadModel('action')->create($this->objectType, $executionID, 'opened', '', $project->hasProduct ? implode(',', $_POST['products']) : '');
             if(!empty($projectID) and strpos(',kanban,agileplus,waterfallplus,ipd,', ",$project->model,") !== false and $execution->type == 'kanban')
             {
                 $execution = $this->execution->fetchByID($executionID);
@@ -1118,11 +1114,10 @@ class execution extends control
             $message = $this->executeHooks($executionID);
             if(empty($message)) $message = $this->lang->saveSuccess;
 
-            $objectChanges = array('type' => 'add', 'objectType' => 'execution', 'objectList' => array($executionID));
-            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $message, 'id' => $executionID, 'changes' => $objectChanges));
+            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $message, 'id' => $executionID));
 
             $location = $this->executionZen->getAfterCreateLocation($projectID, $executionID, $project->model);
-            return $this->send(array('result' => 'success', 'message' => $message, 'load' => $location, 'changes' => $objectChanges));
+            return $this->send(array('result' => 'success', 'message' => $message, 'load' => $location));
         }
 
         list($this->view->pmUsers, $this->view->poUsers, $this->view->qdUsers, $this->view->rdUsers) = $this->executionZen->setUserMoreLink();
@@ -1257,9 +1252,6 @@ class execution extends control
             {
                 $actionID = $this->action->create($this->objectType, $executionID, 'edited', '', $products);
                 $this->action->logHistory($actionID, $changes);
-
-                $formData->id = $executionID;
-                $this->loadModel('message')->sendMentionNotice('execution', 'edit', $actionID, $formData, $oldExecution);
             }
 
             if(in_array($project->model, array('waterfall', 'waterfallplus', 'ipd'))) $this->programplan->computeProgress($executionID, 'edit');
@@ -1285,19 +1277,18 @@ class execution extends control
                         $cancelLink   = 'zui.Modal.hide(); ' . ($execution->type == 'kanban' ? 'loadCurrentPage(' . json_encode($kanbanLoad) . ');' : 'loadCurrentPage();');
                     }
                     $taskScheduleLink = $this->createLink('task', 'autoSchedule', 'executionID=' . $executionID);
-                    $this->send(array('result' => 'success', 'callback' => "zui.Modal.confirm({message: '{$this->lang->execution->dateConflictTip}', 'actions': [{key: 'confirm', text: '{$this->lang->execution->toAdjust}', btnType: 'primary'}, {key: 'cancel', text: '{$this->lang->execution->know}'}]}).then((res) => {if(res){{$toAdjustLink} openPage('$taskScheduleLink'); window.reload();} else {$cancelLink}});", 'changes' => array('type' => 'update', 'objectType' => 'execution', 'objectList' => array($executionID))));
+                    $this->send(array('result' => 'success', 'callback' => "zui.Modal.confirm({message: '{$this->lang->execution->dateConflictTip}', 'actions': [{key: 'confirm', text: '{$this->lang->execution->toAdjust}', btnType: 'primary'}, {key: 'cancel', text: '{$this->lang->execution->know}'}]}).then((res) => {if(res){{$toAdjustLink} openPage('$taskScheduleLink'); window.reload();} else {$cancelLink}});"));
                 }
             }
 
             /* If link from no head then reload. */
-            $objectChanges = array('type' => 'update', 'objectType' => 'execution', 'objectList' => array($executionID));
             if(isInModal())
             {
                 $kanbanLoad = array('selector' => '#main>*');
-                return $this->sendSuccess(array('closeModal' => true, 'callback' => $execution->type == 'kanban' ? 'loadCurrentPage(' . json_encode($kanbanLoad) . ');' : 'loadCurrentPage()', 'changes' => $objectChanges));
+                return $this->sendSuccess(array('closeModal' => true, 'callback' => $execution->type == 'kanban' ? 'loadCurrentPage(' . json_encode($kanbanLoad) . ');' : 'loadCurrentPage()'));
             }
 
-            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => inlink('view', "executionID=$executionID"), 'changes' => $objectChanges));
+            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => inlink('view', "executionID=$executionID")));
         }
 
         $executions = $this->executions;
@@ -1761,7 +1752,6 @@ class execution extends control
                 ->setDefault('lastEditedBy', $this->app->user->account)
                 ->setDefault('lastEditedDate', $now)
                 ->stripTags($this->config->execution->editor->close['id'], $this->config->allowedTags)
-                ->remove('verifyPassword')
                 ->get();
 
             $this->execution->computeBurn($executionID);
@@ -1816,7 +1806,7 @@ class execution extends control
 
         if(empty($execution) || strpos($type, $execution->type) === false) return $this->send(array('result' => 'success', 'load' => array('alert' => $this->lang->notFound, 'locate' => $this->config->vision == 'lite' ? $this->createLink('project', 'index') : $this->createLink('execution', 'all'))));
 
-        if($execution->type == 'kanban' and helper::isApiRequest()) return print($this->fetch('execution', 'kanban', "executionID=$executionID"));
+        if($execution->type == 'kanban' and defined('RUN_MODE') and RUN_MODE == 'api') return print($this->fetch('execution', 'kanban', "executionID=$executionID"));
 
         /* Load lang and set session. */
         $this->app->loadLang('program');
@@ -1897,13 +1887,13 @@ class execution extends control
         $taskToOpen = $this->cookie->taskToOpen ? $this->cookie->taskToOpen : 0;
         helper::setcookie('taskToOpen', 0, 0);
 
-        $this->executionZen->assignKanbanVars($execution->id);
+        $this->executionZen->assignKanbanVars($executionID);
 
         $this->view->title            = $this->lang->kanban->view;
         $this->view->execution        = $execution;
         $this->view->executionList    = $this->loadModel('project')->getExecutionList(array($execution->project));
-        $this->view->executionID      = $execution->id;
-        $this->view->kanbanList       = $this->loadModel('kanban')->getRDKanban($execution->id, $browseType, $orderBy, 0, $groupBy);
+        $this->view->executionID      = $executionID;
+        $this->view->kanbanList       = $this->loadModel('kanban')->getRDKanban($executionID, $browseType, $orderBy, 0, $groupBy);
         $this->view->browseType       = $browseType;
         $this->view->orderBy          = $orderBy;
         $this->view->groupBy          = $groupBy;
@@ -2030,7 +2020,7 @@ class execution extends control
                 $cardList = !empty($laneData[$columnKey]) ? $laneData[$columnKey] : array();
                 foreach($cardList as $card)
                 {
-                    $items[$laneKey][$columnKey][] = array('id' => $card->id, 'name' => $card->id, 'title' => $card->name, 'status' => $card->status, 'delay' => !empty($card->delay) ? $card->delay : 0, 'progress' => $card->progress, 'begin' => !helper::isZeroDate($card->begin) ? $card->begin : '', 'end' => !helper::isZeroDate($card->end) ? $card->end : '');
+                    $items[$laneKey][$columnKey][] = array('id' => $card->id, 'name' => $card->id, 'title' => $card->name, 'status' => $card->status, 'delay' => !empty($card->delay) ? $card->delay : 0, 'progress' => $card->progress);
 
                     if(!isset($columnCards[$columnKey])) $columnCards[$columnKey] = 0;
                     $columnCards[$columnKey] ++;
@@ -3252,8 +3242,7 @@ class execution extends control
      */
     public function doc(int $executionID = 0, int $libID = 0, int $moduleID = 0, string $browseType = 'all', string $orderBy = 'order_asc', int $param = 0, int $recTotal = 0, int $recPerPage = 20, int $pageID = 1, string $mode = 'list', int $docID = 0, string $search = '')
     {
-        $execution   = $this->commonAction($executionID);
-        $executionID = $execution->id;
+        $this->commonAction($executionID);
         echo $this->fetch('doc', 'app', "type=execution&spaceID=$executionID&libID=$libID&moduleID=$moduleID&docID=$docID&mode=$mode&orderBy=$orderBy&recTotal=$recTotal&recPerPage=$recPerPage&pageID=$pageID&filterType=$browseType&search=$search&noSpace=true");
     }
 

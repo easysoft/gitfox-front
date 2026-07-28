@@ -84,6 +84,12 @@ if($app->rawModule == 'programplan' && !$isFromDoc)
         );
     }
 
+    $hasFrozenStage = false;
+    foreach($plans['data'] as $plan)
+    {
+        if(!empty($plan->frozen)) $hasFrozenStage = true;
+    }
+
     /* Build versions for dropdown. */
     $browseTemplate = createLink('programplan', 'browse', "projectID=$projectID&productID={$productID}&type={$type}&orderBy=$orderBy&baselineID=&browseType={$browseType}&queryID={$queryID}&from={$from}&blockID={$blockID}&versionID=%s");
     $versionItems = array();
@@ -117,11 +123,7 @@ if($app->rawModule == 'programplan' && !$isFromDoc)
         if(hasPriv('programplan', 'rollbackGanttVersion'))
         {
             if(!isset($item['actions'])) $item['actions'] = array();
-            $canRollback  = empty($hasFrozenStage) && !empty($canRollbackGantt);
-            $rollbackHint = $lang->programplan->rollbackGanttVersion;
-            if($hasFrozenStage) $rollbackHint = $lang->programplan->frozenCallback;
-            elseif(!$canRollbackGantt) $rollbackHint = $lang->programplan->closedCallback;
-            $item['actions'][] = array('icon' => 'undo', 'hint' => $rollbackHint, 'url' => createLink('programplan', 'rollbackGanttVersion', "projectID={$projectID}&versionID={$version->id}"), 'data-confirm' => $project->model == 'ipd' ? $lang->programplan->rollbackTip4IPD : $lang->programplan->rollbackTip, 'className' => 'ajax-submit', 'disabled' => !$canRollback);
+            $item['actions'][] = array('icon' => 'undo', 'hint' => $hasFrozenStage ? $lang->programplan->frozenCallback : $lang->programplan->rollbackGanttVersion, 'url' => createLink('programplan', 'rollbackGanttVersion', "projectID={$projectID}&versionID={$version->id}"), 'data-confirm' => $project->model == 'ipd' ? $lang->programplan->rollbackTip4IPD : $lang->programplan->rollbackTip, 'className' => 'ajax-submit', 'disabled' => $hasFrozenStage);
         }
 
         if($version->reviewType == 'deliverable') $versionItems['deliverable']['items'][$version->id] = $item;
@@ -186,8 +188,7 @@ if($app->rawModule == 'programplan' && !$isFromDoc)
                 set::settingsItems($settingsItems),
                 set::diffLang($langData),
                 set::browseTemplate($browseTemplate),
-                set::baseline($isDiffMode ? $ganttBaseline : null),
-                set::objectType('project')
+                set::baseline($isDiffMode ? $ganttBaseline : null)
             ) : null,
             icon
             (

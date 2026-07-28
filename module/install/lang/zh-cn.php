@@ -129,8 +129,6 @@ $lang->install->dbEncoding     = '数据库编码';
 $lang->install->dbUser         = '数据库用户名';
 $lang->install->dbPassword     = '数据库密码';
 $lang->install->dbName         = '数据库名称';
-$lang->install->dbSchema       = '数据库Schema';
-$lang->install->dbSchemaNote   = 'Gauss/PostgreSQL使用的Schema，MySQL忽略此项';
 $lang->install->dbPrefix       = '建表使用的前缀';
 $lang->install->clearDB        = '清空现有数据';
 $lang->install->importDemoData = '导入demo数据';
@@ -146,7 +144,6 @@ $lang->install->workingList['full']      = '完整研发管理工具';
 
 $lang->install->errorConnectDB      = '数据库连接失败 ';
 $lang->install->errorDBName         = '数据库名不能含有 “.” ';
-$lang->install->errorDBSchema       = 'Schema名称格式不正确';
 $lang->install->errorCreateDB       = '数据库创建失败';
 $lang->install->errorTableExists    = '数据表已经存在，您之前应该有安装过禅道，继续安装请返回前页并选择清空数据';
 $lang->install->errorCreateTable    = '创建表失败';
@@ -293,7 +290,6 @@ $lang->install->cronList['moduleName=backup&methodName=backup']         = '备�
 $lang->install->cronList['moduleName=mail&methodName=asyncSend']        = '异步发信';
 $lang->install->cronList['moduleName=webhook&methodName=asyncSend']     = '异步发送Webhook';
 $lang->install->cronList['moduleName=admin&methodName=deleteLog']       = '删除过期日志';
-$lang->install->cronList['moduleName=errorlog&methodName=deleteLog']    = '删除过期错误日志';
 $lang->install->cronList['moduleName=todo&methodName=createCycle']      = '生成周期性待办';
 $lang->install->cronList['moduleName=ci&methodName=initQueue']          = '创建周期性任务';
 $lang->install->cronList['moduleName=ci&methodName=checkCompileStatus'] = '同步Jenkins任务状态';

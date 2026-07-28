@@ -1,7 +1,8 @@
 <?php
-global $app;
+declare(strict_types=1);
+global $lang, $app;
 
-$account = $app->user->account ?? '';
+$account = isset($app->user->account) ? $app->user->account : '';
 $now     = helper::now();
 
 $config->testtask->form = new stdclass();

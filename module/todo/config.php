@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 $config->todo = new stdclass();
 $config->todo->batchCreateNumber = 8;
 $config->todo->defaultPri        = 3;

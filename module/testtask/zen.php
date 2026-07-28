@@ -68,7 +68,7 @@ class testtaskZen extends testtask
         $this->loadModel('testcase');
 
         $searchConfig = $this->config->testcase->search;
-        $searchConfig['module']    = 'testtaskTestcase';
+        $searchConfig['module']    = 'testtask';
         $searchConfig['queryID']   = $queryID;
         $searchConfig['actionURL'] = helper::createLink('testtask', 'cases', "taskID=$testtask->id&browseType=bysearch&queryID=myQueryID");
 
@@ -93,7 +93,7 @@ class testtaskZen extends testtask
         $searchConfig['fields']['assignedTo'] = $this->lang->testtask->assignedTo;
         $searchConfig['params']['assignedTo'] = array('operator' => '=', 'control' => 'select', 'values' => 'users');
 
-        if(!$this->config->testcase->needReview && empty($this->config->testcase->forceReview)) unset($searchConfig['params']['status']['values']['wait']);
+        if(!$this->config->testcase->needReview) unset($searchConfig['params']['status']['values']['wait']);
         if($product->shadow) unset($searchConfig['fields']['product']);
         if($product->type == 'normal')
         {
@@ -106,7 +106,6 @@ class testtaskZen extends testtask
             $searchConfig['params']['branch']['values'] = $this->testtask->getBranchesByTask($testtask);
         }
 
-        if(isset($_SESSION['testtaskSearchFunc'])) unset($_SESSION['testtaskSearchFunc']);
         $this->config->testcase->search = $searchConfig;
         $this->loadModel('search')->setSearchParams($searchConfig);
     }
@@ -157,7 +156,7 @@ class testtaskZen extends testtask
             $searchConfig['fields']['branch'] = sprintf($this->lang->product->branch, $this->lang->product->branchName[$product->type]);
             $searchConfig['params']['branch']['values'] = $this->testtask->getBranchesByTask($task);;
         }
-        if(!$this->config->testcase->needReview && empty($this->config->testcase->forceReview)) unset($searchConfig['params']['status']['values']['wait']);
+        if(!$this->config->testcase->needReview) unset($searchConfig['params']['status']['values']['wait']);
         unset($searchConfig['fields']['product']);
 
         $this->loadModel('search')->setSearchParams($searchConfig);
@@ -341,7 +340,7 @@ class testtaskZen extends testtask
         $this->setDropMenu($product->id, $testtask);
         $showModule = $this->loadModel('setting')->getItem("owner={$this->app->user->account}&module=testtask&section=cases&key=showModule");
         $runs       = $this->loadModel('testcase')->appendData($runs, 'run');
-        $runList    = array_merge($scenes, $runs);
+        $runList    = array_merge($runs, $scenes);
 
         if($this->config->edition != 'open')
         {
@@ -577,13 +576,6 @@ class testtaskZen extends testtask
     protected function prepareCasesForBatchRun(int $productID, string $orderBy, string $from, int $taskID, string $confirm, array $caseIdList, array $runIdList = array()): array
     {
         $this->setMenu($productID, 0, (int)$this->session->project, (int)$this->session->execution);
-        if($this->app->tab == 'my' && $from == 'work')
-        {
-            $this->loadModel('my');
-            $this->lang->my->menu->{$from}['subModule'] = 'testtask';
-            $this->lang->my->menu->{$from}['subMenu']->testcase['subModule'] = 'testtask';
-        }
-
         $menu = isset($this->lang->{$this->app->tab}->menu) ? $this->lang->{$this->app->tab}->menu : array();
         if($this->app->tab != 'qa')
         {
@@ -604,7 +596,7 @@ class testtaskZen extends testtask
         /* If cases come from my, check the version of these cases, if not the latest version, remove them. */
         if($from == 'work' && $runIdList)
         {
-            $runs = $this->dao->select('t1.id, t1.`case`, t1.`caseVersion`, t1.version, t1.task, t2.name AS taskName')->from(TABLE_TESTRUN)->alias('t1')
+            $runs = $this->dao->select('t1.id, t1.`case`, t1.version, t1.task, t2.name AS taskName')->from(TABLE_TESTRUN)->alias('t1')
                 ->leftJoin(TABLE_TESTTASK)->alias('t2')->on('t1.task = t2.id')
                 ->where('t1.id')->in($runIdList)
                 ->orderBy('t1.id_desc')
@@ -613,7 +605,7 @@ class testtaskZen extends testtask
             $workCases = array();
             foreach($runs as $runID => $run)
             {
-                if($run->version < $run->caseVersion) continue;
+                if($run->version < $cases[$run->case]->version) continue;
 
                 $case = clone $cases[$run->case];
                 $case->caseID   = (int)$run->case;
@@ -625,11 +617,10 @@ class testtaskZen extends testtask
 
         /* 如果批量执行的用例来自测试单，检查这些用例的版本，如果不是最新版就移除它们。*/
         /* If cases come from a testtask, check the version of these cases, if not the latest version, remove them. */
-        $runs = $this->dao->select('`case`,`caseVersion`,version')->from(TABLE_TESTRUN)->where('`case`')->in(array_keys($cases))->andWhere('task')->eq($taskID)->fetchAll('case');
-        foreach($runs as $caseID => $run)
+        $runs = $this->dao->select('`case`, version')->from(TABLE_TESTRUN)->where('`case`')->in(array_keys($cases))->andWhere('task')->eq($taskID)->fetchPairs();
+        foreach($cases as $caseID => $case)
         {
-            if($run->caseVersion > $run->version) unset($cases[$caseID]);
-            $cases[$caseID]->version = $run->version;
+            if(isset($runs[$caseID]) && $runs[$caseID] < $case->version) unset($cases[$caseID]);
         }
 
         $testtask = $this->testtask->fetchByID($taskID);

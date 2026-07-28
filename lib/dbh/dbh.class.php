@@ -458,8 +458,7 @@ class dbh
         if(in_array($this->dbConfig->driver, $this->config->pgsqlDriverList))
         {
             $this->useDB($this->dbConfig->name);
-            $schema = $this->dbConfig->schema ?? 'public';
-            $sql = "SELECT * FROM information_schema.tables WHERE table_catalog = '{$this->dbConfig->name}' AND table_schema = '{$schema}' AND table_name='{$tableName}'";
+            $sql = "SELECT * FROM information_schema.tables WHERE table_catalog = '{$this->dbConfig->name}' AND table_name='{$tableName}'";
             return $this->rawQuery($sql)->fetch();
         }
 
@@ -592,9 +591,7 @@ class dbh
         $sql = $this->processDmTableIndex($sql);
         $sql = $this->formatLimitOffset($sql);
 
-        if(stripos($sql, 'CURDATE()') !== false) $sql = str_replace('CURDATE()', 'CURRENT_DATE', $sql);
-
-        $actionPos = strcspn($sql, " \t\n\r\0\v");
+        $actionPos = strpos($sql, ' ');
         $action    = strtoupper(substr($sql, 0, $actionPos));
         $setPos    = 0;
         switch($action)
@@ -614,6 +611,7 @@ class dbh
                 if(strpos($sql, "\\'") !== false) $sql = str_replace("\\'", "''''", $sql);
                 if(strpos($sql, '\"') !== false) $sql = str_replace('\"', '"', $sql);
                 if(strpos($sql, '\\\\') !== false) $sql = str_replace('\\\\', '\\', $sql);
+                if(stripos($sql, 'CURDATE()')) $sql = str_replace('CURDATE()', 'CURRENT_DATE', $sql);
             case 'DELETE':
             case 'TRUNCATE':
                 if(strpos($sql, '`') !== false) $sql = str_replace('`', '"', $sql);
@@ -665,7 +663,7 @@ class dbh
                 if(!empty($columnName)) $sql .= " and COLUMN_NAME='$columnName'";
                 return $sql;
             case 'DROP':
-                $sql = rtrim($sql, ';') . ' CASCADE';
+                $sql .= ' CASCADE';
                 return $this->formatField($sql);
         }
 
@@ -704,7 +702,7 @@ class dbh
         $sql = $this->processDmChangeColumn($sql);
         $sql = $this->processDmTableIndex($sql);
 
-        $actionPos = strcspn($sql, " \t\n\r\0\v");
+        $actionPos = strpos($sql, ' ');
         $action    = strtoupper(substr($sql, 0, $actionPos));
         $setPos    = 0;
         switch($action)
@@ -800,8 +798,6 @@ class dbh
         if($action == 'INSERT' and stripos($fields, '"id"') !== FALSE)
         {
             $tableBegin = strpos($sql, '"' . $this->dbConfig->prefix);
-            if($tableBegin === false) $tableBegin = strpos($sql, '"ops_');
-
             $tableEnd   = strpos($sql, '"', $tableBegin + 1);
             $tableName  = '' . $this->dbConfig->name . '."' . substr($sql, $tableBegin + 1, $tableEnd - $tableBegin - 1) . '"';
             return "SET IDENTITY_INSERT $tableName ON;" . $sql;
@@ -848,7 +844,7 @@ class dbh
         if($this->dbConfig->driver == 'dm' || in_array($this->dbConfig->driver, $this->config->pgsqlDriverList))
         {
             $sql = str_replace('`', '"', $sql);
-            $sql = preg_replace('/(?<!\w)if\s*\(/i', '"IF"(', $sql);
+            $sql = preg_replace('/(?<!\w)if\(/i', '"IF"(', $sql);
         }
         if($this->dbConfig->driver == 'gauss') $sql = self::formatGaussFunctions($sql);
 
@@ -868,22 +864,13 @@ class dbh
             'YEAR',
             'DATEDIFF',
             'DATE_FORMAT',
-            'DATE',
-            'DATE_SUB',
             'INSTR',
-            'TRUNCATE',
-            'CURDATE',
-            'DATE_ADD',
-            'ADDDATE',
-            'QUARTER',
-            'WEEK',
-            'YEARWEEK',
-            'TO_DAYS'
+            'LEFT',
         );
 
         foreach($gaussCompatibleFunctions as $function)
         {
-            $sql = preg_replace("/(?<![\\w.\"']){$function}(?=\s*\()/i", '"' . $function . '"', $sql);
+            $sql = preg_replace("/(?<![\\w\"'])(?<!\"){$function}(?=\s*\()/i", '"' . $function . '"', $sql);
         }
 
         return $sql;
@@ -948,14 +935,7 @@ class dbh
             $pos = stripos($sql, ' ENGINE');
             if($pos > 0) $sql = substr($sql, 0, $pos);
 
-            if($this->dbConfig->driver == 'dm')
-            {
-                $sql = preg_replace('/\(\ *\d+\ *\)/', '', $sql);
-            }
-            else
-            {
-                $sql = preg_replace('/\b(?:char|varchar)\s*\(\s*\d+\s*\)(*SKIP)(*F)|\(\ *\d+\ *\)/i', '', $sql);
-            }
+            $sql = preg_replace('/\(\ *\d+\ *\)/', '', $sql);
 
             $replace = array(
                 " int "                     => ' integer ',
@@ -1186,7 +1166,7 @@ class dbh
         $allowedActions = array('insert', 'update', 'delete', 'replace');
 
         $sql       = str_replace(array('\r', '\n'), ' ', trim($sql));
-        $actionPos = strcspn($sql, " \t\n\r\0\v");
+        $actionPos = strpos($sql, ' ');
         $action    = strtolower(substr($sql, 0, $actionPos));
 
         if(!in_array($action, $allowedActions)) return null;

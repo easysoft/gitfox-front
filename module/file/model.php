@@ -38,19 +38,17 @@ class fileModel extends model
      * @param  string    $objectType
      * @param  int|array $objectID
      * @param  string    $extra
-     * @param  bool      $ignoreDeleted
      * @access public
      * @return array
      */
-    public function getByObject(string $objectType, int|array $objectID, string $extra = '', bool $ignoreDeleted = false): array
+    public function getByObject(string $objectType, int|array $objectID, string $extra = ''): array
     {
-        if(!$objectID) return array();
         $files = $this->dao->select('*')->from(TABLE_FILE)
             ->where('objectType')->eq($objectType)
             ->andWhere('objectID')->in($objectID)
             ->andWhere('extra')->ne('editor')
             ->beginIF($extra)->andWhere('extra')->in($extra)->fi()
-            ->beginIF(!$ignoreDeleted)->andWhere('deleted')->eq('0')->fi()
+            ->andWhere('deleted')->eq('0')
             ->orderBy('id')
             ->fetchAll('id');
 
@@ -198,7 +196,7 @@ class fileModel extends model
     public function saveUpload(string $objectType = '', int $objectID = 0, int|string $extra = '', string $filesName = 'files', string $labelsName = 'labels'): array|false
     {
         $fileTitles = array();
-        $now        = helper::now();
+        $now        = helper::today();
         $files      = $this->getUpload($filesName, $labelsName);
 
         foreach($files as $file)
@@ -430,13 +428,7 @@ class fileModel extends model
     public function getRealPathName(string $pathName): string
     {
         $realPath = $this->savePath . $pathName;
-        if(file_exists($realPath))
-        {
-            /* 解析后的真实路径必须位于上传目录内，防止目录穿越。The resolved path must stay under the upload root. */
-            $rootPath     = realpath($this->savePath);
-            $realFilePath = realpath($realPath);
-            if($rootPath !== false && $realFilePath !== false && strpos($realFilePath, $rootPath . DIRECTORY_SEPARATOR) === 0) return $pathName;
-        }
+        if(file_exists($realPath)) return $pathName;
 
         return $this->getSaveName($pathName);
     }
@@ -478,13 +470,10 @@ class fileModel extends model
      *
      * @param  string $module
      * @access public
-     * @return array
+     * @return int|false
      */
-    public function saveExportTemplate(string $module): array
+    public function saveExportTemplate(string $module): int|false
     {
-        $module = strtolower(trim($module));
-        if(!preg_match('/^[a-z0-9_]+$/', $module)) return array('result' => 'fail', 'message' => $this->lang->error->accessDenied);
-
         $template = fixer::input('post')
             ->add('account', $this->app->user->account)
             ->add('type', "export$module")
@@ -493,18 +482,14 @@ class fileModel extends model
 
         if($template->title == $this->lang->file->defaultTPL)
         {
-            return array('result' => 'fail', 'message' => sprintf($this->lang->error->unique, $this->lang->file->tplTitle, $this->lang->file->defaultTPL));
+            dao::$errors[] = sprintf($this->lang->error->unique, $this->lang->file->tplTitle, $this->lang->file->defaultTPL);
+            return false;
         }
 
         $this->lang->error->unique = $this->lang->error->repeat;
-        $condition = "`type` = " . $this->dbh->quote("export$module") . " and `account` = " . $this->dbh->quote($this->app->user->account);
+        $condition = "`type`='export$module' and account='{$this->app->user->account}'";
         $this->dao->insert(TABLE_USERTPL)->data($template)->batchCheck('title, content', 'notempty')->check('title', 'unique', $condition)->exec();
-        if(dao::isError())
-        {
-            return array('result' => 'fail', 'message' => trim(dao::getError(true)));
-        }
-
-        return array('result' => 'success', 'templateID' => $this->dao->lastInsertId());
+        return $this->dao->lastInsertId();
     }
 
     /**
@@ -979,7 +964,7 @@ class fileModel extends model
             $data = new stdclass();
             $data->objectID   = $objectID;
             $data->objectType = $objectType;
-            if(!helper::isApiRequest()) $data->extra = 'editor';
+            if(!defined('RUN_MODE') || RUN_MODE != 'api') $data->extra = 'editor';
 
             $this->dao->update(TABLE_FILE)->data($data)->where('id')->in($_SESSION['album']['used'][$value])->exec();
         }
@@ -1308,13 +1293,10 @@ class fileModel extends model
             $imageWidth = $imageSize[0] ?? 0;
         }
 
-        $downloadModule = $file->objectType == 'doc' ? 'doc' : 'file';
-        $downloadMethod = $file->objectType == 'doc' ? 'downloadFile' : 'download';
-        $downloadLink  = helper::createLink($downloadModule, $downloadMethod, "fileID=$file->id");
+        $downloadLink  = helper::createLink('file', 'download', "fileID=$file->id");
         $downloadLink .= strpos($downloadLink, '?') === false ? '?' : '&';
         $downloadLink .= $sessionString;
-        $canDownload = common::hasPriv('file', 'download') || ($file->objectType == 'doc' && common::hasPriv('doc', 'view'));
-        $fileTitleLink = $canDownload ? html::a($downloadLink, $fileTitle . " <span class='text-gray'>({$fileSize})</span>", '_blank', "id='fileTitle$file->id'") : "<div id='fileTitle$file->id' style='display: inline-block'>" . $fileTitle . " <span class='text-gray'>({$fileSize})</span></div>";
+        $fileTitleLink = common::hasPriv('file', 'download') ? html::a($downloadLink, $fileTitle . " <span class='text-gray'>({$fileSize})</span>", '_blank', "id='fileTitle$file->id'") : "<div id='fileTitle$file->id' style='display: inline-block'>" . $fileTitle . " <span class='text-gray'>({$fileSize})</span></div>";
 
         $objectType = zget($this->config->file->objectType, $file->objectType);
         $viewMethod = $objectType == 'feedback' && $this->config->vision != 'lite' ? 'adminView' : 'view';
@@ -1373,16 +1355,12 @@ class fileModel extends model
         if(stripos('txt|jpg|jpeg|gif|png|bmp|mp4', $file->extension) !== false) $canPreview = true;
         if(isset($this->config->file->libreOfficeTurnon) and $this->config->file->libreOfficeTurnon == 1 && $isOfficeFile) $canPreview = true;
 
-        $canPreviewPriv = common::hasPriv('file', 'preview') || ($file->objectType == 'doc' && common::hasPriv('doc', 'view'));
-        if($canPreview && $canPreviewPriv)
+        if($canPreview && common::hasPriv('file', 'preview'))
         {
             $dataToggle = $isOfficeFile ? '' : " data-toggle='modal' data-size='lg'";
-            $previewModule = $file->objectType == 'doc' ? 'doc' : 'file';
-            $previewMethod = $file->objectType == 'doc' ? 'previewFile' : 'preview';
-            $html      .= html::a(helper::createLink($previewModule, $previewMethod, "fileID=$file->id&mouse=left"), "<i class='icon icon-eye'></i>", $isOfficeFile ? '_blank' : '', "class='fileAction btn btn-link text-primary' title='{$this->lang->file->preview}' {$dataToggle}");
+            $html      .= html::a(helper::createLink('file', 'preview', "fileID=$file->id&mouse=left"), "<i class='icon icon-eye'></i>", $isOfficeFile ? '_blank' : '', "class='fileAction btn btn-link text-primary' title='{$this->lang->file->preview}' {$dataToggle}");
         }
-        $canDownload = common::hasPriv('file', 'download') || ($file->objectType == 'doc' && common::hasPriv('doc', 'view'));
-        if($canDownload) $html .= html::a($downloadLink, "<i class='icon icon-download'></i>", '_blank', "class='fileAction btn btn-link text-primary' title='{$this->lang->file->downloadFile}'");
+        if(common::hasPriv('file', 'download')) $html .= html::a($downloadLink, "<i class='icon icon-download'></i>", '_blank', "class='fileAction btn btn-link text-primary' title='{$this->lang->file->downloadFile}'");
         if(common::hasPriv($objectType, 'edit', $object))
         {
             if($showEdit and common::hasPriv('file', 'edit')) $html .= html::a('###', "<i class='icon icon-pencil-alt'></i>", '', "id='renameFile$file->id' class='fileAction btn btn-link edit text-primary' onclick='showRenameBox($file->id)' title='{$this->lang->file->edit}'");
@@ -1489,24 +1467,10 @@ class fileModel extends model
             $fileIdList = '';
             foreach($fileList as $file)
             {
-                /* 只接受服务端生成格式的 pathname，防止目录穿越。Only accept server-generated path names. */
-                $pathName = zget($file, 'pathname', '');
-                if(!is_string($pathName) || !preg_match('/^(?:\d{6}\/[0-9A-Za-z]+\.[A-Za-z0-9]+|[0-9a-f]{32}(?:\.notAllowed)?)$/', $pathName)) continue;
-
                 unset($file['id']);
                 $file['objectType'] = $objectType;
                 $file['objectID']   = $objectID;
-                /* extra 仅允许空值或数字：
-                 * 1. 数字 extra 是服务端使用的关联标记——需求创建时通过 saveUpload($story->type, $storyID, 1) 写入 extra=1，
-                 *    表示"需求规格附件"，下方 is_numeric 分支收集其文件 id 追加到 zt_storyspec.files；测试步骤结果附件的
-                 *    extra 为步骤 id，读取时按 extra IN (步骤id) 取回（objectType=stepResult）。
-                 * 2. editor 只能由服务端写入（updateObjectID 统一标记编辑器上传的图片），合法 fileList 来源(getByObject)
-                 *    已排除 extra=editor 的文件；若允许客户端伪造 editor，会经 checkPriv 的 editor 分支绕过对象 ACL。
-                 * Only allow empty or numeric extra: numeric marks story-spec attachments (extra=1, collected into
-                 * zt_storyspec.files) or test-step result files (extra=step id); editor is server-only and must not be
-                 * forgeable from fileList, otherwise checkPriv would bypass the object ACL. */
-                $fileExtra   = $extra ?: zget($file, 'extra', '');
-                $file['extra'] = is_numeric($fileExtra) ? $fileExtra : '';
+                $file['extra']      = $extra ?: zget($file, 'extra', '');
 
                 $fileID = $this->fileTao->saveFile($file, 'url,deleted,realPath,webPath,name,url');
                 if(is_numeric($file['extra'])) $fileIdList .= ',' . $fileID;
@@ -1571,7 +1535,7 @@ class fileModel extends model
 
         $addedFiles = $this->saveUpload($objectType, $oldObject->id, $extra, $filesName, $labelsName);
 
-        if(helper::isApiRequest())
+        if(defined('RUN_MODE') && RUN_MODE === 'api')
         {
             $uidFiles = $this->getUploadByUID($this->post->uid, $filesName, $labelsName);
 

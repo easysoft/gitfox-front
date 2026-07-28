@@ -1,49 +1,31 @@
 #!/usr/bin/env php
 <?php
-
-include dirname(__FILE__, 5) . '/test/lib/init.php';
-
-error_reporting(E_ERROR);
-
-$zd_user = zenData('user');
-$zd_user->id->range('1-1');
-$zd_user->account->range('1-1');
-$zd_user->last->range('(M)-(w)')->type('timestamp')->format('YYYY-MM-DD hh:mm:ss');
-$zd_user->feedback->range('0');
-$zd_user->scoreLevel->range('0');
-$zd_user->resetExpired->range('0');
-$zd_user->jira->range('0');
-$zd_user->deleted->range('0');
-$zd_user->gen(1);
-
-su('admin');
-
-$tester->loadModel('group');
-helper::import($tester->app->getModulePath('', 'group') . 'control.php');
-helper::import($tester->app->getModulePath('', 'group') . 'zen.php');
-
-
 /**
 
-title=测试 groupModel::setDevOpsPrivInCompose()
+title=测试 groupModel->copy();
 timeout=0
-cid=0
+cid=16736
 
-- 步骤1：正常输入 @error:TypeError
-- 步骤2：边界值输入 @error:TypeError
-- 步骤3：无效输入 @error:TypeError
-- 步骤4：大值输入 @error:TypeError
-- 步骤5：业务规则验证 @error:TypeError
-
+- 有历史数据设置DevOps权限第repo-import条的vision属性 @rnd
+- 无历史数据DevOps权限个数 @5
+- 没有历史数据DevOps权限个数 @4
+- 没有历史数据设置DevOps权限第repo-import条的vision属性 @rnd
+- 设置过滤的权限后的DevOps权限个数 @2
 */
 
-try { ob_start(); $result = callZenMethod('group', 'setDevOpsPrivInCompose', array()); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤1：正常输入
-try { ob_start(); $result = callZenMethod('group', 'setDevOpsPrivInCompose', array()); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤2：边界值输入
-try { ob_start(); $result = callZenMethod('group', 'setDevOpsPrivInCompose', array()); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤3：无效输入
-try { ob_start(); $result = callZenMethod('group', 'setDevOpsPrivInCompose', array()); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤4：大值输入
-try { ob_start(); $result = callZenMethod('group', 'setDevOpsPrivInCompose', array()); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤5：业务规则验证
+include dirname(__FILE__, 5) . '/test/lib/init.php';
+include dirname(__FILE__, 2) . '/lib/groupzen.unittest.class.php';
+su('admin');
+
+$group = new groupZenTest();
+
+zenData('pipeline')->gen(5);
+r($group->setDevOpsPrivInComposeTest('manageRepo'))        && p('repo-import:vision') && e('rnd'); //有历史数据设置DevOps权限
+r(count($group->setDevOpsPrivInComposeTest('manageRepo'))) && p() && e('5');                       //无历史数据DevOps权限个数
+
+zenData('pipeline')->gen(0);
+$config->group->setComposeDevOpsPriv['repo']['priv'] = 'repo-create';
+r(count($group->setDevOpsPrivInComposeTest('manageRepo'))) && p() && e('4');                      //没有历史数据DevOps权限个数
+r($group->setDevOpsPrivInComposeTest('manageRepo'))        && p('repo-import:vision') && e('rnd');//没有历史数据设置DevOps权限
+$config->group->setComposeDevOpsPriv['repo']['priv'] = 'repo-create,repo-import,repo-edit';
+r(count($group->setDevOpsPrivInComposeTest('manageRepo'))) && p() && e('2');                      //设置过滤的权限后的DevOps权限个数

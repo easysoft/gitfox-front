@@ -759,30 +759,15 @@ class testtaskModelTest extends baseTest
     /**
      * Test getSceneCases method.
      *
-     * @param  int    $productID
-     * @param  array  $runs
-     * @param  string $type
+     * @param  int   $productID
+     * @param  array $runs
      * @access public
-     * @return array|string
+     * @return array
      */
-    public function getSceneCasesTest(int $productID, array $runs, string $type = ''): array|string
+    public function getSceneCasesTest(int $productID, array $runs): array
     {
         $result = $this->instance->getSceneCases($productID, $runs);
         if(dao::isError()) return dao::getError();
-        if($type == 'sceneIds')
-        {
-            $ids = array();
-            foreach($result[1] as $scene) $ids[] = $scene->id;
-            sort($ids);
-            return implode(',', $ids);
-        }
-        if($type == 'sceneParents')
-        {
-            $parents = array();
-            foreach($result[1] as $scene) $parents[$scene->id] = $scene->parent;
-            ksort($parents);
-            return $parents;
-        }
 
         return $result;
     }

@@ -257,23 +257,6 @@ class testcaseModel extends model
     }
 
     /**
-     * 获取用例邮件通知的收件人。
-     * Get toList and ccList.
-     *
-     * @param  object     $case
-     * @access public
-     * @return bool|array
-     */
-    public function getToAndCcList(object $case): bool|array
-    {
-        $toList = trim($case->openedBy . ',' . $case->reviewedBy, ',');
-        $toList = implode(',', array_unique(array_filter(explode(',', $toList))));
-        if(empty($toList)) return false;
-
-        return array($toList, '');
-    }
-
-    /**
      * 测试通过 id 列表和查询语句获取用例。
      * Get cases by id list and query string.
      *
@@ -412,7 +395,7 @@ class testcaseModel extends model
      */
     public function getByAssignedTo(string $account, string $auto = 'no', string $orderBy = 'id_desc', ?object $pager = null): array
     {
-        $cases = $this->dao->select('t1.id AS run, t1.task, t1.case, t1.version, t1.`assignedTo`, t1.`lastRunner`, t1.`lastRunDate`, t1.`lastRunResult`, t1.status AS lastRunStatus, t2.id AS id, t2.project, t2.pri, t2.title, t2.type, t2.`openedBy`, t2.`openedDate`, t2.color, t2.product, t2.lib, t2.branch, t2.module, t2.status, t2.auto, t2.stage, t2.story, t2.`storyVersion`, t2.scene, t2.precondition, t2.keywords, t2.reviewedBy, t2.reviewedDate, t2.`lastEditedBy`, t2.`lastEditedDate`, t3.name AS taskName')->from(TABLE_TESTRUN)->alias('t1')
+        $cases = $this->dao->select('t1.id AS run, t1.task, t1.case, t1.version, t1.`assignedTo`, t1.`lastRunner`, t1.`lastRunDate`, t1.`lastRunResult`, t1.status AS lastRunStatus, t2.id AS id, t2.project, t2.pri, t2.title, t2.type, t2.`openedBy`, t2.color, t2.product, t2.lib, t2.branch, t2.module, t2.status, t2.auto, t2.story, t2.`storyVersion`, t3.name AS taskName')->from(TABLE_TESTRUN)->alias('t1')
             ->leftJoin(TABLE_CASE)->alias('t2')->on('t1.case = t2.id')
             ->leftJoin(TABLE_TESTTASK)->alias('t3')->on('t1.task = t3.id')
             ->where('t1.`assignedTo`')->eq($account)
@@ -612,7 +595,8 @@ class testcaseModel extends model
         {
             $caseID = isset($row->case) ? $row->case : $row->id;
 
-            if($exportType == 'selected' && strpos(",{$this->cookie->checkedItem},", ",$caseID,") === false) continue;
+            if($exportType == 'selected' && $taskID  && strpos(",{$this->cookie->checkedItem},", ",$row->id,") === false) continue;
+            if($exportType == 'selected' && !$taskID && strpos(",{$this->cookie->checkedItem},", ",$caseID,") === false) continue;
 
             $row->id        = $caseID;
             $cases[$caseID] = $row;
@@ -2807,6 +2791,7 @@ class testcaseModel extends model
             ->from(TABLE_CASE)->alias('t1')
             ->leftJoin(TABLE_MODULE)->alias('t2')->on('t1.module=t2.id and t1.product = t2.root')
             ->where('t1.product')->eq($productID)
+            ->andWhere('t1.lib')->eq($libID)
             ->andWhere('t1.`fromCaseID`')->ne('0')
             ->andWhere('t1.deleted')->eq('0')
             ->andWhere('((t2.type')->in('story,case')->andWhere('t2.deleted')->eq('0')->markRight(1)
@@ -2831,8 +2816,8 @@ class testcaseModel extends model
         $libCases  = $this->loadModel('caselib')->getLibCases($libID, 'all');
         foreach($libCases as $caseID => $case)
         {
-            $moduleCount = zget($caseModuleCount, $caseID, 0);
-            if(!empty($moduleCount) && $moduleCount >= $maxCount)
+            $caseModuleCount = zget($caseModuleCount, $caseID, 0);
+            if(!empty($caseModuleCount) && $caseModuleCount >= $maxCount)
             {
                 $canNotImport[$caseID] = $caseID;
             }
@@ -2980,7 +2965,7 @@ class testcaseModel extends model
             $this->config->testcase->search['params']['branch']['values'] = array('' => '', BRANCH_MAIN => $this->lang->branch->main) + $branches + array('all' => $this->lang->branch->all);
         }
 
-        if(!$this->config->testcase->needReview && empty($this->config->testcase->forceReview)) unset($this->config->testcase->search['params']['status']['values']['wait']);
+        if(!$this->config->testcase->needReview) unset($this->config->testcase->search['params']['status']['values']['wait']);
 
         $this->config->testcase->search['actionURL'] = $actionURL;
         $this->config->testcase->search['queryID']   = $queryID;
@@ -3029,7 +3014,7 @@ class testcaseModel extends model
             }
         }
 
-        if(!$this->config->testcase->needReview && empty($this->config->testcase->forceReview)) unset($this->config->testcase->search['params']['status']['values']['wait']);
+        if(!$this->config->testcase->needReview) unset($this->config->testcase->search['params']['status']['values']['wait']);
 
         $_SESSION['searchParams']['module'] = 'testcase';
         $searchConfig = $this->loadModel('search')->processBuildinFields('testcase', $this->config->testcase->search);

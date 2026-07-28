@@ -16,24 +16,6 @@ declare(strict_types=1);
 class baseControl
 {
     /**
-     * 是否收集 FormData，用于补全 Form 表单。
-     * Collect form data.
-     *
-     * @var bool
-     * @access public
-     */
-    public $getFormData = false;
-
-    /**
-     * Form 表单数据。
-     * FormData.
-     *
-     * @var array
-     * @access public
-     */
-    public $formData = array();
-
-    /**
      * 全局对象 $app。
      * The global $app object.
      *
@@ -707,40 +689,6 @@ class baseControl
      */
     public function parseJSON(string $moduleName, string $methodName)
     {
-        if(isset($this->app->apiVersion) and $this->app->apiVersion == 'v2')
-        {
-            header('Content-Type: application/json');
-
-            $this->view->status = is_object($this->view) ? 'success' : 'fail';
-
-            unset($this->view->app);
-            unset($this->view->config);
-            unset($this->view->lang);
-            unset($this->view->header);
-            unset($this->view->position);
-            unset($this->view->moduleTree);
-            unset($this->view->common);
-            unset($this->view->pager->app);
-            unset($this->view->pager->lang);
-
-            $output = $this->view ? json_encode($this->view) : null;
-
-            if($this->app->responseExtractor != '*')
-            {
-                $this->app->loadClass('jsonextractor');
-                $extractor = new jsonextractor();
-
-                $responseExtractor = 'status,' . $this->app->responseExtractor;
-                $this->output      = $extractor->extract($output, $responseExtractor);
-            }
-            else
-            {
-                $this->output = $output;
-            }
-
-            return;
-        }
-
         $output = array();
         unset($this->view->app);
         unset($this->view->config);
@@ -1034,17 +982,14 @@ class baseControl
      */
     public function render($moduleName = '', $methodName = '')
     {
-        if(empty($moduleName)) $moduleName = $this->moduleName;
-        if(empty($methodName)) $methodName = $this->methodName;
-
-        if($this->renderFormData($moduleName, $methodName)) return;
-        if($this->renderApiJSON($moduleName, $methodName)) return;
-
         if(isset($_GET['zin']) && $_GET['zin'] == '0')
         {
             $this->display($moduleName, $methodName);
             return;
         }
+
+        if(empty($moduleName)) $moduleName = $this->moduleName;
+        if(empty($methodName)) $methodName = $this->methodName;
 
         /* Load zin lib */
         $this->app->loadClass('zin', true);
@@ -1106,6 +1051,14 @@ class baseControl
         helper::import($commonFieldFile);
         helper::import($methodFieldFile);
 
+        /* 加载扩展的 field hook 文件。Load extension field hook files. */
+        $lowerMethodName    = strtolower($methodName);
+        $viewExtPath        = $this->app->getModuleExtPath($moduleName, 'ui');
+        $commonExtHookFiles = empty($viewExtPath['common']) ? array() : glob($viewExtPath['common'] . $lowerMethodName . ".*.field.hook.php");
+        $siteExtHookFiles   = empty($viewExtPath['site'])   ? array() : glob($viewExtPath['site']   . $lowerMethodName . ".*.field.hook.php");
+        $extHookFiles       = array_merge((array)$commonExtHookFiles, (array)$siteExtHookFiles);
+        foreach($extHookFiles as $extHookFile) helper::import($extHookFile);
+
         $this->setResponseHeader();
 
         ob_start();
@@ -1122,80 +1075,6 @@ class baseControl
          * At the end, chang the dir to the previous.
          */
         chdir($currentPWD);
-    }
-
-    /**
-     * 渲染视图并收集 API v2 表单数据。
-     * Render the view and collect form data for API v2.
-     *
-     * @param  string $moduleName
-     * @param  string $methodName
-     * @access public
-     * @return bool
-     */
-    public function renderFormData(string $moduleName = '', string $methodName = ''): bool
-    {
-        if(!(isset($this->app->apiVersion) and $this->app->apiVersion == 'v2' and $this->getFormData)) return false;
-
-        /* Load zin lib */
-        $this->app->loadClass('zin', true);
-        \zin\loadConfig();
-
-        $results  = $this->setViewFile($moduleName, $methodName, 'ui');
-        $viewFile = $results;
-        if(is_array($results)) extract($results);
-
-        $currentPWD = getcwd();
-        chdir(dirname($viewFile));
-
-        $context = \zin\context();
-        $context->control = $this;
-        $context->data    = (array)$this->view;
-
-        extract($context->data);
-
-        if(!empty($hookFiles)) $context->addHookFiles($hookFiles);
-
-        $commonFieldFile = dirname($viewFile) . DS . 'common.field.php';
-        $methodFieldFile = dirname($viewFile) . DS . $methodName . '.field.php';
-        helper::import($commonFieldFile);
-        helper::import($methodFieldFile);
-
-        ob_start();
-        include $viewFile;
-
-        $this->setResponseHeader();
-
-        \zin\renderPage(array('type' => 'html'));
-        $content = ob_get_clean();
-
-        $this->app->loadClass('formdom');
-        $parser = new formdom(array('include_disabled' => true));
-
-        $this->formData = $parser->parse($content);
-
-        chdir($currentPWD);
-        return true;
-    }
-
-    /**
-     * 输出 API v2 的 JSON 内容。
-     * Output JSON content for API v2.
-     *
-     * @param  string $moduleName
-     * @param  string $methodName
-     * @access public
-     * @return bool
-     */
-    public function renderApiJSON(string $moduleName = '', string $methodName = ''): bool
-    {
-        if(!(isset($this->app->apiVersion) and $this->app->apiVersion == 'v2' and $this->viewType != 'html')) return false;
-
-        $this->parseJSON($moduleName, $methodName);
-
-        ob_start();
-        echo $this->output;
-        return true;
     }
 
     /**
@@ -1243,24 +1122,7 @@ class baseControl
 
         if(helper::isAjaxRequest() || $this->viewType == 'json')
         {
-            if(helper::isApiRequest())
-            {
-                if(isset($data['result']))
-                {
-                    $data['status'] = $data['result'];
-                    unset($data['result']);
-                }
-                elseif(!isset($data['status']))
-                {
-                    $data['status'] = 'success';
-                }
-
-                $response = helper::removeUTF8Bom(json_encode($data, JSON_UNESCAPED_UNICODE));
-                $this->app->outputXhprof();
-                return helper::end($response);
-            }
-
-            if(helper::isRunMode('xuanxuan'))
+            if(defined('RUN_MODE') && in_array(RUN_MODE, array('api', 'xuanxuan')))
             {
                 print(json_encode($data, JSON_UNESCAPED_UNICODE));
                 $response = helper::removeUTF8Bom(ob_get_clean());

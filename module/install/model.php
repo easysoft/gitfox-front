@@ -118,8 +118,7 @@ class installModel extends model
         $sql = trim($sql);
         if(!$sql) return '';
 
-        $schema = $this->config->db->schema ?? 'public';
-        $prefix = in_array($this->config->db->driver, $this->config->pgsqlDriverList) ? $schema : $this->config->db->name;
+        $prefix = in_array($this->config->db->driver, $this->config->pgsqlDriverList) ? 'public' : $this->config->db->name;
         $sql    = str_replace("`{$this->config->db->defaultPrefix}", $prefix . ".`{$this->config->db->defaultPrefix}", $sql);
         $sql    = str_replace('`ztv_', $prefix . '.`ztv_', $sql);
         $sql    = str_replace($this->config->db->defaultPrefix, $this->config->db->prefix, $sql);
@@ -452,11 +451,9 @@ class installModel extends model
         $this->loadModel('bi');
 
         /* Prepare built-in sqls of bi. */
-        $isMysql = in_array($this->config->db->driver, $this->config->mysqlDriverList);
-        $isPgsql = in_array($this->config->db->driver, $this->config->pgsqlDriverList);
 
         $insertTables = array();
-        if($isMysql || $isPgsql)
+        if(in_array($this->config->db->driver, $this->config->mysqlDriverList) || in_array($this->config->db->driver, $this->config->pgsqlDriverList))
         {
             $chartSQLs    = $this->bi->prepareBuiltinChartSQL();
             $pivotSQLs    = $this->bi->prepareBuiltinPivotSQL();
@@ -464,7 +461,7 @@ class installModel extends model
         }
 
         $metricSQLs   = $this->bi->prepareBuiltinMetricSQL();
-        $screenSQLs   = $isMysql ? $this->bi->prepareBuiltinScreenSQL() : [];
+        $screenSQLs   = $this->bi->prepareBuiltinScreenSQL();
         $insertTables = array_merge($insertTables, $metricSQLs, $screenSQLs);
 
         try

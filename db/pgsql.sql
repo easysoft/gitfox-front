@@ -19,7 +19,7 @@ BEGIN
     WHERE
       t.table_type = 'BASE TABLE'
       AND c.column_default LIKE 'nextval(''%''::regclass)'
-      AND t.table_schema = current_schema()
+      AND t.table_schema = 'public'
   ) LOOP
     EXECUTE format('SELECT COALESCE(MAX(%I), 0) FROM %I', rec.column_name, rec.table_name)
     INTO max_id;

@@ -89,7 +89,7 @@ class providerModel extends model
         }
         else
         {
-            $provider->account = zget($provider, 'account', '');
+            $provider->account = '';
         }
 
         return $provider;
@@ -186,23 +186,24 @@ class providerModel extends model
         );
 
         $excludeTypes = array('gitfox', 'sonarqube');
-        $pipelines = $this->dao->select('*')
+        $pipelines = $this->dao->select('type, name, url, account, password, token, createdBy, createdDate, editedBy, editedDate, deleted')
             ->from('`' . $this->config->db->prefix . 'pipeline`')
             ->where('deleted')->eq('0')
             ->fetchAll();
 
         foreach($pipelines as $pipeline)
         {
+            // 过滤排除的类型
             $typeKey = strtolower(trim((string)$pipeline->type));
             if(in_array($typeKey, $excludeTypes, true)) continue;
             if(!isset($typeMap[$typeKey])) continue;
 
             $provider       = new stdclass();
-            $provider->id   = (int)$pipeline->id;
             $provider->type = $typeMap[$typeKey];
             $provider->name = (string)$pipeline->name;
             $provider->url  = (string)$pipeline->url;
 
+            // Jenkins 单独处理：token = base64(account:token)
             if($provider->type == 'Jenkins')
             {
                 $provider->token = base64_encode(((string)$pipeline->account) . ':' . ((string)$pipeline->token));

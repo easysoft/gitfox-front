@@ -1,8 +1,6 @@
 title: table zt_product
-author: Codex
+author: Wang Yuting
 version: "1.0"
 fields:
   - field: shadow
     range: 0-1
-  - field: acl
-    range: open{50},private{50}

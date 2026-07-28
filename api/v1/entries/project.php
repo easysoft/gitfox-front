@@ -23,7 +23,7 @@ class projectEntry extends entry
         $fields = strtolower($this->param('fields'));
 
         $control = $this->loadController('project', 'view');
-        $control->view((int)$projectID);
+        $control->view($projectID);
 
         $data = $this->getData();
 
@@ -120,7 +120,7 @@ class projectEntry extends entry
         $this->setPost('products', $products);
         $this->setPost('plans', $plans);
 
-        $control->edit((int)$projectID);
+        $control->edit($projectID);
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'fail') return $this->sendError(zget($data, 'code', 400), $data->message);
@@ -140,7 +140,7 @@ class projectEntry extends entry
     public function delete($projectID)
     {
         $control = $this->loadController('project', 'delete');
-        $control->delete((int)$projectID, 'yes');
+        $control->delete($projectID, 'yes');
 
         $this->getData();
         return $this->sendSuccess(200, 'success');

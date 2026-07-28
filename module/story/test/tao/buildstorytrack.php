@@ -4,7 +4,6 @@
 /**
 
 title=测试 storyModel->buildStoryTrack();
-timeout=0
 cid=18603
 
 - 执行$track @0
@@ -55,7 +54,7 @@ $relation->BID->range('1-5');
 $relation->BType->range('commit');
 $relation->gen(5);
 
-zenData('ops_repohistory')->gen(5);
+zenData('repohistory')->gen(5);
 
 global $tester;
 $storyModel = $tester->loadModel('story');

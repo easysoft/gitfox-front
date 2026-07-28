@@ -1,5 +1,6 @@
 <?php
-$now = helper::now();
+declare(strict_types=1);
+global $lang;
 
 $config->zahost->form = new stdclass();
 
@@ -13,7 +14,7 @@ $config->zahost->form->create['memory']      = array('required' => true,  'type'
 $config->zahost->form->create['diskSize']    = array('required' => true,  'type' => 'float',  'default' => 0);
 $config->zahost->form->create['type']        = array('required' => false, 'type' => 'string', 'default' => 'zahost');
 $config->zahost->form->create['status']      = array('required' => false, 'type' => 'string', 'default' => 'wait');
-$config->zahost->form->create['createdDate'] = array('required' => false, 'type' => 'date',   'default' => $now);
+$config->zahost->form->create['createdDate'] = array('required' => false, 'type' => 'date',   'default' => helper::now());
 $config->zahost->form->create['desc']        = array('required' => false, 'type' => 'string', 'default' => '', 'control' => 'editor');
 $config->zahost->form->create['zap']         = array('required' => false, 'type' => 'string', 'default' => $config->zahost->defaultPort);
 
@@ -25,5 +26,5 @@ $config->zahost->form->edit['extranet']   = array('required' => true,  'type' =>
 $config->zahost->form->edit['cpuCores']   = array('required' => true,  'type' => 'int',    'default' => 0);
 $config->zahost->form->edit['memory']     = array('required' => true,  'type' => 'float',  'default' => 0);
 $config->zahost->form->edit['diskSize']   = array('required' => true,  'type' => 'float',  'default' => 0);
-$config->zahost->form->edit['editedDate'] = array('required' => false, 'type' => 'date',   'default' => $now);
+$config->zahost->form->edit['editedDate'] = array('required' => false, 'type' => 'date',   'default' => helper::now());
 $config->zahost->form->edit['desc']       = array('required' => false, 'type' => 'string', 'default' => '', 'control' => 'editor');

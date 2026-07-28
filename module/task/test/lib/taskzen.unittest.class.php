@@ -1555,7 +1555,7 @@ class taskZenTest
             // 模拟方法的核心逻辑而不是直接调用复杂的protected方法
 
             // 模拟API模式检查
-            if(helper::isApiRequest()) {
+            if(defined('RUN_MODE') && RUN_MODE == 'api') {
                 return array('status' => 'success', 'data' => $taskID);
             }
 
@@ -1675,7 +1675,7 @@ class taskZenTest
             // 模拟方法的核心逻辑而不是直接调用复杂的protected方法
 
             // 模拟JSON视图或API模式检查
-            if(helper::isApiRequest()) {
+            if(defined('RUN_MODE') && RUN_MODE == 'api') {
                 return array('result' => 'success');
             }
 
@@ -1812,7 +1812,7 @@ class taskZenTest
             $response['closeModal'] = true;
 
             // 模拟API模式检查
-            if($tester->app->viewType == 'json' || (helper::isApiRequest()))
+            if($tester->app->viewType == 'json' || (defined('RUN_MODE') && RUN_MODE == 'api'))
             {
                 return array('result' => 'success', 'message' => '保存成功', 'id' => $task->id);
             }
@@ -1905,7 +1905,7 @@ class taskZenTest
             $response['message'] = '保存成功';
 
             // 模拟JSON/API模式
-            if($tester->app->getViewType() == 'json' || (helper::isApiRequest()))
+            if($tester->app->getViewType() == 'json' || (defined('RUN_MODE') && RUN_MODE == 'api'))
             {
                 $response['idList'] = $taskIdList;
                 return $response;
@@ -1969,7 +1969,7 @@ class taskZenTest
         try
         {
             // 模拟JSON视图类型的响应
-            if($viewType == 'json' || (helper::isApiRequest()))
+            if($viewType == 'json' || (defined('RUN_MODE') && RUN_MODE == 'api'))
             {
                 return array('result' => 'success');
             }
@@ -2369,56 +2369,4 @@ class taskZenTest
         // 返回view对象以便测试
         return $taskZen->view;
     }
-
-    /**
-     * Test processExportData method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function processExportDataTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('processExportData', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test responseAfterRecord method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function responseAfterRecordTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('responseAfterRecord', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
 }

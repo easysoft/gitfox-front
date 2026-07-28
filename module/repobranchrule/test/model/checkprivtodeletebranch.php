@@ -18,9 +18,11 @@ cid=0
 include dirname(__FILE__, 5) . '/test/lib/init.php';
 include dirname(__FILE__, 2) . '/lib/repobranchrule.unittest.class.php';
 
-$repo = zenData('ops_repo')->loadYaml('ops_repo', false, 2);
+$repo = zenData('repo');
 $repo->id->range('1-5');
 $repo->name->range('代码库{5}');
+$repo->SCM->range('Git{5}');
+$repo->deleted->range('0{5}');
 $repo->gen(5);
 
 $branchTypeTable = zenData('ops_branch_type');

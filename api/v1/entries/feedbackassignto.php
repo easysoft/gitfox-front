@@ -21,7 +21,7 @@ class feedbackAssignToEntry extends entry
     public function get($feedbackID)
     {
         $control = $this->loadController('feedback', 'assignTo');
-        $control->assignTo((int)$feedbackID);
+        $control->assignTo($feedbackID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');
@@ -45,7 +45,7 @@ class feedbackAssignToEntry extends entry
         $fields = 'assignedTo,comment,mailto';
         $this->batchSetPost($fields);
 
-        $control->assignTo((int)$feedbackID);
+        $control->assignTo($feedbackID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

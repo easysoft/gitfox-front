@@ -81,7 +81,7 @@ class programplan extends control
         }
         setcookie('ganttType', json_encode(array($this->app->tab => array($projectID => $type))), $this->config->cookieLife, $this->config->webRoot, '', false, true);
 
-        if(!helper::isApiRequest()) $projectID = $this->project->checkAccess($projectID, $this->project->getPairsByProgram());
+        if(!defined('RUN_MODE') || RUN_MODE != 'api') $projectID = $this->project->checkAccess($projectID, $this->project->getPairsByProgram());
 
         /* Get the product under the project and adjust the three-level navigation action button. */
         $products = $this->loadModel('product')->getProducts($projectID);
@@ -625,13 +625,10 @@ class programplan extends control
      */
     public function rollbackGanttVersion(int $projectID, int $versionID = 0)
     {
-        /* 已关闭项目和执行禁止修改时不允许回滚版本。*/
-        $project = $this->programplan->fetchByID($projectID, 'project');
-        if(!empty($project) && !$this->programplan->canRollbackGanttVersion($project)) return $this->send(array('result' => 'fail', 'message' => $this->lang->programplan->closedCallback));
-
         /* 目标版本中执行的起止日期超出项目起止日期时提示无法回滚。*/
         $targetVersion = $this->programplan->getGanttDataByVersion($versionID);
         $targetData    = $targetVersion['data'] ?? array();
+        $project       = $this->programplan->fetchByID($projectID, 'project');
         $minPlanBegin  = $maxPlanEnd = '';
         foreach($targetData as $version)
         {

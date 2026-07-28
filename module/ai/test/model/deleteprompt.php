@@ -32,9 +32,6 @@ $table->gen(10);
 
 su('admin');
 
-global $config;
-$config->debug = 0;
-
 $aiTest = new aiModelTest();
 
 r($aiTest->deletePromptTest(1)) && p() && e('1');

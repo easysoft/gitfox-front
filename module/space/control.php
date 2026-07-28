@@ -21,25 +21,25 @@ class space extends control
      * @access public
      * @return void
      */
-    public function browse(string $type = 'all', int $queryID = 0, int $recTotal = 20, int $recPerPage = 20, int $pageID = 1)
+    public function browse(int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
     {
-        $type = strtolower($type);
-
         $serverHeath = $this->loadModel('gitfox')->checkHealth();
-        if(!$serverHeath) return $this->locate($this->createLink('gitfox', "installGitFox"));
-        if($serverHeath == 'upgrade') return $this->locate($this->createLink('gitfox', 'upgradeGitFox'));
+        if(!$serverHeath) return $this->locate($this->createLink('gitfox', "devopsIntroduction"));
 
         $this->space->setMenu();
         $this->app->loadClass('pager', true);
         $pager = pager::init($recTotal, $recPerPage, $pageID);
 
-        $queryID = $type == 'bysearch' ? $queryID : 0;
-        $actionURL = $this->createLink('space', 'browse', "type=bysearch&queryID=myQueryID&recTotal={$recTotal}&recPerPage={$recPerPage}&pageID={$pageID}");
-        $this->space->buildSearchForm($queryID, $actionURL);
+        $spaces = $this->space->getListByAccount($this->app->user->account, $pager);
+        if(!empty($spaces->data))
+        {
+            $pager->recTotal   = $spaces->pager->total;
+            $pager->recPerPage = $spaces->pager->pageSize;
+            $pager->pageID     = $spaces->pager->page;
+        }
 
-        $spaces  = $this->space->getListByAccount($this->app->user->account, $pager, $type, $queryID);
-
-        foreach($spaces as $space)
+        $spaces = zget($spaces, 'data', array());
+        foreach($spaces as &$space)
         {
             $space->desc    = str_replace('&nbsp;', ' ', strip_tags(htmlspecialchars_decode($space->desc)));
             $space->manager = '';
@@ -55,7 +55,6 @@ class space extends control
         $this->view->spaces = $spaces;
         $this->view->users  = $this->loadModel('user')->getPairs('noletter|noempty|nodeleted|noclosed');
         $this->view->pager  = $pager;
-        $this->view->type   = $type;
         $this->display();
     }
 
@@ -111,7 +110,6 @@ class space extends control
             }
         }
 
-        $users = $this->loadModel('user')->getPairs('noletter|noempty|nodeleted|noclosed');
         if($_POST)
         {
             $formData = form::data($this->config->space->form->edit)
@@ -123,25 +121,6 @@ class space extends control
 
             if(!empty($changes))
             {
-                foreach($changes as &$change)
-                {
-                    if($change['field'] != 'manager') continue;
-                    if(!empty($change['old']))
-                    {
-                        $oldManagers = explode(',', $change['old']);
-                        $change['old'] = '';
-                        foreach($oldManagers as $oldManager) $change['old'] .= zget($users, $oldManager) . ',';
-                    }
-                    if(!empty($change['new']))
-                    {
-                        $newManagers = explode(',', $change['new']);
-                        $change['new'] = '';
-                        foreach($newManagers as $newManager) $change['new'] .= zget($users, $newManager) . ',';
-                    }
-                    $change['old'] = trim($change['old'], ',');
-                    $change['new'] = trim($change['new'], ',');
-                }
-
                 $actionID = $this->loadModel('action')->create('space', $id, 'edited');
                 $this->action->logHistory($actionID, $changes);
             }
@@ -151,7 +130,7 @@ class space extends control
 
         $this->view->title = $this->lang->space->edit;
         $this->view->space = $space;
-        $this->view->users = $users;
+        $this->view->users = $this->loadModel('user')->getPairs('noletter|noempty|nodeleted|noclosed');
         $this->display();
     }
 
@@ -610,7 +589,7 @@ class space extends control
     public function ajaxTips(int $spaceID): void
     {
         $this->space->setMenu($spaceID);
-        $this->view->title   = $this->lang->space->tips;
+        $this->view->title   = $this->lang->space->create;
         $this->view->spaceID = $spaceID;
         $this->display();
     }
@@ -628,16 +607,6 @@ class space extends control
         $this->loadModel('group');
         if(!empty($_POST))
         {
-            if(!$this->post->sourceSpace)
-            {
-                return $this->sendError(array('sourceSpace' => sprintf($this->lang->error->notempty, $this->lang->space->sourceSpace)));
-            }
-            if(!$this->post->sourceGroup)
-            {
-                return $this->sendError(array('sourceGroup' => sprintf($this->lang->error->notempty, $this->lang->space->sourceGroup)));
-            }
-
-            $this->lang->space->name = $this->lang->group->name;
             $newGroup = form::data($this->config->group->form->copy)
                 ->add('devopsSpace', $spaceID)
                 ->get();

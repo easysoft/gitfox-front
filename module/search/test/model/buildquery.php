@@ -12,11 +12,10 @@ cid=18295
 - 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'query'  @(( 1 = 1  AND `title`  LIKE '%0%' ) AND ( 1 = 1  ))
 - 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'query'  @(( 1 = 1  ) AND ( 1 = 1  ))
 - 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'form' 第0条的field属性 @title
-- 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'form' 第1条的field属性 @status
+- 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'form' 第1条的field属性 @title
 - 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'query'  @(( 1 = 1  AND `title`  LIKE '%bug%' AND `status` = 'active'  ) AND ( 1 = 1  ))
 - 执行search模块的buildQueryTest方法，参数是$searchConfig, $postDatas, 'query'  @(( 1 = 1  AND `title`  LIKE '%bug%' OR `status` = 'active'  ) AND ( 1 = 1  ))
 - 执行search2模块的buildQueryTest方法，参数是$searchConfig2, $postDatas2, 'query'  @(( 1 = 1  OR `status` = 'active'  ) AND ( 1 = 1  ))
-- 执行search3模块的buildQueryTest方法，参数是$searchConfig3, $postDatas3, 'query'  @(( 1 = 1  AND (`story` = '' OR `story` = '0') ) AND ( 1 = 1  ))
 
 */
 
@@ -74,7 +73,7 @@ $postData5->andOr2    = 'and';
 $postData5->operator2 = 'include';
 $postData5->value2    = '';
 $postDatas = array($postData5);
-r($search->buildQueryTest($searchConfig, $postDatas, 'form')) && p('1:field') && e('status');
+r($search->buildQueryTest($searchConfig, $postDatas, 'form')) && p('1:field') && e('title');
 
 // 测试步骤5：多个搜索条件组合
 $postData1->value1 = 'bug';
@@ -108,18 +107,3 @@ $postData4->operator1 = 'include';
 $postData4->value1    = 'test';
 $postDatas2 = array($postData4);
 r($search2->buildQueryTest($searchConfig2, $postDatas2, 'query')) && p() && e("(( 1 = 1  OR `status` = 'active'  ) AND ( 1 = 1  ))");
-
-// 测试步骤8：下拉选择「空」时同时匹配空字符串和 0
-$searchConfig3 = $searchConfig;
-$searchConfig3['fields']['story'] = 'Story';
-$searchConfig3['params']['story'] = array('operator' => '=', 'control' => 'select', 'values' => array('1' => 'Story 1'));
-
-$search3 = new searchModelTest();
-unset($_POST['field2'], $_POST['andOr2'], $_POST['operator2'], $_POST['value2']);
-$postDataNull = new stdclass();
-$postDataNull->field1    = 'story';
-$postDataNull->andOr1    = 'and';
-$postDataNull->operator1 = '=';
-$postDataNull->value1    = 'null';
-$postDatas3 = array($postDataNull);
-r($search3->buildQueryTest($searchConfig3, $postDatas3, 'query')) && p() && e("(( 1 = 1  AND (`story` = '' OR `story` = '0') ) AND ( 1 = 1  ))");

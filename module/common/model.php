@@ -150,7 +150,7 @@ class commonModel extends model
         $today = helper::today();
         if($project->status == 'wait')
         {
-            $realBegan = helper::isZeroDate($project->realBegan) ? $this->dao->select('`realBegan`')->from(TABLE_PROJECT)->where('id')->eq($execution->id)->fetch('realBegan') : $project->realBegan;
+            $realBegan = helper::isZeroDate($project->realBegan) ? $this->dao->select('realBegan')->from(TABLE_PROJECT)->where('id')->eq($execution->id)->fetch('realBegan') : $project->realBegan;
             $this->dao->update(TABLE_PROJECT)
                  ->set('status')->eq('doing')
                  ->set('realBegan')->eq($realBegan)
@@ -447,7 +447,7 @@ class commonModel extends model
     {
         if(in_array("$module.$method", $this->config->openMethods)) return true;
 
-        if($this->loadModel('user')->isLogon() || (!empty($this->app->company->guest) && $this->app->user->account == 'guest'))
+        if($this->loadModel('user')->isLogon() or ($this->app->company->guest and $this->app->user->account == 'guest'))
         {
             if(in_array("$module.$method", $this->config->logonMethods)) return true;
             if($module == 'block' && stripos(',dashboard,printblock,create,edit,delete,close,reset,layout,', ",{$method},") !== false) return true;
@@ -967,7 +967,7 @@ class commonModel extends model
             if(in_array($check, array('lastediteddate', 'lasteditedby', 'assigneddate', 'editedby', 'editeddate', 'editingdate', 'uid', 'prevstatus', 'prevassignedto'))) continue;
             if(in_array($check, array('finisheddate', 'canceleddate', 'hangupeddate', 'lastcheckeddate', 'activateddate', 'closeddate', 'actualcloseddate')) && $value == '') continue;
 
-            if(property_exists($old, $key) && !is_object($old->$key) && !is_array($old->$key))
+            if(isset($old->$key) && !is_object($old->$key) && !is_array($old->$key))
             {
                 if($config->edition != 'open' && isset($dateFields[$key])) $old->$key = formatTime($old->$key);
 
@@ -1245,7 +1245,6 @@ eof;
                 {
                     static::$userPrivs = array();
                     $this->resetProjectPriv(); // 项目有继承和重新定义两种权限，在此处需要重置权限。
-                    if($this->isOpenMethod($module, $method)) return true; // ajax 依赖的权限在项目权限重置后才生效，需重新判断。
                     if(commonModel::hasPriv($module, $method)) return true;
                 }
 
@@ -1449,11 +1448,9 @@ eof;
         /* If is the program/project/product/execution admin, have all program privileges. */
         if($app->config->vision != 'lite' && commonTao::isProjectAdmin($module, $object)) return true;
 
-        if(empty($app->user->rights)) return false;
-
         /* If not super admin, check the rights. */
-        $rights = $app->user->rights['rights'] ?? [];
-        $acls   = $app->user->rights['acls'] ?? [];
+        $rights = $app->user->rights['rights'];
+        $acls   = $app->user->rights['acls'];
 
         /* White list of import method. */
         $canImport = isset($rights[$module]['import']) && commonModel::hasDBPriv($object, $module, 'import');
@@ -1512,7 +1509,7 @@ eof;
             ->leftJoin(TABLE_USERGROUP)->alias('t2')->on('t1.id = t2.`group`')
             ->leftJoin(TABLE_GROUPPRIV)->alias('t3')->on('t2.`group`=t3.`group`')
             ->where('t1.project')->eq($program->id)
-            ->andWhere('t1.`devopsSpace`')->eq(0)
+            ->andWhere('t1.devopsSpace')->eq(0)
             ->andWhere('t2.account')->eq($this->app->user->account)
             ->fetchAll();
 
@@ -1737,7 +1734,7 @@ eof;
      */
     public static function getSysURL(): string
     {
-        if(helper::isRunMode('test')) return '';
+        if(defined('RUN_MODE') && RUN_MODE == 'test') return '';
 
         $httpType = (isset($_SERVER["HTTPS"]) and $_SERVER["HTTPS"] == 'on') ? 'https' : 'http';
         if(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) and strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https') $httpType = 'https';
@@ -1939,7 +1936,7 @@ eof;
      */
     public static function canBeChanged(string $module, $object = null): bool
     {
-        if(helper::isApiRequest()) return true;
+        if(defined('RUN_MODE') && RUN_MODE == 'api') return true;
 
         if(empty($object)) return true;
 
@@ -2876,14 +2873,14 @@ eof;
         /* 如果当前账户是项目负责人，则可以修改团队成员日志。*/
         if(!empty($effort->project))
         {
-            $PM = $this->dao->select('`PM`')->from(TABLE_PROJECT)->where('id')->eq($effort->project)->fetch('PM');
+            $PM = $this->dao->select('PM')->from(TABLE_PROJECT)->where('id')->eq($effort->project)->fetch('PM');
             if($PM == $this->app->user->account) return true;
         }
 
         /* 如果当前账户是执行负责人，则可以修改团队成员日志。*/
         if(!empty($effort->execution))
         {
-            $PM = $this->dao->select('`PM`')->from(TABLE_PROJECT)->where('id')->eq($effort->execution)->fetch('PM');
+            $PM = $this->dao->select('PM')->from(TABLE_PROJECT)->where('id')->eq($effort->execution)->fetch('PM');
             if($PM == $this->app->user->account) return true;
         }
 
@@ -4024,28 +4021,26 @@ EOF;
             $spaceID = $repo->spaceID;
         }
 
-        if(empty($spaceID) && $this->session->devopsSpace)
-        {
-            /* URL 中无 repoID/space/spaceID 但 session 有 spaceID → 用户已离开空间，清 session 恢复全局权限。 */
-            if(empty($params['repoID']) && empty($params['space']) && empty($params['spaceID']))
-            {
-                $this->session->set('devopsSpace', 0);
-            }
-            else
-            {
-                $spaceID = $this->session->devopsSpace;
-            }
-        }
+        if(empty($spaceID) && $this->session->devopsSpace) $spaceID = $this->session->devopsSpace;
         if(empty($spaceID)) return;
 
         $space = $this->loadModel('space')->getByID((int)$spaceID);
         if(empty($space)) return;
 
-        $spaceRightGroup = $this->loadModel('group')->getDevOpsSpacePrivs((int)$spaceID) ?? array();
+        $spaceRights = $this->dao->select('t1.name, t3.module, t3.method')->from(TABLE_GROUP)->alias('t1')
+            ->leftJoin(TABLE_USERGROUP)->alias('t2')->on('t1.id = t2.`group`')
+            ->leftJoin(TABLE_GROUPPRIV)->alias('t3')->on('t2.`group`=t3.`group`')
+            ->where('t1.project')->eq(0)
+            ->andWhere('t1.devopsSpace')->eq($spaceID)
+            ->andWhere('t2.account')->eq($this->app->user->account)
+            ->fetchAll();
+
+        /* Group priv by module the same as rights. */
+        $spaceRightGroup = array();
+        foreach($spaceRights as $spaceRight) $spaceRightGroup[strtolower($spaceRight->module)][strtolower($spaceRight->method)] = 1;
 
         /* Reset priv by space privway. */
         $this->app->user = clone $_SESSION['user'];
-        if(is_object($this->app->user->rights)) $this->app->user->rights = clone $this->app->user->rights;
         $rights = $this->app->user->rights['rights'];
 
         if($space->auth == 'extend') $this->app->user->rights['rights'] = array_merge_recursive($spaceRightGroup, $rights);
@@ -4076,8 +4071,7 @@ EOF;
             $devopsSpaceRights = zget($this->app->user->rights['rights'], 'space', array());
             if(isset($devopsSpaceRights['browse']) and !isset($rights['space']['browse'])) $rights['project']['browse'] = 1;
 
-            $this->app->user->rights['rights']        = $rights;
-            $_SESSION['user']->rights['rights'] = $rights;
+            $this->app->user->rights['rights'] = $rights;
         }
     }
 

@@ -166,8 +166,8 @@ formPanel
             set::width(isInModal() ? '1/2' : '1/4'),
             set::name('releasedDate'),
             set::label($lang->release->releasedDate),
-            set::value(helper::now()),
-            set::control('datetimePicker')
+            set::value(helper::today()),
+            set::control('date')
         )
     ),
     formGroup

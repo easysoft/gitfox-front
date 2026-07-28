@@ -372,14 +372,11 @@ class docZen extends doc
      * 在创建文档后的返回。
      * Return after create a document.
      *
-     * @param  array       $docResult
-     * @param  string      $objectType
-     * @param  string      $from
-     * @param  object|null $docData
+     * @param  array     $docResult
      * @access protected
      * @return void
      */
-    protected function responseAfterCreate(array $docResult, string $objectType = 'doc', $from = '', ?object $docData = null)
+    protected function responseAfterCreate(array $docResult, string $objectType = 'doc', $from = '')
     {
         $docID = $docResult['id'];
         $files = zget($docResult, 'files', '');
@@ -387,15 +384,7 @@ class docZen extends doc
         $fileAction = '';
         if(!empty($files)) $fileAction = $this->lang->addFiles . implode(',', $files) . "\n";
 
-        $actionID = $this->action->create($objectType, $docID, 'Created', $fileAction, '', '', false);
-
-        /* 普通文档创建时发送 @ 通知；模板创建不发送。 */
-        /* Send @ mention notices when creating a normal doc; skip for templates. */
-        if($docData && $actionID && $objectType == 'doc')
-        {
-            $docData->id = $docID;
-            $this->loadModel('message')->sendMentionNotice('doc', 'create', $actionID, $docData);
-        }
+        $this->action->create($objectType, $docID, 'Created', $fileAction, '', '', false);
 
         if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $docID));
 
@@ -583,7 +572,7 @@ class docZen extends doc
         if(!$libID && !empty($libPairs)) $libID = key($libPairs);
         if(empty($lib) && $libID) $lib = $this->doc->getLibByID($libID);
 
-        $this->setObjectsForCreate($objectType, empty($lib) ? null : $lib, $unclosed, $objectID);
+        $this->setObjectsForCreate(empty($lib->type) ? '' : $lib->type, empty($lib) ? null : $lib, $unclosed, $objectID);
 
         $this->view->objectType = $objectType;
         $this->view->spaceType  = $objectType;
@@ -872,7 +861,6 @@ class docZen extends doc
         $this->view->productID      = $doc->product;
         $this->view->projectID      = $doc->project;
         $this->view->executionID    = $doc->execution;
-        $this->view->versionMarkers = $this->doc->getVersionMarkers($docID);
     }
 
     /**
@@ -1867,20 +1855,6 @@ class docZen extends doc
             {
                 if($lib->product && $lib->type == 'product') $spaceType = 'product';
                 if($lib->project && $lib->type == 'project') $spaceType = 'project';
-            }
-        }
-
-        if($spaceType == 'execution' || $lib->type == 'execution')
-        {
-            $spaceType = 'project';
-            if(!empty($lib->project))
-            {
-                $space = (string)$lib->project;
-            }
-            elseif(!empty($lib->execution))
-            {
-                $execution = $this->loadModel('execution')->getByID((int)$lib->execution);
-                if($execution) $space = (string)$execution->project;
             }
         }
 

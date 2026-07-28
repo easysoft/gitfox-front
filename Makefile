@@ -69,13 +69,11 @@ common:
 	# 把隐式可空类型声明 Type $param = null 改为显式可空类型声明 ?Type $param = null
 	php misc/fix_nullable_types.php zentaopms/lib/vendor > /dev/null && rm misc/nullable_types_fix_*.log
 	if [ ! -d "zentaopms/www/js/zui3/editor" ]; then mkdir -p zentaopms/www/js/zui3/editor; fi
-	curl https://$(GITFOX_HOST)/_artifacts/space/zentao/default/zui3/static/blocksuite/$(SUITEVERSION)/blocksuite-$(SUITEVERSION).tar.gz  | tar zxf - -C zentaopms/www/js/zui3/editor/
+	curl https://$(GITFOX_HOST)/_artifacts/zentao/raw/zui3/static/blocksuite/$(SUITEVERSION)/blocksuite-$(SUITEVERSION).tar.gz  | tar zxf - -C zentaopms/www/js/zui3/editor/
 	if [ ! -d "zentaopms/www/js/zui3/whiteboard" ]; then mkdir -p zentaopms/www/js/zui3/whiteboard; fi
-	curl https://$(GITFOX_HOST)/_artifacts/space/zentao/default/zui3/static/whiteboard/$(WHITEBDVERSION)/whiteboard-$(WHITEBDVERSION).tar.gz  | tar zxf - -C zentaopms/www/js/zui3/whiteboard/
+	curl https://$(GITFOX_HOST)/_artifacts/zentao/raw/zui3/static/whiteboard/$(WHITEBDVERSION)/whiteboard-$(WHITEBDVERSION).tar.gz  | tar zxf - -C zentaopms/www/js/zui3/whiteboard/
 	# disable the autoExclude function.
 	sed -i 's/\$$autoExclude = true;/\$$autoExclude = false;/' zentaopms/lib/base/dao/dao.class.php
-	# 禁用 MySQL 严格模式
-	sed -i 's/\$$config->db->strictMode    = true;/\$$config->db->strictMode    = false;/' zentaopms/config/config.php
 	mkdir zentaopms/tmp
 	mkdir zentaopms/tmp/cache/
 	mkdir zentaopms/tmp/duckdb/
@@ -149,7 +147,7 @@ zentaoxx:
 	sed -i "s/text NOT NULL DEFAULT ''/text NULL/" zentaoxx/db_bak/*.sql
 	sed -i "s/text NOT NULL/text NULL/" zentaoxx/db_bak/*.sql
 	sed -i "s/ENGINE=MyISAM/ENGINE=InnoDB/" zentaoxx/db_bak/*.sql
-	sed -i -re "s/(CHARSET)=utf8(\w+)?;/\1=utf8mb4;/g" zentaoxx/db_bak/*.sql
+	sed -i "s/utf8/utf8mb4/g" zentaoxx/db_bak/*.sql
 	sed -i "/`xxb_user` ADD `clientStatus`/d; /`xxb_user` ADD `clientLang`/d; /`xxb_file` CHANGE `pathname`/d" zentaoxx/db_bak/xuanxuan.sql
 	cp zentaoxx/db_bak/upgradexuanxuan*.sql zentaoxx/db_bak/xuanxuan.sql zentaoxx/db/
 	rm -rf zentaoxx/db_bak/

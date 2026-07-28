@@ -70,40 +70,9 @@ $lang->upgrade->continue      = '继续升级';
 $lang->upgrade->noteVersion   = "务必选择正确的版本，否则会造成数据丢失。";
 $lang->upgrade->fromVersion   = '原来的版本';
 $lang->upgrade->toVersion     = '升级到';
-
 $lang->upgrade->confirm       = '确认要执行的SQL语句';
 $lang->upgrade->sureExecute   = '确认执行';
 $lang->upgrade->upgradingTips = '正在升级中，请耐心等待，切勿刷新页面、断电、关机！';
-$lang->upgrade->executeFailed = '升级请求中断，请刷新页面后重试。已执行的变更会自动跳过，不会重复执行。';
-
-$lang->upgrade->dataProcess           = '数据处理';
-$lang->upgrade->dataProcessTip        = '正在执行数据处理。请耐心等待，切勿刷新页面或关闭浏览器！';
-$lang->upgrade->dataProcessStepsTitle = '待处理事项';
-$lang->upgrade->dataProcessProcessed  = '已处理：%s / %s';
-
-$lang->upgrade->tableEngine = new stdClass();
-$lang->upgrade->tableEngine->common  = '更新表引擎';
-$lang->upgrade->tableEngine->change  = '将数据库表 %s 的引擎更新为 InnoDB';
-$lang->upgrade->tableEngine->todo    = '待更新';
-$lang->upgrade->tableEngine->done    = '更新';
-$lang->upgrade->tableEngine->failed  = '跳过';
-$lang->upgrade->tableEngine->success = '表 %s 的引擎已成功更新为 InnoDB。';
-$lang->upgrade->tableEngine->fail    = '表 %s 的引擎已跳过更新';
-$lang->upgrade->tableEngine->busy    = '表 %s 正在被使用，稍后重试。';
-
-$lang->upgrade->charset = new stdClass();
-$lang->upgrade->charset->common  = '更新字符集';
-$lang->upgrade->charset->update  = '更新';
-$lang->upgrade->charset->change  = '给数据库表 %s 更新字符集';
-$lang->upgrade->charset->success = '表 %s 的字符集已成功更新。';
-$lang->upgrade->charset->fail    = '表 %s 的字符集已跳过更新，原因：%s。';
-
-$lang->upgrade->dbView = new stdClass();
-$lang->upgrade->dbView->common     = '更新数据库视图';
-$lang->upgrade->dbView->todo       = '更新';
-$lang->upgrade->dbView->regenerate = '更新数据库视图 %s';
-
-$lang->upgrade->noNeedProcess = '无需处理';
 $lang->upgrade->forbiddenExt  = '以下插件与新版本不兼容，已经自动禁用：';
 $lang->upgrade->updateFile    = '需要更新附件信息。';
 $lang->upgrade->showSQLLog    = '检查到你的数据库跟标准不一致，正在尝试修复。以下是修复SQL语句。';
@@ -145,9 +114,9 @@ $lang->upgrade->list            = '的列表';
 $lang->upgrade->next            = '下一步';
 $lang->upgrade->back            = '上一步';
 
-$lang->upgrade->upgradeDocs    = '升级文档数据';
-$lang->upgrade->upgradingDocs  = '正在升级文档，请稍候...';
-$lang->upgrade->upgradeDocsTip = '检测到 %s 个文档相关数据需要升级';
+$lang->upgrade->upgradeDocs     = '升级文档数据';
+$lang->upgrade->upgradingDocs   = '正在升级文档，请稍候...';
+$lang->upgrade->upgradeDocsTip  = '检测到 %s 个文档相关数据需要升级';
 
 $lang->upgrade->upgradeDocTemplates    = '升级文档模板数据';
 $lang->upgrade->upgradingDocTemplates  = '正在升级文档模板，请稍候...';
@@ -168,9 +137,8 @@ $lang->upgrade->projectCount      = "%s个{$lang->projectCommon}";
 $lang->upgrade->mergeByProject    = "当前提供如下2种数据迁移方式，如果历史的{$lang->projectCommon}都是长周期的，那么我们建议把历史的{$lang->projectCommon}作为项目升级。</br>如果历史的{$lang->projectCommon}都是短周期的，那么我们建议把历史的{$lang->projectCommon}作为{$lang->executionCommon}升级。";
 $lang->upgrade->mergeRepoTips     = "将选中的版本库归并到所选产品下。";
 $lang->upgrade->needBuild4Add     = '本次升级需要创建索引。请到 [后台->系统设置->重建索引] 页面，重新创建索引。';
-$lang->upgrade->needChangeEngine  = '检测到部分表仍未转换为 InnoDB 引擎，请到 [后台->系统设置->数据处理->表引擎] 页面继续处理。';
-$lang->upgrade->needChangeCharset = '检测到部分表字符集仍未更新，请到 [后台->系统设置->数据处理->字符集] 页面继续处理。';
-$lang->upgrade->errorEngineInnodb = '您当前的数据库不支持使用 InnoDB 数据表引擎，请修改为 MyISAM 后重试。';
+$lang->upgrade->needChangeEngine  = '本次升级需要更换表引擎， [后台->系统设置->表引擎] 页面更换引擎。';
+$lang->upgrade->errorEngineInnodb = '您当前的数据库不支持使用InnoDB数据表引擎，请修改为MyISAM后重试。';
 $lang->upgrade->duplicateProject  = "同一个项目集内项目名称不能重复，请调整重名的项目名称";
 $lang->upgrade->upgradeTips       = "历史删除数据不参与升级，升级后将不支持还原，请知悉";
 $lang->upgrade->moveEXTFileFail   = '迁移文件失败， 请执行上面命令后刷新！';
@@ -308,15 +276,3 @@ $lang->upgrade->changeActions['updateValue'] = '更新数据库表 %TABLE% 的�
 $lang->upgrade->changeActions['deleteValue'] = '从数据库表 %TABLE% 删除数据';
 $lang->upgrade->changeActions['method']      = '执行 %MODULE% 模块的 %METHOD% 方法';
 $lang->upgrade->changeActions['other']       = '其他操作';
-
-$lang->upgrade->upgradeFeatureDesc = '22.4版本，集成 DevOps 4.0 强大功能';
-
-$lang->upgrade->upgradeFeatures = array();
-$lang->upgrade->upgradeFeatures[1][] = array('icon' => 'rocket',    'title' => '全面升级', 'desc' => '自研GitFox引擎，打通CI/CD流程，实现代码的全生命周期管理。');
-$lang->upgrade->upgradeFeatures[1][] = array('icon' => 'code-fork', 'title' => '分支类型', 'desc' => '支持自定义分支类型，按分支类型设定规则，管理更规范。');
-$lang->upgrade->upgradeFeatures[1][] = array('icon' => 'bell',      'title' => 'WebHook',  'desc' => '代码库级别的 Webhook 配置，轻松对接外部系统，通知更实时。');
-$lang->upgrade->upgradeFeatures[1][] = array('icon' => 'checkbox',  'title' => '代码扫描', 'desc' => '内置 2000+ 扫描规则，自动检查规范与隐患，严把代码质量。');
-$lang->upgrade->upgradeFeatures[2][] = array('icon' => 'code',      'title' => '代码管理', 'desc' => '完整支持Git代码库管理，支持SVN代码库查看。');
-$lang->upgrade->upgradeFeatures[2][] = array('icon' => 'review',    'title' => '代码评审', 'desc' => '每次推送或合并请求均可发起评审，逐笔把关代码质量。');
-$lang->upgrade->upgradeFeatures[2][] = array('icon' => 'flow',      'title' => '流水线',   'desc' => '支持导入主流流水线（如 Jenkins），可配置多种触发方式。');
-$lang->upgrade->upgradeFeatures[2][] = array('icon' => 'stack',     'title' => '制品库',   'desc' => '多层级、多类型的制品管理，打通 CI/CD流程，流转安全高效。');

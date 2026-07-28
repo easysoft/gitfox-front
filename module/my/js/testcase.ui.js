@@ -30,8 +30,7 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
     const form = new FormData();
     checkedList.forEach(function(id)
     {
-        const rowData = dtable.$.getRowInfo(id).data;
-        form.append('caseIdList[]', rowData.case || rowData.id);
+        form.append('caseIdList[]', dtable.$.getRowInfo(id).data.case);
         form.append('runIdList[]', id);
     });
 

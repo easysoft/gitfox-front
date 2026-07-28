@@ -955,7 +955,7 @@ class programplanModel extends model
 
         $begin         = $end = helper::today();
         $deadlineList  = array();
-        $taskDateLimit = $this->dao->select('`taskDateLimit`')->from(TABLE_PROJECT)->where('id')->eq($projectID)->fetch('taskDateLimit');
+        $taskDateLimit = $this->dao->select('taskDateLimit')->from(TABLE_PROJECT)->where('id')->eq($projectID)->fetch('taskDateLimit');
         foreach($tasks as $taskID => $task)
         {
             if(!$isGantt && helper::isZeroDate($task->deadline)) continue;
@@ -1025,7 +1025,7 @@ class programplanModel extends model
     public function getGanttVersions(int $projectID, int $productID = 0, string $category = '', string $type = 'project'): array
     {
         /* 1. 甘特图创建的版本。 Gantt version. */
-        $ganttVersions = $this->dao->select("*, 'gantt' AS `reviewType`")->from(TABLE_OBJECT)
+        $ganttVersions = $this->dao->select("*, 'gantt' AS reviewType")->from(TABLE_OBJECT)
             ->where('type')->eq('taged')
             ->andWhere('status')->in('gantt,tmpGantt')
             ->andWhere('deleted')->eq(0)
@@ -1046,7 +1046,7 @@ class programplanModel extends model
             ->fetch('disabledFeatures');
 
         /* 2. 交付物的项目计划。 Project plan of deliverable. */
-        $deliverableVersions = strpos(",{$disabledFeatures},", ',deliverable,') !== false ? array() : $this->dao->select('t1.*, t2.type AS `reviewType`, t2.deliverable, t2.id AS reviewID')->from(TABLE_OBJECT)->alias('t1')
+        $deliverableVersions = strpos(",{$disabledFeatures},", ',deliverable,') !== false ? array() : $this->dao->select('t1.*, t2.type AS reviewType, t2.deliverable, t2.id AS reviewID')->from(TABLE_OBJECT)->alias('t1')
             ->leftJoin(TABLE_REVIEW)->alias('t2')->on('t1.id = t2.object')
             ->leftJoin(TABLE_DELIVERABLE)->alias('t3')->on('t1.category = t3.id')
             ->where('t1.project')->eq($projectID)
@@ -1062,7 +1062,7 @@ class programplanModel extends model
         $baselineVersions = array();
         if(strpos(",{$disabledFeatures},", ',cm,') === false)
         {
-            $baselineVersions = $this->dao->select('t1.id, t1.version, t1.category, t1.`categoryVersion`')->from(TABLE_OBJECT)->alias('t1')
+            $baselineVersions = $this->dao->select('t1.id, t1.version, t1.category, t1.categoryVersion')->from(TABLE_OBJECT)->alias('t1')
                 ->leftJoin(TABLE_REVIEW)->alias('t2')->on('t1.id = t2.object')
                 ->where('t1.project')->eq($projectID)
                 ->andWhere('t2.status')->eq('pass')
@@ -1163,7 +1163,7 @@ class programplanModel extends model
         $pausedTasksDate = array();
         if($pausedTasks)
         {
-            $pausedTasksDate = $this->dao->select('`objectID`,`date`')->from(TABLE_ACTION)->where('objectType')->eq('task')
+            $pausedTasksDate = $this->dao->select('objectID,`date`')->from(TABLE_ACTION)->where('objectType')->eq('task')
                 ->andWhere('action')->eq('paused')
                 ->andWhere('objectID')->in($pausedTasks)
                 ->orderBy('id')
@@ -1244,33 +1244,6 @@ class programplanModel extends model
         if($project->type == 'project') $version->project = $projectID;
         if(in_array($project->type, array('stage', 'sprint', 'kanban'))) $version->execution = $projectID;
         $this->dao->insert(TABLE_OBJECT)->data($version)->exec();
-    }
-
-    /**
-     * Check whether the gantt version can be rolled back.
-     * 检查甘特图版本是否可以回滚。
-     *
-     * @param  object $project
-     * @access public
-     * @return bool
-     */
-    public function canRollbackGanttVersion(object $project): bool
-    {
-        /* 已关闭项目禁止修改时不允许回滚。*/
-        if(!common::canModify('project', $project)) return false;
-
-        /* 已关闭执行禁止修改时，项目下存在已关闭执行也不允许回滚。*/
-        $closedStages = $this->dao->select('id,project,status')->from(TABLE_PROJECT)
-            ->where('project')->eq($project->id)
-            ->andWhere('status')->eq('closed')
-            ->andWhere('deleted')->eq('0')
-            ->fetchAll();
-        foreach($closedStages as $closedStage)
-        {
-            if(!common::canModify('execution', $closedStage)) return false;
-        }
-
-        return true;
     }
 
     /**
@@ -1451,7 +1424,7 @@ class programplanModel extends model
      * @access public
      * @return bool
      */
-    public function rollbackPoint(object $targetPoint, ?object $currentPoint = null): bool
+    public function rollbackPoint(object $targetPoint, object $currentPoint = null): bool
     {
         $pointObjectID = explode('-', $targetPoint->id)[2];
         $this->dao->update(TABLE_OBJECT)->set('enabled')->eq(1)->where('id')->eq($pointObjectID)->exec();

@@ -179,17 +179,15 @@ if($task->children)
             }
         }
     }
-    $cols     = $this->loadModel('datatable')->getSetting('task', 'children');
-    $children = initTableData($task->children, $cols, $this->task);
+    $children = initTableData($task->children, $config->task->dtable->children->fieldList, $this->task);
     $sections[] = setting()
         ->title($lang->task->children)
         ->control('dtable')
-        ->methodName('children')
-        ->customCols(true)
+        ->className('ring')
         ->defaultNestedState(true)
         ->onRenderCell(jsRaw('window.renderCell'))
+        ->cols(array_values($config->task->dtable->children->fieldList))
         ->userMap($users)
-        ->cols($cols)
         ->data($children)
         ->checkable(false);
 }

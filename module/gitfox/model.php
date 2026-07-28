@@ -14,13 +14,13 @@ class gitfoxModel extends model
     protected $repos = array();
 
     /**
-     * 获取 GitFox 健康状态及版本信息。
-     * Get GitFox health status and version info.
+     * 检查服务是否健康。
+     * Check service health.
      *
      * @access public
-     * @return object|false
+     * @return bool|string
      */
-    public function getHealth(): object|false
+    public function checkHealth(): bool|string
     {
         $url = $this->config->devops->gitfoxURL;
         if($this->config->devops->gitfoxPort) $url .= ':' . $this->config->devops->gitfoxPort;
@@ -30,28 +30,12 @@ class gitfoxModel extends model
         $result  = json_decode(common::http($url));
         if(empty($result) || empty($result->status) || $result->status != 'healthy') return false;
 
-        return $result;
-    }
+        $checkResult = 'healthy';
+        $version     = zget($result, 'version', '');
+        if($version != $this->config->devops->gitfoxVersion) $checkResult = 'upgrade';
+        if(!$version) $checkResult = 'beta';
 
-    /**
-     * 检查服务是否健康。
-     * Check service health.
-     *
-     * @param  object|false $health
-     * @access public
-     * @return bool|string
-     */
-    public function checkHealth(object|false|null $health = null): bool|string
-    {
-        if($health === null) $health = $this->getHealth();
-        if(!$health) return false;
-
-        $version = trim((string)zget($health, 'version', ''));
-        if($version === '') return 'beta';
-
-        $currentVersion  = ltrim($version, 'vV');
-        $requiredVersion = ltrim((string)$this->config->devops->gitfoxVersion, 'vV');
-        return version_compare($currentVersion, $requiredVersion, '<') ? 'upgrade' : 'healthy';
+        return $checkResult;
     }
 
     /**
@@ -59,17 +43,17 @@ class gitfoxModel extends model
      * Get gitfox server info.
      *
      * @access public
-     * @return object
+     * @return object|bool
      */
-    public function getServer(): object
+    public function getServer(): object|bool
     {
         $server = $this->dao->select('*')->from(TABLE_ENTRY)->where('code')->eq('gitfox')->fetch();
+        if(empty($server)) return false;
 
-        $gitfox = new stdclass;
-        $gitfox->url   = $this->config->devops->gitfoxURL;
-        if($this->config->devops->gitfoxPort) $gitfox->url .= ':' . $this->config->devops->gitfoxPort;
-        $gitfox->token = empty($server->key) ? '' : md5('zentao' . $this->app->user->account . $server->key);
-        return $gitfox;
+        $server->url   = $this->config->devops->gitfoxURL;
+        if($this->config->devops->gitfoxPort) $server->url .= ':' . $this->config->devops->gitfoxPort;
+        $server->token = md5('zentao' . $this->app->user->account . $server->key);
+        return $server;
     }
 
     /**
@@ -83,6 +67,7 @@ class gitfoxModel extends model
     public function getApiRoot(): string|object
     {
         $gitfox = $this->getServer();
+        if(!$gitfox) return '';
 
         $apiRoot = new stdclass;
         $apiRoot->url    = rtrim($gitfox->url, '/') . '/api/v2%s';
@@ -102,24 +87,12 @@ class gitfoxModel extends model
      * @access public
      * @return object|array|bool
      */
-    public function request($url, $method = 'GET', $data = array(), $parseResponse = true): object|array|bool
+    public function request($url, $method = 'GET', $data = array()): object|array|bool
     {
         $originURL = $url;
         if($method == 'GET')
         {
-            $queryParts = array();
-            foreach((array)$data as $key => $value)
-            {
-                if(is_array($value))
-                {
-                    foreach($value as $item) $queryParts[] = $key . '=' . (string)$item;
-                }
-                else
-                {
-                    $queryParts[] = $key . '=' . (string)$value;
-                }
-            }
-            $url .= '?' . implode('&', $queryParts);
+            $url .= '?' . http_build_query($data);
             $data = array();
         }
         $options = array();
@@ -130,8 +103,6 @@ class gitfoxModel extends model
 
         $url    = sprintf($apiRoot->url, $url);
         $result = json_decode(common::http($url, $data, $options, $apiRoot->header, 'json', $method));
-        if(!$parseResponse) return $result;
-
         $result = $this->getResponse($result);
         if(isset($result->pager) && $result->pager->total > 0 && empty($result->data))
         {
@@ -457,28 +428,6 @@ class gitfoxModel extends model
     }
 
     /**
-     * 根据回调地址获取 webhook。
-     * Get webhook by callback URL.
-     *
-     * @param  int    $repoID
-     * @param  string $url
-     * @access public
-     * @return object|false
-     */
-    public function getWebhookByURL(int $repoID, string $url): object|false
-    {
-        $hookList = $this->apiGetHooks($repoID);
-        if(!is_array($hookList)) return false;
-
-        foreach($hookList as $hook)
-        {
-            if(isset($hook->url) && $hook->url == $url) return $hook;
-        }
-
-        return false;
-    }
-
-    /**
      * 添加一个推送和合并请求事件的webhook到gitfox项目。
      * Add webhook with push and merge request events to GitLab project.
      *
@@ -491,39 +440,14 @@ class gitfoxModel extends model
     {
         $systemURL = dirname(common::getSysURL() . $_SERVER['REQUEST_URI']);
 
-        $this->loadModel('repo');
-        if(empty($repo->gitUID) && !empty($repo->id))
-        {
-            $dbRepo = $this->repo->fetchByID((int)$repo->id);
-            if($dbRepo && !empty($dbRepo->gitUID)) $repo->gitUID = $dbRepo->gitUID;
-        }
-
-        $token = empty($repo->gitUID) ? $token : (string)$repo->gitUID;
-        if($token === '') return false;
-
         $hook = new stdClass;
         $hook->url         = $systemURL . '/api.php/v1/gitfox/webhook?repoID='. $repo->id;
         $hook->displayName = "zentao_{$repo->id}_" . date('Ymd');
         $hook->enabled     = true;
-        $hook->secret      = $token;
-        $hook->authMethod  = 'token';
-        $hook->authHeader  = 'X-Gitfox-Token';
+        if($token) $hook->secret = $token;
 
-        /* 已存在回调时补上缺失或不一致的 secret。 */
-        $existingHook = $this->getWebhookByURL((int)$repo->id, $hook->url);
-        if($existingHook)
-        {
-            if(!empty($existingHook->secret) && (string)$existingHook->secret === $token) return true;
-
-            $updateHook = new stdClass;
-            $updateHook->secret     = $token;
-            $updateHook->authMethod = 'token';
-            $updateHook->authHeader = 'X-Gitfox-Token';
-
-            $result = $this->apiUpdateWebhook((int)$repo->id, (int)$existingHook->id, $updateHook);
-            if(!empty($result->id)) return true;
-            return !dao::isError();
-        }
+        /* Return an empty array if where is one existing webhook. */
+        if($this->isWebhookExists($repo, $hook->url)) return true;
 
         $result = $this->apiCreateHook((int)$repo->id, $hook);
 
@@ -1109,7 +1033,7 @@ class gitfoxModel extends model
             $target = 'refs/heads/' . $target;
         }
         $apiRoot = $this->getApiRoot();
-        $url     = sprintf($apiRoot->url, '/repos/' . $repoID . '/merge-check');
+        $url     = sprintf($apiRoot->url, '/repos/' . $repoID . '/merge-check/' . $target . '...' . $source);
         $result  = json_decode(common::http($url, array('source' => $source, 'target' => $target), array(CURLOPT_CUSTOMREQUEST => 'POST'), $apiRoot->header, 'json'));
         return $this->getResponse($result);
     }
@@ -1133,8 +1057,8 @@ class gitfoxModel extends model
             $target = 'refs/heads/' . $target;
         }
         $apiRoot = $this->getApiRoot();
-        $url     = sprintf($apiRoot->url, "/repos/{$repoID}/diff-stats");
-        $result  = json_decode(common::http($url, array('source' => $source, 'target' => $target), array(), $apiRoot->header, 'json'));
+        $url     = sprintf($apiRoot->url, "/repos/{$repoID}/diff-stats/{$target}...{$source}");
+        $result  = json_decode(common::http($url, array(), array(), $apiRoot->header, 'json'));
         return $this->getResponse($result);
     }
 
@@ -1163,26 +1087,5 @@ class gitfoxModel extends model
 
         $response = json_decode(common::http($url, $data, array(CURLOPT_CUSTOMREQUEST => 'PUT'), $apiRoot->header, 'json', 'PUT'));
         return $this->getResponse($response);
-    }
-
-    /**
-     * 获取仓库的差异。
-     * Get repo diffs.
-     *
-     * @param  int $repoID
-     * @param  string $from
-     * @param  string $to
-     * @access public
-     * @return string
-     */
-    public function apiGetRepoDiffs(int $repoID, string $from, string $to): string
-    {
-        $apiRoot = $this->getApiRoot();
-        $url     = sprintf($apiRoot->url, "/repos/{$repoID}/diff");
-
-        $result = common::http($url, array('range' => "{$from}...{$to}"), array(), $apiRoot->header, 'json');
-        if(empty($result)) return '';
-
-        return $result;
     }
 }

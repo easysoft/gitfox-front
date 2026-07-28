@@ -81,8 +81,6 @@ class datatable extends control
             $account = $this->app->user->account;
             if($account == 'guest') return $this->send(array('result' => 'fail', 'message' => 'guest.'));
 
-            $this->loadModel($module);
-
             $rawModule  = zget($this->config->datatable->moduleAlias, "$module-$method", $module);
             if($rawModule == 'story' && $extra && $rawModule != $extra) $rawModule = $extra;
 
@@ -151,7 +149,6 @@ class datatable extends control
      */
     public function ajaxCustom(string $module, string $method, string $extra = '')
     {
-        $this->loadModel($module);
         $cols = $this->datatable->getSetting($module, $method, true, $extra);
         if(!$method) $method = $this->app->getMethodName();
 
@@ -160,10 +157,6 @@ class datatable extends control
             unset($cols['assignedTo']);
             unset($cols['product']);
             unset($cols['module']);
-        }
-        if($module == 'my' && $method == 'testcase' && $extra == 'openedbyme')
-        {
-            unset($cols['taskName']);
         }
         if($module == 'bug')
         {
@@ -239,13 +232,6 @@ class datatable extends control
 
             $hasProcess = $this->loadModel('workflowgroup')->hasFeature($workflowGroup, 'process');
             if(!$hasProcess) unset($cols['activity'], $cols['trimmable'], $cols['trimRule']);
-        }
-
-        if(in_array($this->config->edition, array('max', 'ipd')) && $module == 'project' && $method == 'execution')
-        {
-            $project        = $this->datatable->fetchByID($this->session->project, 'project');
-            $hasDeliverable = $this->loadModel('workflowgroup')->hasFeature($project->workflowGroup, 'deliverable');
-            if(!$hasDeliverable) unset($cols['deliverable']);
         }
 
         if($extra == 'unsetStory' && isset($cols['story'])) unset($cols['story']);

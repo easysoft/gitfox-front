@@ -124,23 +124,9 @@ class userModel extends model
     {
         if(empty($user->password1))
         {
-            unset($user->passwordPlain);
             if(!$canNoPassword) dao::$errors['password1'][] = sprintf($this->lang->error->notempty, $this->lang->user->password);
             return !dao::isError();
         }
-
-        /* 服务端根据明文重新计算密码强度与长度，避免信任客户端提交的 passwordStrength/passwordLength 字段。*/
-        /* Recompute the password strength and length on the server, never trust the client submitted fields. */
-        $passwordPlain = isset($user->passwordPlain) ? trim((string)$user->passwordPlain) : '';
-        if($passwordPlain === '' && isset($this->post->passwordPlain)) $passwordPlain = trim((string)$this->post->passwordPlain);
-        if($passwordPlain === '')
-        {
-            dao::$errors['password1'][] = $this->lang->user->error->password;
-            return !dao::isError();
-        }
-        $user->passwordLength   = strlen($passwordPlain);
-        $user->passwordStrength = $this->computePasswordStrength($passwordPlain);
-        unset($user->passwordPlain);
 
         /* 检查密码强度是否符合安全设置。*/
         /* Check if the password strength meets the security settings. */
@@ -197,16 +183,14 @@ class userModel extends model
      *
      * @param  string $params
      * @param  string $fields
-     * @param  bool   $followShowOutside
      * @access public
      * @return array
      */
-    public function getList(string $params = 'nodeleted', string $fields = '*', bool $followShowOutside = true): array
+    public function getList(string $params = 'nodeleted', string $fields = '*'): array
     {
-        $showAll = strpos($params, 'all') !== false || ($followShowOutside && !empty($this->config->user->showOutside));
         return $this->dao->select($fields)->from(TABLE_USER)
             ->where('1 = 1')
-            ->beginIF(!$showAll)->andWhere('type')->eq('inside')->fi()
+            ->beginIF(strpos($params, 'all') === false && empty($this->config->user->showOutside))->andWhere('type')->eq('inside')->fi()
             ->beginIF(strpos($params, 'nodeleted') !== false)->andWhere('deleted')->eq(0)->fi()
             ->orderBy('account')
             ->fetchAll('', false);
@@ -257,11 +241,10 @@ class userModel extends model
      * @param  string|array $usersToAppended  account1,account2
      * @param  int          $maxCount
      * @param  string|array $accounts
-     * @param  bool         $followShowOutside
      * @access public
      * @return array
      */
-    public function getPairs(string $params = '', string|array $usersToAppended = '', int $maxCount = 0, string|array $accounts = '', bool $followShowOutside = true)
+    public function getPairs(string $params = '', string|array $usersToAppended = '', int $maxCount = 0, string|array $accounts = '')
     {
         if(commonModel::isTutorialMode()) return $this->loadModel('tutorial')->getUserPairs();
 
@@ -280,7 +263,7 @@ class userModel extends model
         if(strpos($params, 'pmfirst') !== false) $fields .= ", INSTR(',td,pm,', role) AS roleOrder";
         if(strpos($params, 'devfirst')!== false) $fields .= ", INSTR(',td,pm,qd,qa,dev,', role) AS roleOrder";
         $type     = (strpos($params, 'outside') !== false) ? 'outside' : 'inside';
-        $showAll  = strpos($params, 'all') !== false || ($followShowOutside && !empty($this->config->user->showOutside));
+        $showAll  = strpos($params, 'all') !== false || !empty($this->config->user->showOutside);
         $orderBy  = (strpos($params, 'first')   !== false) ? 'roleOrder DESC, account' : 'account';
         $keyField = (strpos($params, 'useid')   !== false) ? 'id' : "account";
 
@@ -518,7 +501,7 @@ class userModel extends model
             $requiredFields = trim(str_replace(array(',dept,', ',commiter,'), '', ',' . $requiredFields . ','), ',');
         }
 
-        $this->dao->insert(TABLE_USER)->data($user, 'new,newCompany,password1,password2,group,verifyPassword,passwordLength,passwordStrength,passwordPlain')
+        $this->dao->insert(TABLE_USER)->data($user, 'new,newCompany,password1,password2,group,verifyPassword,passwordLength,passwordStrength')
             ->batchCheck($requiredFields, 'notempty')
             ->checkIF($user->account, 'account', 'unique')
             ->checkIF($user->account, 'account', 'account')
@@ -682,7 +665,7 @@ class userModel extends model
         /* Remove unavailable contact fields from available fields. */
         $requiredFields = implode(',', array_diff($requiredFields, $unAvailableContactFields));
 
-        $this->dao->update(TABLE_USER)->data($user, 'new,newCompany,password1,password2,group,verifyPassword,passwordLength,passwordStrength,passwordPlain')
+        $this->dao->update(TABLE_USER)->data($user, 'new,newCompany,password1,password2,group,verifyPassword,passwordLength,passwordStrength')
             ->batchCheck($requiredFields, 'notempty')
             ->checkIF($user->account, 'account', 'unique', "id != '$user->id'")
             ->checkIF($user->account, 'account', 'account')
@@ -1036,7 +1019,6 @@ class userModel extends model
         $user->view   = $this->grantUserView($user->account, $user->rights['acls']);
         $this->session->set('user', $user);
         $this->app->user = $this->session->user;
-        $this->regenerateSession();
         $this->loadModel('action')->create('user', $user->id, 'login');
         $this->loadModel('score')->create('user', 'login');
         $this->loadModel('common')->loadConfigFromDB();
@@ -1063,7 +1045,6 @@ class userModel extends model
         $user->view   = $this->grantUserView($user->account, $user->rights['acls']);
         $this->session->set('user', $user);
         $this->app->user = $this->session->user;
-        $this->regenerateSession();
         $this->loadModel('action')->create('user', $user->id, 'login');
         $this->loadModel('score')->create('user', 'login');
         $this->loadModel('common')->loadConfigFromDB();
@@ -1168,7 +1149,7 @@ class userModel extends model
                 ->leftJoin(TABLE_GROUPPRIV)->alias('t3')->on('t2.`group` = t3.`group`')
                 ->where('t2.account')->eq($account)
                 ->andWhere('t1.project')->eq(0)
-                ->andWhere('t1.`devopsSpace`')->eq(0)
+                ->andWhere('t1.devopsSpace')->eq(0)
                 ->andWhere('t1.vision')->eq($this->config->vision)
                 ->query();
         }
@@ -1225,10 +1206,6 @@ class userModel extends model
         $this->session->set('user', $user);
         $this->app->user = $this->session->user;
 
-        /* 登录成功后轮换会话 ID，防止会话固定。*/
-        /* Regenerate session ID after login to prevent session fixation. */
-        $this->regenerateSession();
-
         /* 记录登录日志并发放积分。*/
         /* Save log and give login score. */
         if(isset($user->id) and $addAction) $this->loadModel('action')->create('user', $user->id, 'login');
@@ -1239,28 +1216,6 @@ class userModel extends model
         if($keepLogin) $this->keepLogin($user);
 
         return $user;
-    }
-
-    /**
-     * 登录成功后轮换会话 ID，并重发会话 cookie，防止会话固定攻击。
-     * Regenerate session ID after login and resend session cookie to prevent session fixation.
-     *
-     * @access protected
-     * @return void
-     */
-    protected function regenerateSession(): void
-    {
-        if(empty(session_id()) or headers_sent()) return;
-
-        session_regenerate_id(true);
-
-        /* 同步 app->sessionID，避免 www/index.php 的还原逻辑把轮换后的会话还原回旧 ID。*/
-        /* Keep app->sessionID in sync to prevent the restore logic in www/index.php reverting the rotated session. */
-        if(isset($this->app->sessionID)) $this->app->sessionID = session_id();
-
-        /* 同步重发会话 cookie，确保浏览器和客户端使用新的会话 ID。*/
-        /* Resend the session cookie so clients use the new session ID. */
-        helper::setcookie($this->config->sessionVar, session_id(), 0);
     }
 
     /**
@@ -1358,26 +1313,13 @@ class userModel extends model
         $projectStoryCountAndEstimate = $this->userTao->fetchProjectStoryCountAndEstimate(array_keys($projects));
         $projectExecutionCount        = $this->userTao->fetchProjectExecutionCount(array_keys($projects));
 
-        /* Get workingDays. */
-        $today       = helper::today();
-        $earliestEnd = $today;
-        foreach($projects as $project)
-        {
-            if(!empty($project->end) && !helper::isZeroDate($project->end) && $project->end < $earliestEnd) $earliestEnd = $project->end;
-        }
-        $workingDays = $this->loadModel('holiday')->getActualWorkingDays($earliestEnd, $today);
         foreach($projects as $project)
         {
             /* Judge whether the project is delayed. */
             if($project->status != 'done' && $project->status != 'closed' && $project->status != 'suspended')
             {
-                $betweenDays = $this->holiday->getDaysBetween($project->end, $today);
-                if($betweenDays)
-                {
-                    $delayDays = array_intersect($betweenDays, $workingDays);
-                    $delay     = count($delayDays) - 1;
-                    if($delay > 0) $project->delay = $delay;
-                }
+                $delay = helper::diffDate(helper::today(), $project->end);
+                if($delay > 0) $project->delay = $delay;
             }
 
             $projectStory = zget($projectStoryCountAndEstimate, $project->id, '');
@@ -1753,7 +1695,7 @@ class userModel extends model
         if(empty($stakeholders[$account]))
         {
             $stakeholders[$account] = [];
-            $cachedHolders = $this->dao->select('`objectID`, `objectType`, user')->from(TABLE_STAKEHOLDER)->where('deleted')->eq('0')->andWhere('user')->eq($account)->fetchAll();
+            $cachedHolders = $this->dao->select('objectID, objectType, user')->from(TABLE_STAKEHOLDER)->where('deleted')->eq('0')->andWhere('user')->eq($account)->fetchAll();
             foreach($cachedHolders as $holder) $stakeholders[$account][$holder->objectType][$holder->objectID][$holder->user] = $holder->user;
         }
 
@@ -2060,7 +2002,7 @@ class userModel extends model
     private function getProgramStakeholder($programProduct): array
     {
         $stakeholderGroups = array();
-        $stmt = $this->dao->select('`objectID`,user')->from(TABLE_STAKEHOLDER)
+        $stmt = $this->dao->select('objectID,user')->from(TABLE_STAKEHOLDER)
             ->where('objectType')->eq('program')
             ->andWhere('objectID')->in(array_keys($programProduct))
             ->query();
@@ -2071,7 +2013,7 @@ class userModel extends model
             foreach($productIDList as $productID) $stakeholderGroups[$productID][$programStakeholder->user] = $programStakeholder->user;
         }
 
-        $programOwners = $this->mao->select('id,`PM`')->from(TABLE_PROGRAM)
+        $programOwners = $this->mao->select('id,PM')->from(TABLE_PROGRAM)
             ->where('type')->eq('program')
             ->andWhere('id')->in(array_keys($programProduct))
             ->fetchAll();
@@ -2107,7 +2049,7 @@ class userModel extends model
         while($projectProduct = $stmt->fetch()) $projectProducts[$projectProduct->project][$projectProduct->product] = $projectProduct->product;
 
         /* Get linked projects stakeholders. */
-        $stmt = $this->dao->select('`objectID`,user')->from(TABLE_STAKEHOLDER)
+        $stmt = $this->dao->select('objectID,user')->from(TABLE_STAKEHOLDER)
             ->where('objectType')->eq('project')
             ->andWhere('objectID')->in(array_keys($projectProducts))
             ->andWhere('deleted')->eq(0)
@@ -2278,7 +2220,7 @@ class userModel extends model
         $parentPMGroup          = $this->loadModel('program')->getParentPM($programIDList);             // Get all parent program and subprogram relation.
         $programAdmins          = $this->loadModel('group')->getAdmins($programIDList, 'programs');     // Get programs's admins.
 
-        $stmt            = $this->dao->select('`objectID`,account')->from(TABLE_ACL)->where('objectType')->eq('program')->andWhere('objectID')->in($programIDList)->query();
+        $stmt            = $this->dao->select('objectID,account')->from(TABLE_ACL)->where('objectType')->eq('program')->andWhere('objectID')->in($programIDList)->query();
         $whiteListGroup  = array();
         while($whiteList = $stmt->fetch()) $whiteListGroup[$whiteList->objectID][$whiteList->account] = $whiteList->account;
 
@@ -2337,7 +2279,7 @@ class userModel extends model
         while($team = $stmt->fetch()) $teamsGroup[$team->root][$team->account] = $team->account;
 
         /* Get white list group. */
-        $stmt            = $this->dao->select('`objectID`,account')->from(TABLE_ACL)->where('objectType')->eq('project')->andWhere('objectID')->in($projectIDList)->query();
+        $stmt            = $this->dao->select('objectID,account')->from(TABLE_ACL)->where('objectType')->eq('project')->andWhere('objectID')->in($projectIDList)->query();
         $whiteListGroup  = array();
         while($whiteList = $stmt->fetch()) $whiteListGroup[$whiteList->objectID][$whiteList->account] = $whiteList->account;
 
@@ -2399,7 +2341,7 @@ class userModel extends model
         list($teamsGroup, $stakeholderGroup) = $this->getProductMembers($products);
 
         /* Get white list group. */
-        $stmt            = $this->dao->select('`objectID`,account')->from(TABLE_ACL)->where('objectType')->eq('product')->andWhere('objectID')->in($productIDList)->query();
+        $stmt            = $this->dao->select('objectID,account')->from(TABLE_ACL)->where('objectType')->eq('product')->andWhere('objectID')->in($productIDList)->query();
         $whiteListGroup  = array();
         while($whiteList = $stmt->fetch()) $whiteListGroup[$whiteList->objectID][$whiteList->account] = $whiteList->account;
 
@@ -2463,7 +2405,7 @@ class userModel extends model
         $teamsGroup = array();
         while($team = $stmt->fetch()) $teamsGroup[$team->root][$team->account] = $team->account;
 
-        $stmt            = $this->dao->select('`objectID`,account')->from(TABLE_ACL)->where('objectType')->eq('sprint')->andWhere('objectID')->in($sprintIDList)->query();
+        $stmt            = $this->dao->select('objectID,account')->from(TABLE_ACL)->where('objectType')->eq('sprint')->andWhere('objectID')->in($sprintIDList)->query();
         $whiteListGroup  = array();
         while($whiteList = $stmt->fetch()) $whiteListGroup[$whiteList->objectID][$whiteList->account] = $whiteList->account;
 
@@ -2629,7 +2571,7 @@ class userModel extends model
         if($program->parent != 0 && $program->acl == 'program')
         {
             $path    = str_replace(",{$program->id},", ',', "{$program->path}");
-            $parents = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROGRAM)->where('id')->in($path)->fetchAll();
+            $parents = $this->mao->select('openedBy,PM')->from(TABLE_PROGRAM)->where('id')->in($path)->fetchAll();
             foreach($parents as $parent)
             {
                 /* 当前用户是其中一个父项目集的PM或创建者则判断为有权限。 */
@@ -2671,7 +2613,7 @@ class userModel extends model
         if($project->type == 'project' && $project->parent != 0 && $project->acl == 'program')
         {
             $path     = str_replace(",{$project->id},", ',', "{$project->path}");
-            $programs = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROJECT)->where('id')->in($path)->fetchAll();
+            $programs = $this->mao->select('openedBy,PM')->from(TABLE_PROJECT)->where('id')->in($path)->fetchAll();
             foreach($programs as $program)
             {
                 /* 当前用户是其中一个父项目集的PM或创建者则判断为有权限。 */
@@ -2682,7 +2624,7 @@ class userModel extends model
         /* 如果是迭代并且是私有的，则检查所属项目的权限。 */
         if(($project->type == 'sprint' || $project->type == 'stage' || $project->type == 'kanban') && $project->acl == 'private')
         {
-            $project = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROJECT)->where('id')->eq($project->project)->fetch();
+            $project = $this->mao->select('openedBy,PM')->from(TABLE_PROJECT)->where('id')->eq($project->project)->fetch();
             if(empty($project)) return false;
 
             /* 当前用户是所属项目的PM或创建者则判断为有权限。 */
@@ -2754,7 +2696,7 @@ class userModel extends model
         if($program->parent != 0 && $program->acl == 'program')
         {
             $path    = str_replace(",{$program->id},", ',', "{$program->path}");
-            $parents = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROGRAM)->where('id')->in($path)->fetchAll();
+            $parents = $this->mao->select('openedBy,PM')->from(TABLE_PROGRAM)->where('id')->in($path)->fetchAll();
             foreach($parents as $parent)
             {
                 $users[$parent->openedBy] = $parent->openedBy;
@@ -2798,7 +2740,7 @@ class userModel extends model
         if($project->type == 'project' && $project->parent != 0 && $project->acl == 'program')
         {
             $path     = str_replace(",{$project->id},", ',', "{$project->path}");
-            $programs = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROJECT)->where('id')->in($path)->fetchAll();
+            $programs = $this->mao->select('openedBy,PM')->from(TABLE_PROJECT)->where('id')->in($path)->fetchAll();
             foreach($programs as $program)
             {
                 $users[$program->openedBy] = $program->openedBy;
@@ -2809,7 +2751,7 @@ class userModel extends model
         /* 如果是迭代类型并且是私有的，则所属项目的PM和创建者是关系人。 */
         if(($project->type == 'sprint' || $project->type == 'stage' || $project->type == 'kanban') && $project->acl == 'private')
         {
-            $parent = $this->mao->select('`openedBy`,`PM`')->from(TABLE_PROJECT)->where('id')->eq($project->project)->fetch();
+            $parent = $this->mao->select('openedBy,PM')->from(TABLE_PROJECT)->where('id')->eq($project->project)->fetch();
             if($parent)
             {
                 $users[$parent->openedBy] = $parent->openedBy;

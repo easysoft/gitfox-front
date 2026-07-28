@@ -1,6 +1,5 @@
 #!/usr/bin/env php
 <?php
-
 /**
 
 title=测试 bugZen::buildCreateForm();
@@ -22,9 +21,6 @@ cid=15427
 - 测试构造创建Bug的数据
  - 属性plansCount @0
  - 属性casesCount @0
-- 测试创建页不预加载需求和已发布版本
- - 属性storiesCount @0
- - 属性releasedBuildsCount @0
 
 */
 
@@ -37,8 +33,7 @@ zenData('branch')->gen(0);
 zenData('build')->gen(0);
 zenData('module')->gen(0);
 zenData('productplan')->gen(0);
-zenData('case')->gen(10);
-zenData('story')->gen(10);
+zenData('case')->gen(0);
 zenData('bug')->gen(10);
 zenData('user')->gen(5);
 su('admin');
@@ -69,4 +64,3 @@ r($bugTest->buildCreateFormTest($bug)) && p('productName,productsCount')        
 r($bugTest->buildCreateFormTest($bug)) && p('branchesCount,buildsCount')              && e('1,1');               // 测试构造创建Bug的数据
 r($bugTest->buildCreateFormTest($bug)) && p('moduleOptionMenuCount,resultFilesCount') && e('1,0');               // 测试构造创建Bug的数据
 r($bugTest->buildCreateFormTest($bug)) && p('plansCount,casesCount')                  && e('0,0');               // 测试构造创建Bug的数据
-r($bugTest->buildCreateFormTest($bug)) && p('storiesCount,releasedBuildsCount')        && e('0,0');               // 测试创建页不预加载需求和已发布版本

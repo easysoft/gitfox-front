@@ -28,7 +28,6 @@ class mailZen extends mail
             $mailConfig->fromAddress = $this->config->mail->fromAddress;
             $mailConfig->fromName    = $this->config->mail->fromName;
             $mailConfig->charset     = zget($mailConfig, 'charset', 'utf-8');
-            $mailConfig->async       = $this->config->mail->async;
         }
 
         if(empty($mailConfig) || !is_object($mailConfig)) return false;
@@ -94,7 +93,7 @@ class mailZen extends mail
         $log        = '';
         $mailStatus = 'wait';
         if(!isset($queue->merge) or $queue->merge == false) $mailStatus = $this->dao->select('*')->from(TABLE_NOTIFY)->where('id')->eq($queue->id)->fetch('status');
-        if(empty($mailStatus) or ($mailStatus != 'wait' and $mailStatus != 'fail')) return false;
+        if(empty($mailStatus) or $mailStatus != 'wait') return false;
 
         $this->dao->update(TABLE_NOTIFY)->set('status')->eq('sending')->where('id')->in($queue->id)->exec();
         $this->mail->send($queue->toList, $queue->subject, $queue->data, $queue->ccList, $includeMe);

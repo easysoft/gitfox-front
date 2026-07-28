@@ -15,7 +15,6 @@ $config->product->search['fields']['product']  = $lang->story->product;
 $config->product->search['fields']['branch']   = '';
 $config->product->search['fields']['grade']    = $lang->story->grade;
 $config->product->search['fields']['plan']     = $lang->story->plan;
-$config->product->search['fields']['release']  = $lang->story->release;
 $config->product->search['fields']['estimate'] = $lang->story->estimate;
 
 $config->product->search['fields']['source']     = $lang->story->source;
@@ -54,7 +53,6 @@ $config->product->search['params']['grade']          = array('operator' => '=', 
 $config->product->search['params']['module']         = array('operator' => 'belong',  'control' => 'select', 'values' => '');
 $config->product->search['params']['roadmap']        = array('operator' => '=',       'control' => 'select', 'values' => '');
 $config->product->search['params']['plan']           = array('operator' => '=',       'control' => 'select', 'values' => '');
-$config->product->search['params']['release']        = array('operator' => '=',       'control' => 'select', 'values' => '');
 $config->product->search['params']['estimate']       = array('operator' => '=',       'control' => 'input',  'values' => '');
 
 $config->product->search['params']['source']         = array('operator' => '=',       'control' => 'select', 'values' => $lang->story->sourceList);
@@ -85,11 +83,10 @@ $app->loadLang('product');
 if(!isset($config->product->all)) $config->product->all = new stdclass();
 $config->product->all->search['module']                = 'product';
 $config->product->all->search['fields']['name']        = $lang->product->name;
-$config->product->all->search['fields']['PO']          = $lang->product->PO;
 $config->product->all->search['fields']['QD']          = $lang->product->QD;
-$config->product->all->search['fields']['RD']          = $lang->product->RD;
 $config->product->all->search['fields']['reviewer']    = $lang->product->reviewer;
-$config->product->all->search['fields']['status']      = $lang->product->status;
+$config->product->all->search['fields']['PO']          = $lang->product->PO;
+$config->product->all->search['fields']['RD']          = $lang->product->RD;
 $config->product->all->search['fields']['desc']        = $lang->product->desc;
 $config->product->all->search['fields']['type']        = $lang->product->type;
 $config->product->all->search['fields']['id']          = $lang->productCommon . $lang->product->id;
@@ -104,7 +101,6 @@ $config->product->all->search['params']['PO']          = array('operator' => '='
 $config->product->all->search['params']['QD']          = array('operator' => '=',       'control' => 'select', 'values' => 'users');
 $config->product->all->search['params']['RD']          = array('operator' => '=',       'control' => 'select', 'values' => 'users');
 $config->product->all->search['params']['reviewer']    = array('operator' => 'include', 'control' => 'select', 'values' => 'users');
-$config->product->all->search['params']['status']      = array('operator' => '=',       'control' => 'select', 'values' => $lang->product->statusList);
 $config->product->all->search['params']['desc']        = array('operator' => 'include', 'control' => 'input',  'values' => '');
 $config->product->all->search['params']['type']        = array('operator' => '=',       'control' => 'select', 'values' => $lang->product->typeList);
 $config->product->all->search['params']['id']          = array('operator' => '=',       'control' => 'input',  'values' => '');

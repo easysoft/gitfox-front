@@ -10,29 +10,10 @@ declare(strict_types=1);
  */
 namespace zin;
 
-modalHeader();
+$fields = useFields('bug.close');
 
-formPanel
-(
-    formGroup
-    (
-        set::label($lang->comment),
-        set::name('comment'),
-        set::control('editor')
-    ),
-    formGroup
-    (
-        set::hidden(true),
-        set::label($lang->bug->status),
-        picker
-        (
-            set::name('status'),
-            set::items($lang->bug->statusList),
-            set::value('closed')
-        )
-    )
-);
+modalHeader();
+formPanel(set::fields($fields));
+
 hr();
 history();
-
-render();

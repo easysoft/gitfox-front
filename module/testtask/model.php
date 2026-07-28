@@ -381,8 +381,8 @@ class testtaskModel extends model
             ->andWhere('(t1.owner')->eq($account)
             ->orWhere("FIND_IN_SET('$account', t1.members)")
             ->markRight(1)
-            ->beginIF($this->app->rawMethod == 'work')->andWhere('t1.status')->ne('done')->fi()
-            ->beginIF($this->app->rawMethod == 'contribute')->andWhere('t1.status')->eq('done')->fi()
+            ->beginIF($type == 'wait')->andWhere('t1.status')->ne('done')->fi()
+            ->beginIF($type == 'done')->andWhere('t1.status')->eq('done')->fi()
             ->beginIF($testtaskQuery)->andWhere($testtaskQuery)->fi()
             ->orderBy($orderBy)
             ->page($pager)
@@ -511,17 +511,11 @@ class testtaskModel extends model
         $bugs = $this->dao->select('bugs')->from(TABLE_BUILD)->where('id')->eq($task->build)->fetch('bugs');
         if(!$bugs) return array();
 
-        $caseIdList = $this->dao->select('`case`')->from(TABLE_BUG)->where('id')->in(trim($bugs, ','))->andWhere('`case`')->gt(0)->fetchPairs();
-
-        /* 可关联的用例包括已解决 Bug 创建的用例（用例的 fromBug 字段）和已解决 Bug 来源的用例（Bug 的 case 字段）。*/
-        $caseCondition = '`fromBug` ' . helper::dbIN($bugs);
-        if($caseIdList) $caseCondition .= ' OR `id` ' . helper::dbIN($caseIdList);
-
         return $this->dao->select('*')->from(TABLE_CASE)
             ->where('deleted')->eq('0')
             ->andWhere('product')->eq($productID)
             ->andWhere('status')->ne('wait')
-            ->andWhere("({$caseCondition})")
+            ->andWhere('fromBug')->in(trim($bugs, ','))
             ->beginIF($query)->andWhere($query)->fi()
             ->beginIF($linkedCases)->andWhere('id')->notIN($linkedCases)->fi()
             ->beginIF($task->branch !== '')->andWhere('branch')->in("0,{$task->branch}")->fi()
@@ -729,35 +723,6 @@ class testtaskModel extends model
 
         $users = $this->loadModel('user')->getPairs('noclosed|noletter');
         foreach($datas as $result => $data) $data->name = $result ? zget($users, $result) : $this->lang->testtask->unexecuted;
-
-        return $datas;
-    }
-
-    /**
-     * 按指派人统计测试单中的用例。
-     * Get report data of a testtask by case assignee.
-     *
-     * @param  int    $taskID
-     * @param  string $caseQuery
-     * @param  int    $moduleID
-     * @access public
-     * @return array
-     */
-    public function getDataOfTestTaskPerAssignee(int $taskID, string $caseQuery, int $moduleID = 0): array
-    {
-        $datas = $this->dao->select('t1.`assignedTo` AS name, COUNT(1) AS value')->from(TABLE_TESTRUN)->alias('t1')
-            ->leftJoin(TABLE_CASE)->alias('t2')->on('t1.case = t2.id')
-            ->where($caseQuery)
-            ->andWhere('t1.task')->eq($taskID)
-            ->andWhere('t2.deleted')->eq('0')
-            ->beginIF($moduleID)->andWhere('t2.module')->eq($moduleID)->fi()
-            ->groupBy('t1.`assignedTo`')
-            ->orderBy('value DESC')
-            ->fetchAll('name');
-        if(!$datas) return array();
-
-        $users = $this->loadModel('user')->getPairs('noclosed|noletter');
-        foreach($datas as $result => $data) $data->name = $result ? zget($users, $result) : $this->lang->testtask->unassigned;
 
         return $datas;
     }
@@ -1226,29 +1191,9 @@ class testtaskModel extends model
      */
     public function getSceneCases(int|array $productID, array $runs)
     {
-        foreach($runs as $run)
-        {
-            $run->parent  = 0;
-            $run->isScene = false;
-        }
-
-        /* 从用例所属场景的 path 中取出全部祖先场景。*/
-        /* Collect ancestor scenes from case scene paths. */
-        $caseScenes = array_unique(array_filter(array_column($runs, 'scene')));
-        if(!$caseScenes) return array($runs, array());
-
-        $pathList = $this->dao->select('path')->from(TABLE_SCENE)
-            ->where('deleted')->eq('0')
-            ->andWhere('product')->in($productID)
-            ->andWhere('id')->in($caseScenes)
-            ->fetchPairs();
-        $idList = array_unique(array_filter(explode(',', implode(',', $pathList))));
-        if(!$idList) return array($runs, array());
-
         $scenes = $this->dao->select('*')->from(TABLE_SCENE)
             ->where('deleted')->eq('0')
             ->andWhere('product')->in($productID)
-            ->andWhere('id')->in($idList)
             ->orderBy('grade_desc, sort_asc')
             ->fetchAll('id', false);
 
@@ -1256,8 +1201,7 @@ class testtaskModel extends model
         foreach($runs as $run)
         {
             if(!empty($run->scene)) $displayScenes[] = $run->scene;
-            if(empty($run->scene) || !isset($scenes[$run->scene])) continue;
-            $run->parent  = 'scene-' . $run->scene;
+            $run->parent  = !empty($run->scene) ? 'scene-' . $scenes[$run->scene]->id : 0;
             $run->isScene = false;
         }
 
@@ -1267,14 +1211,16 @@ class testtaskModel extends model
             {
                 if(str_contains($scene->path, $displayScene . ','))
                 {
-                    $displayScenes = array_merge($displayScenes, explode(',', trim($scene->path, ',')));
+                    $displayScenes += explode(',', trim($scene->path, ','));
                 }
             }
         }
 
+        $displayScenes = array_unique($displayScenes);
         foreach($scenes as $id => $scene)
         {
-            $scene->parent  = !empty($scene->parent) && isset($scenes[$scene->parent]) ? 'scene-' . $scene->parent : 0;
+            if(!in_array($id, $displayScenes)) unset($scenes[$id]);
+            $scene->parent  = !empty($scene->parent) ? 'scene-' . $scene->parent : 0;
             $scene->id      = 'scene-' . $scene->id;
             $scene->isScene = true;
         }
@@ -1312,21 +1258,21 @@ class testtaskModel extends model
 
         if($browseType == 'bysearch')
         {
-            if($this->session->testtaskTestcaseQuery == false) $this->session->set('testtaskTestcaseQuery', ' 1 = 1');
+            if($this->session->testtaskQuery == false) $this->session->set('testtaskQuery', ' 1 = 1');
             if($queryID)
             {
                 $query = $this->loadModel('search')->getQuery($queryID);
                 if($query)
                 {
-                    $this->session->set('testtaskTestcaseQuery', $query->sql);
-                    $this->session->set('testtaskTestcaseForm', $query->form);
+                    $this->session->set('testtaskQuery', $query->sql);
+                    $this->session->set('testtaskForm', $query->form);
                 }
             }
 
             /* 预处理搜索表单生成的查询 SQL。*/
             /* Preprocess the query SQL generated by the search form. */
             $allProduct     = "`product` = 'all'";
-            $caseQuery      = $this->session->testtaskTestcaseQuery;
+            $caseQuery      = $this->session->testtaskQuery;
             $isQueryProduct = strpos($caseQuery, "`product` = '");
             if(strpos($caseQuery, $allProduct) !== false) $caseQuery = str_replace($allProduct, '1', $caseQuery) . ' AND `product` ' . helper::dbIN($this->app->user->view->products);
             $caseQuery = preg_replace('/`(\w+)`/', 't2.`$1`', $caseQuery);
@@ -1600,11 +1546,6 @@ class testtaskModel extends model
             $result->caseResult  = $caseResult;
             $result->stepResults = serialize($stepResults);
             $this->dao->insert(TABLE_TESTRESULT)->data($result)->autoCheck()->exec();
-
-            /* 把上传的文件关联到到执行结果的用例步骤中。*/
-            /* Associated the uploaded files to the test case steps of the execution results. */
-            $resultID = $this->dao->lastInsertID();
-            foreach($stepResults as $stepID => $stepResult) $this->loadModel('file')->saveUpload('stepResult', $resultID, $stepID, "files{$stepID}", "labels{$stepID}");
 
             $case->lastRunResult = $caseResult;
             $this->dao->update(TABLE_CASE)->data($case)->where('id')->eq($caseID)->exec();

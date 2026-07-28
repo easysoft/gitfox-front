@@ -277,20 +277,6 @@ function loadAssignedTo(productID, projectID = 0, executionID = 0)
     }
 }
 
-function keepClosedAssignedTo(data, assignedTo)
-{
-    if(assignedTo != 'closed') return data;
-
-    let hasClosed = false;
-    $.each(data, function(index, item)
-    {
-        if(item.value == 'closed') hasClosed = true;
-    });
-
-    if(!hasClosed) data.push({text: 'Closed', value: 'closed'});
-    return data;
-}
-
 function loadAssignedToByProduct(productID)
 {
     let branch = $('[name="branch"]').val();
@@ -301,7 +287,6 @@ function loadAssignedToByProduct(productID)
     {
         let assignedTo        = $('[name="assignedTo"]').val();
         let $assignedToPicker = $('[name="assignedTo"]').zui('picker');
-        data = keepClosedAssignedTo(data, assignedTo);
         $assignedToPicker.render({items: data});
         $assignedToPicker.$.setValue(assignedTo);
     });
@@ -314,7 +299,6 @@ function loadAssignedToByProject(projectID)
     {
         let assignedTo        = $('[name="assignedTo"]').val();
         let $assignedToPicker = $('[name="assignedTo"]').zui('picker');
-        data = keepClosedAssignedTo(data, assignedTo);
         $assignedToPicker.render({items: data});
         $assignedToPicker.$.setValue(assignedTo);
     });
@@ -327,7 +311,6 @@ function loadAssignedToByExecution(executionID)
     {
         let assignedTo        = $('[name="assignedTo"]').val();
         let $assignedToPicker = $('[name="assignedTo"]').zui('picker');
-        data = keepClosedAssignedTo(data, assignedTo);
         $assignedToPicker.render({items: data});
         $assignedToPicker.$.setValue(assignedTo);
     });
@@ -588,17 +571,6 @@ function loadTestTasks(productID, executionID)
     });
 }
 
-function toggleAllBuilds(event)
-{
-    if($(event.target).prop('checked'))
-    {
-        const productID = $('[name="product"]').val();
-        loadProductBuilds(productID, 'all', 'openedBuild');
-        return;
-    }
-    loadBuilds();
-}
-
 function loadAllBuilds(event)
 {
     const productID     = $('[name="product"]').val();
@@ -614,7 +586,6 @@ function loadAllUsers(event)
     const link        = $.createLink('bug', 'ajaxLoadAllUsers', params);
     $.getJSON(link, function(data)
     {
-        data = keepClosedAssignedTo(data, $('[name="assignedTo"]').val());
         $('[name="assignedTo"]').zui('picker').render({items: data});
         if(!isClosedBug)
         {

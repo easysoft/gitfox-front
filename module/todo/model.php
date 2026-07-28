@@ -226,22 +226,6 @@ class todoModel extends model
     }
 
     /**
-     * 获取待办邮件通知的收件人，与待办webhook通知人保持一致。
-     * Get toList and ccList.
-     *
-     * @param  object     $todo
-     * @access public
-     * @return bool|array
-     */
-    public function getToAndCcList(object $todo): bool|array
-    {
-        $toList = $todo->assignedTo ? $todo->assignedTo : $todo->account;
-        if(empty($toList)) return false;
-
-        return array($toList, '');
-    }
-
-    /**
      * 获取用户的待办事项列表。
      * Get todo list of a user.
      *
@@ -451,7 +435,7 @@ class todoModel extends model
         /* Update status of feedback if the closed todo type is feedback. */
         if($this->config->edition != 'open')
         {
-            $feedbackID = $this->dao->select('`objectID`')->from(TABLE_TODO)->where('id')->eq($todoID)->andWhere('type')->eq('feedback')->fetch('objectID');
+            $feedbackID = $this->dao->select('objectID')->from(TABLE_TODO)->where('id')->eq($todoID)->andWhere('type')->eq('feedback')->fetch('objectID');
             if($feedbackID) $this->loadModel('feedback')->updateStatus('todo', $feedbackID, 'closed', '', $todoID);
         }
         return true;

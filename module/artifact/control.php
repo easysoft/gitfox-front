@@ -115,15 +115,12 @@ class artifact extends control
      */
     public function view(int $artifactLibID, int $spaceID = 0, int $repoID = 0, string $type = 'space', string $selectPath = '', int $leaf = 0, string $orderBy = 'edited_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
     {
-        $this->session->set('artifactLibViewLink', $this->inLink('view', "artifactLibID={$artifactLibID}&spaceID={$spaceID}&repoID={$repoID}&type={$type}&selectPath={$selectPath}&leaf={$leaf}"));
-
         $this->config->file->dangers = '';
         $this->checkAccess($spaceID, $repoID);
         $selectPath = helper::safe64Decode($selectPath);
 
         $artifactLib = $this->artifact->fetchByID($artifactLibID);
         if(empty($artifactLib)) return print(js::error($this->lang->artifact->notice->noArtifact));
-
 
         $this->commonAction((int)$artifactLib->spaceID, (int)$artifactLib->repoID);
         $this->app->loadClass('pager', true);
@@ -160,7 +157,6 @@ class artifact extends control
         $this->view->treeItems       = $this->artifactZen->getArtifactLibTreeData($artifactLib, '/', $selectPath, $spaceID, $repoID, $type, $leaf);
         $this->view->selectNode      = $selectNode;
         $this->view->spaceID         = $spaceID;
-        $this->view->space           = $this->loadModel('space')->fetchByID($spaceID);
         $this->view->repoID          = $repoID;
         $this->view->type            = $type;
         $this->view->repo            = $repo;
@@ -199,9 +195,9 @@ class artifact extends control
                 ->add('repoID', (int)$repoID)
                 ->add('spaceID', $type == 'repo' && !empty($repo) ? $repo->spaceID : (int)$space)
                 ->get();
-            if(in_array($formData->format, array('container', 'helm')) && !preg_match('/^[a-z0-9_\-\.]+$/', $formData->code))
+            if(in_array($formData->format, array('container', 'helm')) && !preg_match('/[a-zA-Z0-9_\-\.]+$/', $formData->name))
             {
-                return $this->sendError(array('code' => $this->lang->artifact->notice->nameNotSupportChinese));
+                return $this->sendError(array('name' => $this->lang->artifact->notice->nameNotSupportChinese));
             }
             $result = $this->loadModel('gitfox')->request('/artifacts/views', 'POST', $formData);
             if(dao::isError()) $this->sendError(dao::getError());
@@ -232,7 +228,7 @@ class artifact extends control
         {
             $formData = form::data($this->config->artifact->form->edit)->get();
 
-            if(in_array($artifactLib->type, array('container', 'helm')) && !preg_match('/^[a-z0-9_\-\.]+$/', $formData->code))
+            if(in_array($artifactLib->type, array('container', 'helm')) && !preg_match('/[a-zA-Z0-9_\-\.]+$/', $formData->name))
             {
                 return $this->sendError(array('name' => $this->lang->artifact->notice->nameNotSupportChinese));
             }
@@ -298,11 +294,11 @@ class artifact extends control
             $base64Path = $path ? helper::safe64Encode($path) : '';
 
             $formData = form::data($this->config->artifact->form->createDir)->get();
-            if(!preg_match('/^[\x{4e00}-\x{9fa5}a-zA-Z0-9\-_.]+$/u', $formData->name)) return $this->sendError(array('name' => $this->lang->artifact->notice->dirNameFormatError));
+            if(!preg_match('/^[\x{4e00}-\x{9fa5}a-zA-Z0-9\-_]+$/u', $formData->name)) return $this->sendError(array('name' => $this->lang->artifact->notice->dirNameFormatError));
             if(mb_strlen($formData->name) > 15) return $this->sendError(array('name' => $this->lang->artifact->notice->dirNameTooLong));
             if($path)
             {
-                $formData->name = ltrim($path . '/' . $formData->name, '/');
+                $formData->name = ltrim($path . '.' . $formData->name, '/');
             }
             if(empty($path) && $isSubDir) $formData->name = '/' . $formData->name;
             $result = $this->loadModel('gitfox')->request('/artifacts/groups', 'POST', array('artifactID' => (int)$artifactLibID, 'names' => $formData->name, 'format' => $artifactLib->type));
@@ -335,7 +331,7 @@ class artifact extends control
 
         $currentPath = $path ? helper::safe64Decode($path) : '';
         $parentPath  = $currentPath ? $this->artifact->parseDirname($currentPath) : '/';
-        if($parentPath === '') $parentPath = '/';
+        if($parentPath === '' || $parentPath === '.') $parentPath = '/';
         $parentNode = $this->artifactZen->getNodeByPath($artifactLib, $parentPath);
 
         $artifactLibs = $this->artifactZen->getArtifactLibPickerItems($artifactLib->scope, $artifactLib->type, $this->spaces, $this->repos);
@@ -345,10 +341,10 @@ class artifact extends control
             if(empty($node)) return $this->sendError($this->lang->fail);
 
             $formData = form::data($this->config->artifact->form->editDir)->get();
-            if(!preg_match('/^[\x{4e00}-\x{9fa5}a-zA-Z0-9\-_.]+$/u', $formData->name)) return $this->sendError(array('name' => $this->lang->artifact->notice->dirNameFormatError));
+            if(!preg_match('/^[\x{4e00}-\x{9fa5}a-zA-Z0-9\-_]+$/u', $formData->name)) return $this->sendError(array('name' => $this->lang->artifact->notice->dirNameFormatError));
             if(mb_strlen($formData->name) > 15) return $this->sendError(array('name' => $this->lang->artifact->notice->dirNameTooLong));
 
-            $targetGroupID = $formData->parent == '.' ? 0 : explode('.', $formData->parent)[1];
+            $targetGroupID = $formData->parent == '/' ? 0 : explode('.', $formData->parent)[1];
             $params = array();
             $params['entityID']         = $node->entityID;
             $params['newName']          = $formData->name;
@@ -359,7 +355,7 @@ class artifact extends control
 
             if($result)
             {
-                $dirID = empty(explode('/', $node->entityID)[1]) ? 0 : explode('/', $node->entityID)[1];
+                $dirID = empty(explode('.', $node->entityID)[1]) ? 0 : explode('.', $node->entityID)[1];
                 $this->loadModel('action')->create('artifactDir', (int)$dirID, 'edited', '', $artifactLibID . '|' . $currentPath . '|' . $node->entityID);
             }
 
@@ -419,27 +415,13 @@ class artifact extends control
                 $oldName = !empty($asset->metadata) && !empty($asset->metadata->name) ? $asset->metadata->name : basename($asset->path);
                 $extra   = sprintf($this->lang->artifact->actionComment->edited, $oldName, $formData->name);
                 $this->loadModel('action')->create('artifactAsset', $assetID, 'editedasset', '', "{$artifactLibID}|{$extra}");
-                if($this->session->artifactLibViewLink && $asset->metadata->group)
-                {
-                    $oldPath = helper::safe64Encode('/' . $asset->metadata->group . '/' . $oldName);
-                    $newPath = helper::safe64Encode('/' . $asset->metadata->group . '/' . $formData->name);
-                    $link = str_replace($oldPath, $newPath, $this->session->artifactLibViewLink);
-                }
             }
             if(dao::isError()) $this->sendError(dao::getError());
             $response = array();
             $response['result']     = 'success';
             $response['message']    = $this->lang->saveSuccess;
             $response['closeModal'] = true;
-            if(!empty($link) && $link != $this->session->artifactLibViewLink)
-            {
-
-                $response['locate'] = $link;
-            }
-            else
-            {
-                $response['callback'] = "window.expandNode();";
-            }
+            $response['callback']   = "window.expandNode();";
             $this->sendSuccess($response);
         }
 

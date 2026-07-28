@@ -23,7 +23,7 @@ class storyEntry extends entry
         $this->resetOpenApp($this->param('tab', 'product'));
 
         $control = $this->loadController('story', 'view');
-        $control->view((int)$storyID, 0, 0, $this->param('type', 'story'));
+        $control->view($storyID, 0, 0, $this->param('type', 'story'));
 
         $data = $this->getData();
 
@@ -132,7 +132,7 @@ class storyEntry extends entry
             $this->setPost('status', 'reviewing');
         }
 
-        $control->edit((int)$storyID);
+        $control->edit($storyID);
 
         $data = $this->getData();
 
@@ -153,7 +153,7 @@ class storyEntry extends entry
     public function delete($storyID)
     {
         $control = $this->loadController('story', 'delete');
-        $control->delete((int)$storyID, 'yes');
+        $control->delete($storyID, 'yes');
 
         $this->getData();
         return $this->sendSuccess(200, 'success');

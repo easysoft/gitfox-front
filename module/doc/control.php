@@ -76,10 +76,9 @@ class doc extends control
             'mine'    => 'mySpace',
             'product' => 'productSpace',
             'project' => 'projectSpace',
-            'quick'   => 'quick',
             'custom'  => 'teamSpace'
         );
-        $method = zget($spaceMap, $lastViewedSpaceHome, '');
+        $method = $spaceMap[$lastViewedSpaceHome];
         if(empty($method) || !common::hasPriv('doc', $method)) return $this->locate($this->createLink('doc', 'mySpace'));
 
         $lastViewedSpace = $this->doc->getLastViewed('lastViewedSpace');
@@ -952,13 +951,9 @@ class doc extends control
                 $docData->module = $parentDoc->module;
             }
 
-            /* create 会 unset rawContent，克隆一份供 @ 通知解析。 */
-            /* create() unsets rawContent, clone one copy for parsing @ mentions. */
-            $docForMention = clone $docData;
-
             $docResult = $this->doc->create($docData);
             if(!$docResult || dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
-            return $this->docZen->responseAfterCreate($docResult, 'doc', $from, $docForMention);
+            return $this->docZen->responseAfterCreate($docResult, '', $from);
         }
 
         $this->docZen->assignVarsForCreate($objectType, $objectID, $libID, $moduleID, $docType);
@@ -1009,7 +1004,7 @@ class doc extends control
                 $_POST['parent'] = 0;
             }
 
-            if(!$doc) return $this->send(array('result' => 'fail', 'message' => $this->lang->notFound));
+            if(!$doc) return $this->send(array('result' => 'fail', 'message' => $this->lang->doc->errorNotFound));
 
             $isOpen          = $doc->acl == 'open';
             $currentAccount  = $this->app->user->account;
@@ -1025,13 +1020,6 @@ class doc extends control
             }
 
             if(!$isOpen && !$isAuthorOrAdmin && !$isInEditUsers && !$isInEditGroups) return $this->send(array('result' => 'fail', 'message' => $this->lang->doc->needEditable));
-
-            if(isset($_POST['renameFileID']))
-            {
-                $this->loadModel('file');
-                $result = $this->doc->renameFile($docID, (int)$this->post->renameFileID, (string)$this->post->fileName, (string)$this->post->extension);
-                return $this->send($result);
-            }
 
             if($doc->type == 'chapter') $this->lang->doc->title = $this->lang->doc->chapterName;
 
@@ -1073,7 +1061,6 @@ class doc extends control
                 $this->loadModel('message')->sendMentionNotice('doc', 'edit', $response['actionID'], $docData, $doc);
             }
 
-            $response['changes'] = array('type' => 'update', 'objectType' => 'doc', 'objectList' => array($docID));
             return $this->send($response);
         }
 
@@ -1425,7 +1412,7 @@ class doc extends control
         if($isApi) $docParam = 'api.' . $docParam;
         if(!$doc || !isset($doc->id))
         {
-            if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
+            if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
             return $this->sendError($this->lang->notFound, $this->inlink('index'));
         }
 
@@ -1896,46 +1883,6 @@ class doc extends control
     }
 
     /**
-     * 下载文档附件。
-     * Download doc file.
-     *
-     * @param  int    $fileID
-     * @param  string $mouse
-     * @access public
-     * @return void
-     */
-    public function downloadFile(int $fileID, string $mouse = '')
-    {
-        $this->loadModel('file');
-        $file = $this->file->getByID($fileID);
-        if(empty($file) || $file->objectType != 'doc') return $this->sendError($this->lang->file->fileNotFound);
-        $doc = $this->doc->getByID((int)$file->objectID);
-        if(!$doc || !$this->doc->checkPrivDoc($doc)) return $this->sendError($this->lang->file->accessDenied);
-
-        return print($this->fetch('file', 'download', "fileID=$fileID&mouse=$mouse"));
-    }
-
-    /**
-     * 预览文档附件。
-     * Preview doc file.
-     *
-     * @param  int    $fileID
-     * @param  string $mouse
-     * @access public
-     * @return void
-     */
-    public function previewFile(int $fileID, string $mouse = '')
-    {
-        $this->loadModel('file');
-        $file = $this->file->getByID($fileID);
-        if(empty($file) || $file->objectType != 'doc') return $this->sendError($this->lang->file->fileNotFound);
-        $doc = $this->doc->getByID((int)$file->objectID);
-        if(!$doc || !$this->doc->checkPrivDoc($doc)) return $this->sendError($this->lang->file->accessDenied);
-
-        return print($this->fetch('file', 'preview', "fileID=$fileID&mouse=$mouse"));
-    }
-
-    /**
      * 移动文档库
      * Move Lib.
      *
@@ -2002,7 +1949,7 @@ class doc extends control
                 $_POST['parent'] = 0;
             }
 
-            $data = $this->docZen->prepareDocFormData($spaceType, (string)$space);
+            $data = $this->docZen->prepareDocFormData($spaceType, $space);
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
             $changes = common::createChanges($doc, $data);
@@ -2029,17 +1976,6 @@ class doc extends control
         $this->display();
     }
 
-    /**
-     * 复制文档。
-     * Copy doc.
-     *
-     * @param  int    $docID
-     * @param  int    $libID
-     * @param  string $spaceType
-     * @param  string $space
-     * @access public
-     * @return void
-     */
     public function copyDoc(int $docID, int $libID = 0, string $spaceType = '', string $space = '')
     {
         $doc = $this->docZen->initDocContext($docID, $libID, $spaceType, $space);
@@ -2053,7 +1989,7 @@ class doc extends control
                 $_POST['parent'] = 0;
             }
 
-            $data = $this->docZen->prepareDocFormData($spaceType, (string)$space);
+            $data = $this->docZen->prepareDocFormData($spaceType, $space);
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
             $newDocID = $this->doc->copyDoc($docID, $data);
@@ -2573,29 +2509,17 @@ class doc extends control
         if(is_string($docID) && strpos($docID, 'api.') === 0)
         {
             $apiID = (int)str_replace('api.', '', $docID);
-            $api   = $this->loadModel('api')->getByID($apiID, $version);
-            if($api)
-            {
-                $api->originTitle = $api->title;
-                $api->icon        = "api is-$api->method";
-                $api->title       = "$api->method $api->path $api->title";
-                $api->api         = true;
-                $api->editable    = common::hasPriv('api', 'edit');
-            }
-            $this->send(array('result' => 'success', 'doc' => $api));
+            echo $this->fetch('api', 'ajaxGetApi', "apiID=$apiID&version=$version");
             return;
         }
 
         $docID = (int)$docID;
         $doc = $this->doc->getByID($docID, $version);
-        $doc->versionMarkers = $this->doc->getVersionMarkers($docID);
         $doc->lib     = (int)$doc->lib;
         $doc->module  = (int)$doc->module;
         $doc->privs   = array('edit' => common::hasPriv('doc', 'edit', $doc) && $doc->acl == 'open');
         $doc->editors = $this->doc->getEditors($docID);
         $doc->draft   = $doc->status == 'draft' ? $this->doc->getContent($docID, 0) : null;
-
-        unset($doc->order); // 防止order覆盖左侧文档树导致乱跳
 
         $lib        = $this->doc->getLibByID((int)$doc->lib);
         $objectType = $lib->type;
@@ -2632,33 +2556,7 @@ class doc extends control
         }
         if($docID) $this->doc->createAction($docID, 'view');
 
-        $this->send(array('result' => 'success', 'doc' => $doc));
-    }
-
-    /**
-     * Show deliverable and baseline relations of a document version.
-     *
-     * @param  int    $docID
-     * @param  int    $version
-     * @access public
-     * @return void
-     */
-    public function ajaxVersionRelations(int $docID, int $version = 0)
-    {
-        $this->app->loadLang('deliverable');
-
-        $doc = $this->doc->getByID($docID);
-        if(!$doc || !$this->doc->checkPrivDoc($doc)) return $this->sendError($this->lang->notFound);
-
-        if(!$version) $version = $doc->version;
-        $versionMarkers = $this->doc->getVersionMarkers($docID);
-
-        $this->view->title            = $this->lang->doc->versionRelation;
-        $this->view->docID            = $docID;
-        $this->view->version          = $version;
-        $this->view->relationVersions = array_keys($versionMarkers);
-        $this->view->relations        = $this->doc->getVersionRelations($docID, $version);
-        $this->display();
+        $this->send($doc);
     }
 
     /**
@@ -2702,14 +2600,13 @@ class doc extends control
      * Get lib summaries by space type and space list.
      *
      * @param  string $spaceType
+     * @param  string $spaceList
      * @access public
      * @return void
      */
-    public function ajaxGetLibSummaries(string $spaceType)
+    public function ajaxGetLibSummaries(string $spaceType, string $spaceList)
     {
-        $spaceList = !empty($_POST['spaceList']) ? $_POST['spaceList'] : array();
-        $spaceList = is_array($spaceList) ? implode(',', $spaceList) : $spaceList;
-        $libsMap   = $this->doc->getLibsOfSpaces($spaceType, $spaceList, 0);
+        $libsMap = $this->doc->getLibsOfSpaces($spaceType, $spaceList, 0);
         echo json_encode($libsMap);
     }
 
@@ -2741,7 +2638,6 @@ class doc extends control
         {
             $editTitle = $docType == 'url' ? $this->lang->doc->edit : $this->lang->settings;
             $title     = $isCreate ? $this->lang->doc->create : $editTitle;
-            if($objectType == 'template' && $isCreate) $title = $this->lang->docTemplate->create;
         }
         elseif($modalType == 'doc' && $isDraft != 'no')
         {

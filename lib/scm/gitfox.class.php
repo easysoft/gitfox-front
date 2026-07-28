@@ -475,6 +475,7 @@ class gitfoxRepo
         $endLine = end($lines);
         if(strpos($endLine, '\ No newline at end of file') === 0) $num -= 1;
 
+        $newFile  = false;
         $allFiles = array();
         for($i = 0; $i < $num; $i ++)
         {
@@ -492,6 +493,8 @@ class gitfoxRepo
             for($i ++; $i < $num; $i ++)
             {
                 $diff = new stdclass();
+                /* Fix bug #1757. */
+                if($lines[$i] == '+++ /dev/null') $newFile = true;
                 if(strpos($lines[$i], '+++', 0) !== false) continue;
                 if(strpos($lines[$i], '---', 0) !== false) continue;
                 if(strpos($lines[$i], '======', 0) !== false) continue;
@@ -503,6 +506,11 @@ class gitfoxRepo
                     list($diff->newStartLine) = explode(',', $newStartLine);
                     $oldCurrentLine = $diff->oldStartLine;
                     $newCurrentLine = $diff->newStartLine;
+                    if($newFile)
+                    {
+                        $oldCurrentLine = $diff->newStartLine;
+                        $newCurrentLine = $diff->oldStartLine;
+                    }
                     $newLines = array();
                     for($i++; $i < $num; $i ++)
                     {
@@ -516,10 +524,12 @@ class gitfoxRepo
                         $line = $lines[$i];
                         if(strpos($line, '\ No newline at end of file') === 0)continue;
                         $sign = empty($line) ? '' : $line[0];
+                        if($sign == '-' and $newFile) $sign = '+';
                         $type = $sign != '-' ? ($sign == '+' ? 'new' : 'all') : 'old';
                         if($sign == '-' || $sign == '+')
                         {
                             $line = substr_replace($line, ' ', 1, 0);
+                            if($newFile) $line = preg_replace('/^\-/', '+', $line);
                         }
 
                         $newLine = new stdclass();
@@ -541,6 +551,7 @@ class gitfoxRepo
                 if(isset($lines[$i]) and strpos($lines[$i], "diff --git ") === 0)
                 {
                     $i --;
+                    $newFile = false;
                     break;
                 }
             }

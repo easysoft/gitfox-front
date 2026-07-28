@@ -13,7 +13,7 @@ class projectModel extends model
      */
     public function getAclListByObjectType(string $objectType, string $account = ''): array
     {
-        return $this->dao->select('id, account, `objectType`, `objectID`')->from(TABLE_ACL)->where('objectType')->in($objectType)
+        return $this->dao->select('id, account, objectType, objectID')->from(TABLE_ACL)->where('objectType')->in($objectType)
             ->beginIF($account)->andWhere('account')->eq($account)->fi()
             ->fetchAll('id');
     }
@@ -47,7 +47,7 @@ class projectModel extends model
      */
     public function getListByAclAndType(string $acl, string $type = ''): array
     {
-        return $this->dao->select('id, project, type, parent, path, `openedBy`, `PO`, `PM`, `QD`, `RD`, acl')->from(TABLE_PROJECT)
+        return $this->dao->select('id, project, type, parent, path, openedBy, PO, PM, QD, RD, acl')->from(TABLE_PROJECT)
             ->where('acl')->in($acl)
             ->beginIF($type)->andWhere('type')->in($type)->fi()
             ->filterTpl('skip')
@@ -230,7 +230,7 @@ class projectModel extends model
         }
 
         /* 项目模板不校验访问权限。 */
-        $isTpl = $this->dao->select('`isTpl`')->from(TABLE_PROJECT)->where('id')->eq($projectID)->fetch('isTpl');
+        $isTpl = $this->dao->select('isTpl')->from(TABLE_PROJECT)->where('id')->eq($projectID)->fetch('isTpl');
         if(empty($isTpl) && !isset($projects[$projectID]))
         {
             if($projectID && strpos(",{$this->app->user->view->projects},", ",{$projectID},") === false && !empty($projects))
@@ -397,16 +397,8 @@ class projectModel extends model
         $taskSummary   = $this->projectTao->getTotalTaskByProject($projectIdList);
         $storySummary  = $this->projectTao->getTotalStoriesByProject($projectIdList);
 
-        /* Get workingDays. */
-        $today       = helper::today();
-        $earliestEnd = $today;
-        foreach($projects as $project)
-        {
-            if(!empty($project->end) && !helper::isZeroDate($project->end) && $project->end < $earliestEnd) $earliestEnd = $project->end;
-        }
-        $workingDays = $this->loadModel('holiday')->getActualWorkingDays($earliestEnd, $today);
-
         /* Set project attribute. */
+        $today = helper::today();
         foreach($projects as $projectID => $project)
         {
             $project->leftBugs      = isset($bugSummary[$projectID])   ? $bugSummary[$projectID]->leftBugs             : 0;
@@ -425,13 +417,8 @@ class projectModel extends model
             /* Judge whether the project is delayed. */
             if($project->status != 'done' && $project->status != 'closed' && $project->status != 'suspended')
             {
-                $betweenDays = $this->holiday->getDaysBetween($project->end, $today);
-                if($betweenDays)
-                {
-                    $delayDays = array_intersect($betweenDays, $workingDays);
-                    $delay     = count($delayDays) - 1;
-                    if($delay > 0) $project->delay = $delay;
-                }
+                $delay = helper::diffDate($today, $project->end);
+                if($delay > 0) $project->delay = $delay;
             }
         }
 
@@ -498,8 +485,8 @@ class projectModel extends model
      */
     public function getWaterfallPVEVAC(int $projectID): array
     {
-        $executions = $this->dao->select('id,begin,end,`realEnd`,status')->from(TABLE_EXECUTION)->where('deleted')->eq(0)->andWhere('vision')->eq($this->config->vision)->andWhere('project')->eq($projectID)->fetchAll('id');
-        $stmt       = $this->dao->select('id,status,estimate,consumed,`left`,`closedReason`')->from(TABLE_TASK)->where('execution')->in(array_keys($executions))->andWhere("isParent")->eq(0)->andWhere("deleted")->eq(0)->andWhere('status')->ne('cancel')->query();
+        $executions = $this->dao->select('id,begin,end,realEnd,status')->from(TABLE_EXECUTION)->where('deleted')->eq(0)->andWhere('vision')->eq($this->config->vision)->andWhere('project')->eq($projectID)->fetchAll('id');
+        $stmt       = $this->dao->select('id,status,estimate,consumed,`left`,closedReason')->from(TABLE_TASK)->where('execution')->in(array_keys($executions))->andWhere("isParent")->eq(0)->andWhere("deleted")->eq(0)->andWhere('status')->ne('cancel')->query();
 
         $PV   = 0;
         $EV   = 0;
@@ -630,13 +617,7 @@ class projectModel extends model
         if($this->config->edition != 'open')
         {
             $flow = $this->loadModel('workflow')->getByModule($module);
-            if(!empty($flow) && $flow->buildin == '0')
-            {
-                /* 工作流的所属视图可能是项目类型，需要转换为项目应用的代号。 */
-                $flowApp = $flow->app;
-                if(in_array($flowApp, array('scrum', 'waterfall', 'kanbanProject'))) $flowApp = 'project';
-                return helper::createLink('flow', 'ajaxSwitchBelong', "objectID=%s&moduleName=$module") . '#app=' . $flowApp;
-            }
+            if(!empty($flow) && $flow->buildin == '0') return helper::createLink('flow', 'ajaxSwitchBelong', "objectID=%s&moduleName=$module") . '#app=' . $flow->app;
         }
 
         $link    = helper::createLink('project', 'index', "projectID=%s");
@@ -844,23 +825,6 @@ class projectModel extends model
             ->andWhere('id')->in($projectIdList)
             ->beginIF(!$this->app->user->admin and $mode != 'all')->andWhere('id')->in($this->app->user->view->projects)->fi()
             ->fetchAll('id');
-    }
-
-    /**
-     * 获取项目邮件通知的收件人。
-     * Get toList and ccList.
-     *
-     * @param  object     $project
-     * @access public
-     * @return bool|array
-     */
-    public function getToAndCcList(object $project): bool|array
-    {
-        $toList = trim($project->openedBy . ',' . $project->PM, ',');
-        $toList = implode(',', array_unique(array_filter(explode(',', $toList))));
-        if(empty($toList)) return false;
-
-        return array($toList, '');
     }
 
     /**
@@ -1134,7 +1098,7 @@ class projectModel extends model
         $this->config->build->search['actionURL'] = helper::createLink($this->app->rawModule, $this->app->rawMethod, "{$objectIDField}=$projectID&browseType=bysearch&queryID=myQueryID");
         $this->config->build->search['queryID']   = (int)$queryID;
         $this->config->build->search['params']['product']['values'] = $products;
-        $this->config->build->search['params']['system']['values']  = $this->loadModel('system')->getPairsByProducts(array_keys($products));
+        $this->config->build->search['params']['system']['values']  = $this->loadModel('system')->getPairs($queryID ? 0 : (int)$productID, '0');
 
         $this->loadModel('search')->setSearchParams($this->config->build->search);
         return true;
@@ -2326,7 +2290,7 @@ class projectModel extends model
         $project = $this->projectTao->fetchProjectInfo($projectID);
         if(empty($project)) return array();
 
-        return $this->dao->select("t1.*, t1.hours * t1.days AS totalHours, t2.id as `userID`, if(t2.deleted='0', t2.realname, t1.account) as realname")->from(TABLE_TEAM)->alias('t1')
+        return $this->dao->select("t1.*, t1.hours * t1.days AS totalHours, t2.id as userID, if(t2.deleted='0', t2.realname, t1.account) as realname")->from(TABLE_TEAM)->alias('t1')
             ->leftJoin(TABLE_USER)->alias('t2')->on('t1.account = t2.account')
             ->where('t1.root')->eq((int)$projectID)
             ->andWhere('t1.type')->eq($project->type)

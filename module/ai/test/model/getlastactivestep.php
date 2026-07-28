@@ -32,7 +32,6 @@ $promptNull = null;
 
 $promptActive = new stdClass();
 $promptActive->status = 'active';
-$promptActive->type = '';
 $promptActive->name = 'Active prompt';
 $promptActive->module = 'story';
 $promptActive->actionPurpose = 'story.change';
@@ -40,12 +39,10 @@ $promptActive->displayPosition = 'detail';
 
 $promptWithTargetForm = new stdClass();
 $promptWithTargetForm->status = 'draft';
-$promptWithTargetForm->type = '';
 $promptWithTargetForm->targetForm = 'product.create';
 
 $promptWithBasicInfo = new stdClass();
 $promptWithBasicInfo->status = 'draft';
-$promptWithBasicInfo->type = '';
 $promptWithBasicInfo->name = 'Basic prompt';
 $promptWithBasicInfo->module = 'story';
 $promptWithBasicInfo->actionPurpose = 'story.change';
@@ -53,7 +50,6 @@ $promptWithBasicInfo->displayPosition = 'detail';
 
 $promptWithSource = new stdClass();
 $promptWithSource->status = 'draft';
-$promptWithSource->type = '';
 $promptWithSource->name = 'Source prompt';
 $promptWithSource->module = 'story';
 $promptWithSource->actionPurpose = 'story.change';
@@ -62,7 +58,6 @@ $promptWithSource->source = 'database';
 
 $promptWithFormPosition = new stdClass();
 $promptWithFormPosition->status = 'draft';
-$promptWithFormPosition->type = '';
 $promptWithFormPosition->name = 'Form prompt';
 $promptWithFormPosition->module = 'story';
 $promptWithFormPosition->actionPurpose = 'story.create';
@@ -70,7 +65,6 @@ $promptWithFormPosition->displayPosition = 'form';
 
 $promptWithPurpose = new stdClass();
 $promptWithPurpose->status = 'draft';
-$promptWithPurpose->type = '';
 $promptWithPurpose->name = 'Purpose prompt';
 $promptWithPurpose->module = 'story';
 $promptWithPurpose->actionPurpose = 'story.change';

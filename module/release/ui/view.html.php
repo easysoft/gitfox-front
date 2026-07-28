@@ -70,31 +70,20 @@ jsVar('releaseID', $release->id);
 jsVar('showGrade', $showGrade);
 jsVar('grades', $grades);
 
-$bugCols = $this->loadModel('datatable')->getSetting('release', 'bug');
 if(!empty($release->releases) || $release->deleted || ($app->tab == 'project' && !common::canModify('project', $project)))
 {
     $config->release->dtable->story->fieldList['id']['type']      = 'ID';
-    $bugCols['id']['type']                                        = 'ID';
+    $config->release->dtable->bug->fieldList['id']['type']        = 'ID';
     $config->release->dtable->leftBug->fieldList['id']['type']    = 'ID';
     $config->release->dtable->escapedBug->fieldList['id']['type'] = 'ID';
 
     unset($config->release->dtable->story->fieldList['actions']);
-    unset($bugCols['actions']);
+    unset($config->release->dtable->bug->fieldList['actions']);
     unset($config->release->dtable->leftBug->fieldList['actions']);
 }
 
-if($product->type == 'normal')     unset($bugCols['branch']);
-if(isset($bugCols['module']))      $bugCols['module']['map']     = $modules;
-if(isset($bugCols['branch']))      $bugCols['branch']['map']     = array(BRANCH_MAIN => $lang->trunk) + $branches;
-if(isset($bugCols['project']))     $bugCols['project']['map']    = array('') + $projectPairs;
-if(isset($bugCols['execution']))   $bugCols['execution']['map']  = array('') + $executions;
-if(isset($bugCols['openedBuild'])) $bugCols['openedBuild']['map'] = array('') + $builds;
-if(isset($bugCols['story']))       $bugCols['story']['map']      = array('') + $bugStories;
-if(isset($bugCols['task']))        $bugCols['task']['map']       = array('') + $bugTasks;
-if(isset($bugCols['toTask']))      $bugCols['toTask']['map']     = array('') + $bugTasks;
-
-if(!common::hasPriv($releaseModule, 'unlinkStory') || $release->status == 'terminate') unset($config->release->dtable->story->fieldList['actions']['list']['unlinkStory']);
-if(!common::hasPriv($releaseModule, 'unlinkBug') || $release->status == 'terminate')   unset($bugCols['actions']['list']['unlinkBug'], $config->release->dtable->leftBug->fieldList['actions']['list']['unlinkLeftBug']);
+if(!common::hasPriv($releaseModule, 'unlinkStory')) unset($config->release->dtable->story->fieldList['actions']['list']['unlinkStory']);
+if(!common::hasPriv($releaseModule, 'unlinkBug'))   unset($config->release->dtable->bug->fieldList['actions']['list']['unlinkBug']);
 
 /* Table data and setting for finished stories tab. */
 jsVar('storyCases', $storyCases);
@@ -103,8 +92,8 @@ jsVar('checkedSummary', $lang->product->checkedSRSummary);
 jsVar('unlinkstoryurl', helper::createLink($releaseModule, 'unlinkStory', "releaseID={$release->id}&storyID=%s"));
 $storyTableData = initTableData($stories, $config->release->dtable->story->fieldList, $this->release);
 
-$canBatchUnlinkStory = !$isInModal && $canBeChanged && common::hasPriv($releaseModule, 'batchUnlinkStory') && $release->status != 'terminate';
-$canBatchCloseStory  = !$isInModal && $canBeChanged && common::hasPriv('story', 'batchClose') && $release->status != 'terminate';
+$canBatchUnlinkStory = !$isInModal && $canBeChanged && common::hasPriv($releaseModule, 'batchUnlinkStory');
+$canBatchCloseStory  = !$isInModal && $canBeChanged && common::hasPriv('story', 'batchClose');
 
 $storyFootToolbar = array();
 if($canBatchUnlinkStory) $storyFootToolbar['items'][] = array('className' => 'btn primary size-sm batch-btn', 'text' => $lang->release->batchUnlink, 'data-type' => 'story', 'data-url' => createLink($releaseModule, 'batchUnlinkStory', "release={$release->id}"));
@@ -114,16 +103,16 @@ if($canBatchCloseStory)  $storyFootToolbar['items'][] = array('className' => 'bt
 jsVar('confirmunlinkbug', $lang->release->confirmUnlinkBug);
 jsVar('unlinkbugurl', helper::createLink($releaseModule, 'unlinkBug', "releaseID={$release->id}&bugID=%s"));
 
-$bugCols['resolvedBuild']['map'] = $builds;
-$bugTableData = initTableData($bugs, $bugCols, $this->release);
+$config->release->dtable->bug->fieldList['resolvedBuild']['map'] = $builds;
+$bugTableData = initTableData($bugs, $config->release->dtable->bug->fieldList, $this->release);
 $bugTableData = array_map(function($bug)
 {
     if(helper::isZeroDate($bug->resolvedDate)) $bug->resolvedDate = '';
     return $bug;
 }, $bugTableData);
 
-$canBatchUnlinkBug = !$isInModal && $canBeChanged && common::hasPriv($releaseModule, 'batchUnlinkBug') && $release->status != 'terminate';
-$canBatchCloseBug  = !$isInModal && $canBeChanged && common::hasPriv('bug', 'batchClose') && $release->status != 'terminate';
+$canBatchUnlinkBug = !$isInModal && $canBeChanged && common::hasPriv($releaseModule, 'batchUnlinkBug');
+$canBatchCloseBug  = !$isInModal && $canBeChanged && common::hasPriv('bug', 'batchClose');
 
 $bugFootToolbar = array();
 if($canBatchUnlinkBug) $bugFootToolbar['items'][] = array('className' => 'btn primary size-sm batch-btn', 'text' => $lang->release->batchUnlink, 'data-type' => 'bug', 'data-url' => createLink($releaseModule, 'batchUnlinkBug', "release={$release->id}"));
@@ -212,7 +201,7 @@ $linkStoryBtn = $linkBugBtn = $linkLeftBtn = null;
 jsVar('linkParams', $decodeParam);
 jsVar('releaseModule', $releaseModule);
 
-if(!$release->deleted && $canBeChanged && empty($release->releases) && $release->status != 'terminate')
+if(!$release->deleted && $canBeChanged && empty($release->releases))
 {
     if(!$isInModal && common::hasPriv($releaseModule, 'linkStory'))
     {
@@ -259,7 +248,6 @@ detailBody
             set::className('w-full'),
             set::id('releaseTabs'),
             set::headerClass('border-b'),
-            on::shown('.tab-pane')->call('$.apps.updateAppUrl', jsRaw('$this.data("url")')),
 
             /* Linked story table. */
             tabPane
@@ -268,7 +256,6 @@ detailBody
                 set::key('finishedStory'),
                 set::title($lang->release->stories),
                 set::active($type == 'story'),
-                setData('url', sprintf($tabUrl, 'story')),
                 div
                 (
                     setClass('tab-actions'),
@@ -300,7 +287,6 @@ detailBody
                 set::key('resolvedBug'),
                 set::title($lang->release->bugs),
                 set::active($type == 'bug'),
-                setData('url', sprintf($tabUrl, 'bug')),
                 div
                 (
                     setClass('tab-actions'),
@@ -310,11 +296,9 @@ detailBody
                 dtable
                 (
                     setID('resolvedBugDTable'),
-                    set::methodName('bug'),
                     set::style(array('min-width' => '100%')),
                     set::userMap($users),
-                    set::customCols(true),
-                    set::cols(array_values($bugCols)),
+                    set::cols(array_values($config->release->dtable->bug->fieldList)),
                     set::data($bugTableData),
                     set::checkable(empty($release->releases) && ($canBatchUnlinkBug || $canBatchCloseBug)),
                     set::sortLink(createLink($releaseModule, 'view', "releaseID={$release->id}&type=bug&link={$link}&param={$param}&orderBy={name}_{sortType}")),
@@ -332,7 +316,6 @@ detailBody
                 set::key('leftBug'),
                 set::title($lang->release->generatedBugs),
                 set::active($type == 'leftBug'),
-                setData('url', sprintf($tabUrl, 'leftBug')),
                 div
                 (
                     setClass('tab-actions'),
@@ -363,7 +346,6 @@ detailBody
                 to::suffix(set::title($lang->release->escapedBugTip), icon('help')),
                 set::title($lang->release->escapedBugs),
                 set::active($type == 'escapedBug'),
-                setData('url', sprintf($tabUrl, 'escapedBug')),
                 div
                 (
                     setClass('tab-actions'),
@@ -391,7 +373,6 @@ detailBody
                 set::key('releaseInfo'),
                 set::title($lang->release->basicInfo),
                 set::active($type == 'releaseInfo'),
-                setData('url', sprintf($tabUrl, 'releaseInfo')),
                 div
                 (
                     setClass('tab-actions'),

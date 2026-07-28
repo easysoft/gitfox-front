@@ -38,11 +38,6 @@ foreach($kanbanList as $current => $region)
 
 jsVar('privs',     $privs);
 jsVar('delayInfo', $lang->project->delayInfo);
-jsVar('toText', $lang->to);
-jsVar('futureDateText', $lang->productplan->future);
-jsVar('longTimeText', $lang->program->longTime);
-jsVar('FUTURE_DATE', FUTURE_DATE);
-jsVar('LONG_TIME', LONG_TIME);
 
 featureBar
 (

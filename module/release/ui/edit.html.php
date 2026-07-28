@@ -113,7 +113,7 @@ formPanel
             set::name('releasedDate'),
             set::label($lang->release->releasedDate),
             set::value($release->releasedDate),
-            set::control('datetimePicker')
+            set::control('date')
         )
     ),
     formGroup

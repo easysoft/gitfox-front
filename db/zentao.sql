@@ -383,7 +383,7 @@ CREATE TABLE IF NOT EXISTS `zt_bug` (
   `repo` int unsigned NOT NULL DEFAULT 0,
   `mr` int unsigned NOT NULL DEFAULT 0,
   `entry` text DEFAULT NULL,
-  `lines` varchar(50) NOT NULL DEFAULT '',
+  `lines` varchar(10) NOT NULL DEFAULT '',
   `v1` varchar(255) NOT NULL DEFAULT '',
   `v2` varchar(255) NOT NULL DEFAULT '',
   `repoType` varchar(30) NOT NULL DEFAULT '',
@@ -623,12 +623,11 @@ CREATE TABLE `zt_deliverable` (
 CREATE TABLE IF NOT EXISTS `zt_deliverablestage` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `deliverable` int unsigned NOT NULL DEFAULT 0,
-  `type` varchar(30) NOT NULL DEFAULT 'execution',
   `stage` varchar(30) NOT NULL,
   `required` varchar(30) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE UNIQUE INDEX `unique` ON `zt_deliverablestage`(`deliverable`,`type`,`stage`);
+CREATE UNIQUE INDEX `unique` ON `zt_deliverablestage`(`deliverable`,`stage`);
 
 -- DROP TABLE IF EXISTS `zt_decision`;
 CREATE TABLE IF NOT EXISTS `zt_decision` (
@@ -681,6 +680,27 @@ CREATE TABLE IF NOT EXISTS `zt_company` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
+-- DROP TABLE IF EXISTS `zt_compile`;
+CREATE TABLE IF NOT EXISTS `zt_compile` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL DEFAULT '',
+  `job` int unsigned NOT NULL DEFAULT 0,
+  `queue` int unsigned NOT NULL DEFAULT 0,
+  `status` varchar(100) NOT NULL DEFAULT '',
+  `branch` varchar(255) NOT NULL DEFAULT '',
+  `logs` longtext DEFAULT NULL,
+  `atTime` varchar(10) NOT NULL DEFAULT '',
+  `testtask` int unsigned NOT NULL DEFAULT 0,
+  `tag` varchar(255) NOT NULL DEFAULT '',
+  `times` tinyint unsigned NOT NULL DEFAULT 0,
+  `createdBy` varchar(30) NOT NULL DEFAULT '',
+  `createdDate` datetime DEFAULT NULL,
+  `updateDate` datetime DEFAULT NULL,
+  `deleted` tinyint unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+CREATE INDEX `idx_created_status` ON `zt_compile`(`createdDate`, `status`, `deleted`);
+
 -- DROP TABLE IF EXISTS `zt_config`;
 CREATE TABLE IF NOT EXISTS `zt_config` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -712,7 +732,6 @@ CREATE TABLE IF NOT EXISTS `zt_cron` (
   `buildin` tinyint unsigned NOT NULL DEFAULT 0,
   `status` varchar(20) NOT NULL DEFAULT '',
   `lastTime` datetime DEFAULT NULL,
-  `timeout` smallint unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 CREATE INDEX `lastTime` ON `zt_cron`(`lastTime`);
@@ -946,7 +965,6 @@ CREATE TABLE IF NOT EXISTS `zt_effort` (
   `product` text DEFAULT NULL,
   `project` int unsigned NOT NULL DEFAULT 0,
   `execution` int unsigned NOT NULL DEFAULT 0,
-  `team` int unsigned NOT NULL DEFAULT 0 COMMENT '团队',
   `account` varchar(30) NOT NULL DEFAULT '',
   `work` text DEFAULT NULL,
   `date` date DEFAULT NULL,
@@ -1220,7 +1238,6 @@ CREATE TABLE IF NOT EXISTS `zt_kanbangroup` (
 CREATE TABLE IF NOT EXISTS `zt_kanbanlane` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `execution` int unsigned NOT NULL DEFAULT 0,
-  `team` int unsigned NOT NULL DEFAULT 0 COMMENT '团队',
   `type` varchar(30) NOT NULL DEFAULT '',
   `region` int unsigned NOT NULL DEFAULT 0,
   `group` int unsigned NOT NULL DEFAULT 0,
@@ -1236,22 +1253,11 @@ CREATE TABLE IF NOT EXISTS `zt_kanbanlane` (
 CREATE INDEX `execution` ON `zt_kanbanlane`(`execution`);
 CREATE INDEX `group` ON `zt_kanbanlane`(`group`);
 
--- DROP TABLE IF EXISTS `zt_kanbanlinks`;
-CREATE TABLE IF NOT EXISTS `zt_kanbanlinks` (
-  `kanban` int unsigned NOT NULL DEFAULT 0 COMMENT '看板ID',
-  `from` char(30) NOT NULL DEFAULT '' COMMENT '源ID',
-  `to` char(30) NOT NULL DEFAULT '' COMMENT '目标ID'
-) ENGINE=InnoDB COMMENT='看板关联表';
-CREATE UNIQUE INDEX `uk_kanbanlinks` ON `zt_kanbanlinks`(`kanban`,`from`,`to`);
-
 -- DROP TABLE IF EXISTS `zt_kanbancolumn`;
 CREATE TABLE IF NOT EXISTS `zt_kanbancolumn` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `parent` int NOT NULL DEFAULT 0,
   `type` varchar(30) NOT NULL DEFAULT '',
-  `execution` int unsigned NOT NULL DEFAULT 0 COMMENT '执行',
-  `capacity` varchar(255) NOT NULL DEFAULT '0' COMMENT '容量',
-  `piexecution` int unsigned NOT NULL DEFAULT 0 COMMENT 'PI执行',
   `region` int unsigned NOT NULL DEFAULT 0,
   `group` int unsigned NOT NULL DEFAULT 0,
   `name` varchar(255) NOT NULL DEFAULT '',
@@ -1294,34 +1300,6 @@ CREATE TABLE IF NOT EXISTS `zt_log` (
 ) ENGINE=InnoDB;
 CREATE INDEX `objectType` ON `zt_log`(`objectType`);
 CREATE INDEX `obejctID`   ON `zt_log`(`objectID`);
-
--- DROP TABLE IF EXISTS `zt_errorlog`;
-CREATE TABLE IF NOT EXISTS `zt_errorlog` (
-  `md5` char(32) NOT NULL DEFAULT '' COMMENT '错误签名MD5',
-  `file` varchar(255) NOT NULL DEFAULT '' COMMENT '错误文件',
-  `line` int unsigned NOT NULL DEFAULT 0 COMMENT '错误行号',
-  `level` smallint unsigned NOT NULL DEFAULT 0 COMMENT '错误级别',
-  `message` text DEFAULT NULL COMMENT '错误信息',
-  `trace` text DEFAULT NULL COMMENT '错误堆栈',
-  PRIMARY KEY (`md5`)
-) ENGINE=InnoDB COMMENT='错误本体';
-
--- DROP TABLE IF EXISTS `zt_errorlogreq`;
-CREATE TABLE IF NOT EXISTS `zt_errorlogreq` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `requestID` varchar(64) NOT NULL DEFAULT '' COMMENT '请求ID',
-  `md5` char(32) NOT NULL DEFAULT '' COMMENT '错误签名MD5',
-  `module` varchar(30) NOT NULL DEFAULT '' COMMENT '模块',
-  `method` varchar(100) NOT NULL DEFAULT '' COMMENT '方法',
-  `account` varchar(30) NOT NULL DEFAULT '' COMMENT '用户账号',
-  `url` varchar(255) NOT NULL DEFAULT '' COMMENT '请求地址',
-  `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB COMMENT='错误请求记录';
-CREATE UNIQUE INDEX `uk_requestID_md5` ON `zt_errorlogreq`(`requestID`, `md5`);
-CREATE INDEX `idx_requestID`   ON `zt_errorlogreq`(`requestID`);
-CREATE INDEX `idx_md5`         ON `zt_errorlogreq`(`md5`);
-CREATE INDEX `idx_createdDate` ON `zt_errorlogreq`(`createdDate`);
 
 -- DROP TABLE IF EXISTS `zt_module`;
 CREATE TABLE IF NOT EXISTS `zt_module` (
@@ -1522,7 +1500,6 @@ CREATE TABLE IF NOT EXISTS `zt_project` (
   `consumed` decimal(12,2) unsigned NOT NULL DEFAULT 0.00,
   `teamCount` int unsigned NOT NULL DEFAULT 0,
   `market` int unsigned NOT NULL DEFAULT 0,
-  `PI` int unsigned NOT NULL DEFAULT 0 COMMENT 'PI',
   `openedBy` varchar(30) NOT NULL DEFAULT '',
   `openedDate` datetime DEFAULT NULL,
   `openedVersion` varchar(20) NOT NULL DEFAULT '',
@@ -1614,8 +1591,7 @@ CREATE INDEX `project` ON `zt_projectchange` (`project`);
 CREATE TABLE IF NOT EXISTS `zt_projectdeliverable` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `project` int unsigned NOT NULL DEFAULT 0 COMMENT '所属项目',
-  `sourceType` varchar(20) NOT NULL DEFAULT 'project' COMMENT '来源类型',
-  `sourceID` int unsigned NOT NULL DEFAULT 0 COMMENT '来源对象',
+  `submitFrom` int unsigned NOT NULL DEFAULT 0 COMMENT '提交来源',
   `review` int unsigned NOT NULL DEFAULT 0 COMMENT '关联评审',
   `deliverable` varchar(30) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -1693,16 +1669,13 @@ CREATE TABLE IF NOT EXISTS `zt_queue` (
   `type` varchar(255) NOT NULL DEFAULT '',
   `command` text DEFAULT NULL,
   `status` varchar(10) NOT NULL DEFAULT 'wait',
-  `pending` tinyint unsigned NULL DEFAULT NULL,
   `execId` int unsigned NOT NULL DEFAULT 0,
   `createdDate` datetime DEFAULT NULL,
-  `startedDate` datetime DEFAULT NULL,
   `deleted` tinyint unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 CREATE INDEX `status_createdDate` ON `zt_queue`(`status`, `createdDate`);
 CREATE INDEX `cron_createdDate` ON `zt_queue`(`cron`, `createdDate`);
-CREATE UNIQUE INDEX `uk_cron_pending` ON `zt_queue`(`cron`, `pending`);
 
 -- DROP TABLE IF EXISTS `zt_relation`;
 CREATE TABLE IF NOT EXISTS `zt_relation` (
@@ -1737,7 +1710,7 @@ CREATE TABLE IF NOT EXISTS `zt_release` (
   `releases` varchar(255) NOT NULL DEFAULT '',
   `marker` tinyint unsigned NOT NULL DEFAULT 0,
   `date` date DEFAULT NULL,
-  `releasedDate` datetime DEFAULT NULL,
+  `releasedDate` date DEFAULT NULL,
   `stories` text DEFAULT NULL,
   `bugs` text DEFAULT NULL,
   `leftBugs` text DEFAULT NULL,
@@ -1766,55 +1739,6 @@ CREATE TABLE IF NOT EXISTS `zt_releaserelated` (
 CREATE INDEX `objectID` ON `zt_releaserelated` (`objectID`);
 CREATE INDEX `objectType` ON `zt_releaserelated` (`objectType`);
 CREATE UNIQUE INDEX `unique` ON `zt_releaserelated` (`release`, `objectID`, `objectType`);
-
--- DROP TABLE IF EXISTS `zt_rule`;
-CREATE TABLE IF NOT EXISTS `zt_rule` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '规则名称',
-  `scene` varchar(30) NOT NULL DEFAULT 'automation' COMMENT '场景',
-  `type` varchar(30) NOT NULL DEFAULT 'global' COMMENT '类型',
-  `workflowGroup` varchar(255) DEFAULT NULL COMMENT '工作流组',
-  `objectType` varchar(30) NOT NULL DEFAULT '' COMMENT '对象类型',
-  `action` varchar(30) NOT NULL DEFAULT '' COMMENT '动作',
-  `alertLevel` varchar(10) NOT NULL DEFAULT 'notice' COMMENT '预警级别',
-  `triggerKind` varchar(30) NOT NULL DEFAULT 'object' COMMENT '触发类型',
-  `nodes` mediumtext DEFAULT NULL COMMENT '节点',
-  `version` mediumint unsigned NOT NULL DEFAULT 0 COMMENT '版本',
-  `runAs` varchar(30) NOT NULL DEFAULT '' COMMENT '规则执行人',
-  `method` varchar(30) NOT NULL DEFAULT 'sync' COMMENT '执行方法',
-  `status` char(30) NOT NULL DEFAULT 'disable' COMMENT '状态',
-  `notifyUsers` text NULL COMMENT '通知用户',
-  `notifyMethod` varchar(30) NULL COMMENT '通知方式',
-  `createdBy` varchar(30) DEFAULT NULL COMMENT '创建人',
-  `createdDate` date DEFAULT NULL COMMENT '创建时间',
-  `lastEditedBy` varchar(30) DEFAULT NULL COMMENT '最后编辑人',
-  `lastEditedDate` date DEFAULT NULL COMMENT '最后编辑时间',
-  `lastRunTime` datetime DEFAULT NULL COMMENT '最后运行时间',
-  `lastRunResult` varchar(30) NOT NULL DEFAULT '' COMMENT '最后运行结果',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX `idx_rule_scene_status` ON `zt_rule` (`scene`, `status`);
-CREATE INDEX `idx_rule_object_action` ON `zt_rule` (`objectType`, `action`);
-
--- DROP TABLE IF EXISTS `zt_rulequeue`;
-CREATE TABLE IF NOT EXISTS `zt_rulequeue` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `rule` int unsigned NOT NULL DEFAULT 0 COMMENT '规则',
-  `ruleVersion` mediumint unsigned NOT NULL DEFAULT 0 COMMENT '规则版本',
-  `fromObject` mediumtext DEFAULT NULL COMMENT '触发对象',
-  `actions` longtext DEFAULT NULL COMMENT '执行动作',
-  `status` char(30) NOT NULL DEFAULT 'wait' COMMENT '执行状态',
-  `runAs` varchar(30) NOT NULL DEFAULT '' COMMENT '运行方式',
-  `log` text DEFAULT NULL COMMENT '日志',
-  `triggeredBy` varchar(30) DEFAULT NULL COMMENT '触发执行人',
-  `triggeredDate` datetime DEFAULT NULL COMMENT '触发时间',
-  `executedTime` datetime DEFAULT NULL COMMENT '执行时间',
-  `startedAt` datetime DEFAULT NULL COMMENT '开始时间',
-  `finishedAt` datetime DEFAULT NULL COMMENT '完成时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-CREATE INDEX `idx_rulequeue_status` ON `zt_rulequeue` (`status`);
-CREATE INDEX `idx_rulequeue_rule` ON `zt_rulequeue` (`rule`);
 
 -- DROP TABLE IF EXISTS `zt_score`;
 CREATE TABLE IF NOT EXISTS `zt_score` (
@@ -1919,10 +1843,8 @@ CREATE TABLE IF NOT EXISTS `zt_story` (
   `status` varchar(10) NOT NULL DEFAULT '',
   `subStatus` varchar(30) NOT NULL DEFAULT '',
   `color` char(7) NOT NULL DEFAULT '',
-  `cardColor` char(30) NOT NULL DEFAULT '' COMMENT '卡片颜色',
   `stage` varchar(10) NOT NULL DEFAULT 'wait',
   `stagedBy` varchar(30) NOT NULL DEFAULT '',
-  `prevReviewers` text DEFAULT NULL,
   `mailto` text DEFAULT NULL,
   `lib` int unsigned NOT NULL DEFAULT 0,
   `fromStory` int unsigned NOT NULL DEFAULT 0,
@@ -2069,7 +1991,6 @@ CREATE TABLE IF NOT EXISTS `zt_task` (
   `fromBug` int unsigned NOT NULL DEFAULT 0,
   `feedback` int unsigned NOT NULL DEFAULT 0,
   `fromIssue` int unsigned NOT NULL DEFAULT 0,
-  `fromDeliverable` int unsigned NOT NULL DEFAULT 0 COMMENT '由交付物转的任务',
   `docs` text DEFAULT NULL,
   `docVersions` text DEFAULT NULL,
   `name` varchar(255) NOT NULL DEFAULT '',
@@ -2086,7 +2007,6 @@ CREATE TABLE IF NOT EXISTS `zt_task` (
   `mailto` text DEFAULT NULL,
   `keywords` varchar(255) NOT NULL DEFAULT '',
   `desc` mediumtext DEFAULT NULL,
-  `deliverable` text DEFAULT NULL COMMENT '任务关联的交付物类型',
   `version` smallint unsigned NOT NULL DEFAULT 1,
   `openedBy` varchar(30) NOT NULL DEFAULT '',
   `openedDate` datetime DEFAULT NULL,
@@ -2173,7 +2093,6 @@ CREATE TABLE IF NOT EXISTS `zt_team` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `root` int unsigned NOT NULL DEFAULT 0,
   `type` varchar(10) NOT NULL DEFAULT 'project',
-  `teamgroup` int unsigned NOT NULL DEFAULT 0 COMMENT '团队组',
   `account` varchar(30) NOT NULL DEFAULT '',
   `role` varchar(30) NOT NULL DEFAULT '',
   `position` varchar(30) NOT NULL DEFAULT '',
@@ -2188,28 +2107,6 @@ CREATE TABLE IF NOT EXISTS `zt_team` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 CREATE UNIQUE INDEX `team` ON `zt_team`(`root`,`type`,`account`);
-
--- DROP TABLE IF EXISTS `zt_teamgroup`;
-CREATE TABLE IF NOT EXISTS `zt_teamgroup` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `type` char(30) NOT NULL DEFAULT '' COMMENT '类型',
-  `logo` text DEFAULT NULL COMMENT '团队logo',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '团队名称',
-  `manager` text DEFAULT NULL COMMENT '负责人',
-  `parent` int unsigned NOT NULL DEFAULT 0 COMMENT '所属团队',
-  `grade` smallint unsigned NOT NULL DEFAULT 1 COMMENT '级别',
-  `path` text DEFAULT NULL COMMENT '路径',
-  `status` char(30) NOT NULL DEFAULT 'enable' COMMENT '状态',
-  `slogan` varchar(255) NOT NULL DEFAULT '' COMMENT '团队口号',
-  `declaration` text DEFAULT NULL COMMENT '团队信条',
-  `createdBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
-  `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
-  `lastEditedBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁编辑',
-  `lastEditedDate` datetime DEFAULT NULL COMMENT '编辑时间',
-  `disbandedDate` datetime DEFAULT NULL COMMENT '解散时间',
-  `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB COMMENT='团队组织结构表';
 
 -- DROP TABLE IF EXISTS `zt_testreport`;
 CREATE TABLE IF NOT EXISTS `zt_testreport` (
@@ -2529,27 +2426,24 @@ CREATE TABLE IF NOT EXISTS `zt_webhook` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
-REPLACE INTO `zt_cron` (`m`, `h`, `dom`, `mon`, `dow`, `command`, `remark`, `type`, `buildin`, `status`, `lastTime`, `timeout`) VALUES
-('*',   '*',  '*', '*', '*', '',                                                         '监控定时任务',       'zentao', 1, 'normal', NULL, 300),
-('0',   '*',  '*', '*', '*', 'moduleName=metric&methodName=updateDashboardMetricLib',    '计算仪表盘数据',     'zentao', 1, 'normal', NULL, 3600),
-('*/1', '*',  '*', '*', '*', 'moduleName=mail&methodName=asyncSend',                     '异步发信',           'zentao', 1, 'normal', NULL, 300),
-('*/1', '*',  '*', '*', '*', 'moduleName=webhook&methodName=asyncSend',                  '异步发送Webhook',    'zentao', 1, 'normal', NULL, 300),
-('*/5', '*',  '*', '*', '*', 'moduleName=admin&methodName=deleteLog',                    '删除过期日志',       'zentao', 1, 'normal', NULL, 300),
-('*/5', '*',  '*', '*', '*', 'moduleName=errorlog&methodName=deleteLog',                 '删除过期错误日志',   'zentao', 1, 'normal', NULL, 300),
-('*/5', '*',  '*', '*', '*', 'moduleName=program&methodName=refreshStats',               '刷新项目集统计数据', 'zentao', 1, 'normal', NULL, 300),
-('*/5', '*',  '*', '*', '*', 'moduleName=product&methodName=refreshStats',               '刷新产品统计数据',   'zentao', 1, 'normal', NULL, 300),
-('0',   '0',  '*', '*', '*', 'moduleName=weekly&methodName=createCycleReport',           '定时生成报告',       'zentao', 1, 'normal', NULL, 300),
-('30',  '0',  '*', '*', '*', 'moduleName=backup&methodName=backup',                      '备份数据和附件',     'zentao', 1, 'normal', NULL, 3600),
-('0',   '1',  '*', '*', '*', 'moduleName=todo&methodName=createCycle',                   '生成周期性待办',     'zentao', 1, 'normal', NULL, 300),
-('30',  '1',  '*', '*', '*', 'moduleName=metric&methodName=updateMetricLib',             '计算度量数据',       'zentao', 1, 'normal', NULL, 7200),
-('30',  '7',  '*', '*', '*', 'moduleName=effort&methodName=remindNotRecord',             '提醒录入日志',       'zentao', 1, 'stop',   NULL, 300),
-('0',   '8',  '*', '*', '*', 'moduleName=report&methodName=remind',                      '每日任务提醒',       'zentao', 1, 'normal', NULL, 300),
-('30',  '23', '*', '*', '*', 'moduleName=execution&methodName=computeTaskEffort',        '计算任务剩余工时',   'zentao', 1, 'normal', NULL, 300),
-('40',  '23', '*', '*', '*', 'moduleName=execution&methodName=computeburn',              '更新燃尽图',         'zentao', 1, 'normal', NULL, 300),
-('50',  '23', '*', '*', '*', 'moduleName=execution&methodName=computecfd',               '更新累积流图',       'zentao', 1, 'normal', NULL, 300),
-('2',   '2',  '*', '*', '*', 'moduleName=auditplan&methodName=ajaxCreateCycleAuditplan', '生成周期性活动检查', 'zentao', 1, 'normal', NULL, 300),
-('*/5', '*',  '*', '*', '*', 'moduleName=zai&methodName=syncVectorization',              '自动同步向量化数据', 'zentao', 1, 'normal', NULL, 300),
-('*/5', '*',  '*', '*', '*', 'moduleName=ai&methodName=runTimerAgents',                  '执行定时智能体',     'zentao', 1, 'normal', NULL, 300);
+REPLACE INTO `zt_cron` (`m`, `h`, `dom`, `mon`, `dow`, `command`, `remark`, `type`, `buildin`, `status`, `lastTime`) VALUES
+('*',   '*',  '*', '*', '*', '',                                                         '监控定时任务',                       'zentao', 1, 'normal', NULL),
+('0',   '*',  '*', '*', '*', 'moduleName=metric&methodName=updateDashboardMetricLib',    '计算仪表盘数据',                     'zentao', 1, 'normal', NULL),
+('*/1', '*',  '*', '*', '*', 'moduleName=mail&methodName=asyncSend',                     '异步发信',                           'zentao', 1, 'normal', NULL),
+('*/1', '*',  '*', '*', '*', 'moduleName=webhook&methodName=asyncSend',                  '异步发送Webhook',                    'zentao', 1, 'normal', NULL),
+('*/5', '*',  '*', '*', '*', 'moduleName=admin&methodName=deleteLog',                    '删除过期日志',                       'zentao', 1, 'normal', NULL),
+('*/5', '*',  '*', '*', '*', 'moduleName=program&methodName=refreshStats',               '刷新项目集统计数据',                 'zentao', 1, 'normal', NULL),
+('*/5', '*',  '*', '*', '*', 'moduleName=product&methodName=refreshStats',               '刷新产品统计数据',                   'zentao', 1, 'normal', NULL),
+('0',   '0',  '*', '*', '*', 'moduleName=weekly&methodName=createCycleReport',           '定时生成报告',                       'zentao', 1, 'normal', NULL),
+('30',  '0',  '*', '*', '*', 'moduleName=backup&methodName=backup',                      '备份数据和附件',                     'zentao', 1, 'normal', NULL),
+('0',   '1',  '*', '*', '*', 'moduleName=todo&methodName=createCycle',                   '生成周期性待办',                     'zentao', 1, 'normal', NULL),
+('30',  '1',  '*', '*', '*', 'moduleName=metric&methodName=updateMetricLib',             '计算度量数据',                       'zentao', 1, 'normal', NULL),
+('30',  '7',  '*', '*', '*', 'moduleName=effort&methodName=remindNotRecord',             '提醒录入日志',                       'zentao', 1, 'stop',   NULL),
+('0',   '8',  '*', '*', '*', 'moduleName=report&methodName=remind',                      '每日任务提醒',                       'zentao', 1, 'normal', NULL),
+('30',  '23', '*', '*', '*', 'moduleName=execution&methodName=computeTaskEffort',        '计算任务剩余工时',                   'zentao', 1, 'normal', NULL),
+('40',  '23', '*', '*', '*', 'moduleName=execution&methodName=computeburn',              '更新燃尽图',                         'zentao', 1, 'normal', NULL),
+('50',  '23', '*', '*', '*', 'moduleName=execution&methodName=computecfd',               '更新累积流图',                       'zentao', 1, 'normal', NULL),
+('2',   '2',  '*', '*', '*', 'moduleName=auditplan&methodName=ajaxCreateCycleAuditplan', '生成周期性活动检查',                 'zentao', 1, 'normal', NULL);
 
 REPLACE INTO `zt_group` (`vision`, `name`, `role`, `desc`) VALUES
 ('rnd',  'ADMIN',          'admin',          'for administrator'),
@@ -2669,6 +2563,41 @@ CREATE TABLE IF NOT EXISTS `zt_report` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 CREATE UNIQUE INDEX `code` ON `zt_report`(`code`);
+
+-- DROP VIEW IF EXISTS `ztv_executionsummary`;
+CREATE OR REPLACE VIEW `ztv_executionsummary` AS SELECT `zt_task`.`execution` AS `execution`,SUM(IF((`zt_task`.`isParent` = '0'),`zt_task`.`estimate`,0)) AS `estimate`,SUM(IF((`zt_task`.`isParent` = '0'),`zt_task`.`consumed`,0)) AS `consumed`,SUM(IF(((`zt_task`.`status` <> 'cancel') AND (`zt_task`.`status` <> 'closed') AND (`zt_task`.`isParent` = '0')),`zt_task`.`left`,0)) AS `left`,COUNT(0) AS `number`,SUM(IF(((`zt_task`.`status` <> 'done') AND (`zt_task`.`status` <> 'closed')),1,0)) AS `undone`,SUM(IF(`zt_task`.`isParent` = '0',`zt_task`.`consumed`,0) + IF(((`zt_task`.`status` <> 'cancel') AND (`zt_task`.`status` <> 'closed') AND (`zt_task`.`isParent` = '0')),`zt_task`.`left`,0)) AS `totalReal` FROM `zt_task` WHERE (`zt_task`.`deleted` = '0') GROUP BY `zt_task`.`execution`;
+-- DROP VIEW IF EXISTS `ztv_projectsummary`;
+CREATE OR REPLACE VIEW `ztv_projectsummary` AS SELECT `zt_task`.`project` AS `project`,SUM(IF((`zt_task`.`isParent` = '0'),`zt_task`.`estimate`,0)) AS `estimate`,SUM(IF((`zt_task`.`isParent` = '0'),`zt_task`.`consumed`,0)) AS `consumed`,SUM(IF(((`zt_task`.`status` <> 'cancel') AND (`zt_task`.`status` <> 'closed') AND (`zt_task`.`isParent` = '0')),`zt_task`.`left`,0)) AS `left`,COUNT(0) AS `number`,SUM(IF(((`zt_task`.`status` <> 'done') AND (`zt_task`.`status` <> 'closed')),1,0)) AS `undone`,SUM(IF(`zt_task`.`isParent` = '0',`zt_task`.`consumed`,0) + IF(((`zt_task`.`status` <> 'cancel') AND (`zt_task`.`status` <> 'closed') AND (`zt_task`.`isParent` = '0')),`zt_task`.`left`,0)) AS `totalReal` FROM `zt_task` WHERE (`zt_task`.`deleted` = '0') GROUP BY `zt_task`.`project`;
+-- DROP VIEW IF EXISTS `ztv_projectstories`;
+CREATE OR REPLACE VIEW `ztv_projectstories` AS SELECT `t1`.`project` AS `execution`,COUNT(1) AS `stories`,SUM(IF((`t2`.`status` = 'closed'),0,1)) AS `undone` FROM ((`zt_projectstory` `t1` LEFT JOIN `zt_story` `t2` ON((`t1`.`story` = `t2`.`id`))) LEFT JOIN `zt_project` `t3` ON((`t1`.`project` = `t3`.`id`))) WHERE ((`t2`.`deleted` = '0') AND (`t3`.`type` IN ('sprint','stage'))) GROUP BY `t1`.`project`;
+-- DROP VIEW IF EXISTS `ztv_projectteams`;
+CREATE OR REPLACE VIEW `ztv_projectteams` AS SELECT `zt_team`.`root` AS `execution`,COUNT(1) AS `teams` FROM `zt_team` WHERE (`zt_team`.`type` = 'execution') GROUP BY `zt_team`.`root`;
+-- DROP VIEW IF EXISTS `ztv_projectbugs`;
+CREATE OR REPLACE VIEW `ztv_projectbugs` AS SELECT `zt_bug`.`execution` AS `execution`,COUNT(1) AS `bugs`,SUM(IF((`zt_bug`.`resolution` = ''),0,1)) AS `resolutions`,SUM(IF((`zt_bug`.`severity` <= 2),1,0)) AS `seriousBugs` FROM `zt_bug` WHERE (`zt_bug`.`deleted` = '0') GROUP BY `zt_bug`.`execution`;
+-- DROP VIEW IF EXISTS `ztv_productbugs`;
+CREATE OR REPLACE VIEW `ztv_productbugs` AS SELECT `zt_bug`.`product` AS `product`,COUNT(1) AS `bugs`,SUM(IF((`zt_bug`.`resolution` = ''),0,1)) AS `resolutions`,SUM(IF((`zt_bug`.`severity` <= 2),1,0)) AS `seriousBugs` FROM `zt_bug` WHERE (`zt_bug`.`deleted` = '0') GROUP BY `zt_bug`.`product`;
+-- DROP VIEW IF EXISTS `ztv_productstories`;
+CREATE OR REPLACE VIEW `ztv_productstories` AS SELECT `zt_story`.`product` AS `product`,COUNT(1) AS `stories`,SUM(IF((`zt_story`.`status` = 'closed'),0,1)) AS `undone` FROM `zt_story` WHERE (`zt_story`.`deleted` = '0') GROUP BY `zt_story`.`product`;
+-- DROP VIEW IF EXISTS `ztv_dayuserlogin`;
+CREATE OR REPLACE VIEW `ztv_dayuserlogin` AS SELECT COUNT(1) AS `userlogin`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'user') AND (`zt_action`.`action` = 'login')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_dayeffort`;
+CREATE OR REPLACE VIEW `ztv_dayeffort` AS SELECT ROUND(SUM(`zt_effort`.`consumed`), 1) AS `consumed`,`zt_effort`.`date` AS `date` FROM `zt_effort` GROUP BY `zt_effort`.`date`;
+-- DROP VIEW IF EXISTS `ztv_daystoryopen`;
+CREATE OR REPLACE VIEW `ztv_daystoryopen` AS SELECT COUNT(1) AS `storyopen`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'story') AND (`zt_action`.`action` = 'opened')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_daystoryclose`;
+CREATE OR REPLACE VIEW `ztv_daystoryclose` AS SELECT COUNT(1) AS `storyclose`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'story') AND (`zt_action`.`action` = 'closed')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_daytaskopen`;
+CREATE OR REPLACE VIEW `ztv_daytaskopen` AS SELECT COUNT(1) AS `taskopen`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'task') AND (`zt_action`.`action` = 'opened')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_daytaskfinish`;
+CREATE OR REPLACE VIEW `ztv_daytaskfinish` AS SELECT COUNT(1) AS `taskfinish`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'task') AND (`zt_action`.`action` = 'finished')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_daybugopen`;
+CREATE OR REPLACE VIEW `ztv_daybugopen` AS SELECT COUNT(1) AS `bugopen`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'bug') AND (`zt_action`.`action` = 'opened')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_daybugresolve`;
+CREATE OR REPLACE VIEW `ztv_daybugresolve` AS SELECT COUNT(1) AS `bugresolve`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` WHERE ((`zt_action`.`objectType` = 'bug') AND (`zt_action`.`action` = 'resolved')) GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_dayactions`;
+CREATE OR REPLACE VIEW `ztv_dayactions` AS SELECT COUNT(1) AS `actions`,CAST(`zt_action`.`date` AS DATE) AS `day` FROM `zt_action` GROUP BY CAST(`zt_action`.`date` AS DATE);
+-- DROP VIEW IF EXISTS `ztv_normalproduct`;
+CREATE OR REPLACE VIEW `ztv_normalproduct` AS SELECT * FROM `zt_product` WHERE `shadow` = 0;
 
 -- DROP TABLE IF EXISTS `zt_feedback`;
 CREATE TABLE IF NOT EXISTS `zt_feedback` (
@@ -4395,7 +4324,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (1, 'task', 'finish'),
 (1, 'task', 'import'),
 (1, 'task', 'pause'),
-(1, 'task', 'recordWorkhour'),
+(1, 'task', 'recordEstimate'),
 (1, 'task', 'report'),
 (1, 'task', 'restart'),
 (1, 'task', 'showImport'),
@@ -5318,7 +5247,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (2, 'task', 'finish'),
 (2, 'task', 'import'),
 (2, 'task', 'pause'),
-(2, 'task', 'recordWorkhour'),
+(2, 'task', 'recordEstimate'),
 (2, 'task', 'report'),
 (2, 'task', 'restart'),
 (2, 'task', 'showImport'),
@@ -5947,7 +5876,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (3, 'task', 'export'),
 (3, 'task', 'finish'),
 (3, 'task', 'pause'),
-(3, 'task', 'recordWorkhour'),
+(3, 'task', 'recordEstimate'),
 (3, 'task', 'report'),
 (3, 'task', 'restart'),
 (3, 'task', 'start'),
@@ -6903,7 +6832,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (4, 'task', 'finish'),
 (4, 'task', 'import'),
 (4, 'task', 'pause'),
-(4, 'task', 'recordWorkhour'),
+(4, 'task', 'recordEstimate'),
 (4, 'task', 'report'),
 (4, 'task', 'restart'),
 (4, 'task', 'showImport'),
@@ -7908,7 +7837,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (5, 'task', 'finish'),
 (5, 'task', 'import'),
 (5, 'task', 'pause'),
-(5, 'task', 'recordWorkhour'),
+(5, 'task', 'recordEstimate'),
 (5, 'task', 'report'),
 (5, 'task', 'restart'),
 (5, 'task', 'showImport'),
@@ -8663,7 +8592,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (6, 'task', 'export'),
 (6, 'task', 'finish'),
 (6, 'task', 'pause'),
-(6, 'task', 'recordWorkhour'),
+(6, 'task', 'recordEstimate'),
 (6, 'task', 'report'),
 (6, 'task', 'restart'),
 (6, 'task', 'start'),
@@ -9489,7 +9418,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (7, 'task', 'export'),
 (7, 'task', 'finish'),
 (7, 'task', 'pause'),
-(7, 'task', 'recordWorkhour'),
+(7, 'task', 'recordEstimate'),
 (7, 'task', 'report'),
 (7, 'task', 'restart'),
 (7, 'task', 'start'),
@@ -10171,7 +10100,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (8, 'task', 'export'),
 (8, 'task', 'finish'),
 (8, 'task', 'pause'),
-(8, 'task', 'recordWorkhour'),
+(8, 'task', 'recordEstimate'),
 (8, 'task', 'report'),
 (8, 'task', 'restart'),
 (8, 'task', 'start'),
@@ -11005,7 +10934,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (9, 'task', 'export'),
 (9, 'task', 'finish'),
 (9, 'task', 'pause'),
-(9, 'task', 'recordWorkhour'),
+(9, 'task', 'recordEstimate'),
 (9, 'task', 'report'),
 (9, 'task', 'restart'),
 (9, 'task', 'start'),
@@ -11480,7 +11409,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (10, 'task', 'export'),
 (10, 'task', 'finish'),
 (10, 'task', 'pause'),
-(10, 'task', 'recordWorkhour'),
+(10, 'task', 'recordEstimate'),
 (10, 'task', 'report'),
 (10, 'task', 'restart'),
 (10, 'task', 'start'),
@@ -11960,7 +11889,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (11, 'task', 'export'),
 (11, 'task', 'finish'),
 (11, 'task', 'pause'),
-(11, 'task', 'recordWorkhour'),
+(11, 'task', 'recordEstimate'),
 (11, 'task', 'report'),
 (11, 'task', 'restart'),
 (11, 'task', 'start'),
@@ -12941,14 +12870,41 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'codescan', 'unlinkset'),
 (21, 'codescan', 'unlinkSolution'),
 (21, 'codescan', 'view'),
-(21, 'pipeline', 'edit'),
+(21, 'deploy', 'activate'),
+(21, 'deploy', 'assignTo'),
+(21, 'deploy', 'batchUnlinkCases'),
+(21, 'deploy', 'browse'),
+(21, 'deploy', 'cases'),
+(21, 'deploy', 'create'),
+(21, 'deploy', 'delete'),
+(21, 'deploy', 'edit'),
+(21, 'deploy', 'finish'),
+(21, 'deploy', 'finishStep'),
+(21, 'deploy', 'linkCases'),
+(21, 'deploy', 'manageStep'),
+(21, 'deploy', 'publish'),
+(21, 'deploy', 'steps'),
+(21, 'deploy', 'unlinkCase'),
+(21, 'deploy', 'view'),
+(21, 'deploy', 'viewStep'),
+(21, 'env', 'browse'),
+(21, 'env', 'create'),
+(21, 'env', 'delete'),
+(21, 'env', 'edit'),
+(21, 'host', 'browse'),
+(21, 'host', 'changeStatus'),
+(21, 'host', 'create'),
+(21, 'host', 'delete'),
+(21, 'host', 'edit'),
+(21, 'host', 'treemap'),
+(21, 'host', 'view'),
+(21, 'pipeline', 'arrange'),
 (21, 'pipeline', 'browse'),
 (21, 'pipeline', 'create'),
 (21, 'pipeline', 'delete'),
 (21, 'pipeline', 'execution'),
 (21, 'pipeline', 'execView'),
 (21, 'pipeline', 'exec'),
-(21, 'pipeline', 'arrange'),
 (21, 'ppm', 'browse'),
 (21, 'ppm', 'close'),
 (21, 'ppm', 'create'),
@@ -12958,8 +12914,10 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'ppm', 'reopen'),
 (21, 'ppm', 'review'),
 (21, 'ppm', 'view'),
+(21, 'repo', 'activeBranch'),
 (21, 'repo', 'addBug'),
 (21, 'repo', 'addComment'),
+(21, 'repo', 'archiveBranch'),
 (21, 'repo', 'blame'),
 (21, 'repo', 'browse'),
 (21, 'repo', 'browseBranch'),
@@ -12993,6 +12951,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'repo', 'review'),
 (21, 'repo', 'revision'),
 (21, 'repo', 'setRules'),
+(21, 'repo', 'setArchive'),
 (21, 'repo', 'unlink'),
 (21, 'repo', 'view'),
 (21, 'repobranchrule', 'setBranchRule'),
@@ -13006,6 +12965,11 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'reporeviewflow', 'create'),
 (21, 'reporeviewflow', 'delete'),
 (21, 'reporeviewflow', 'edit'),
+(21, 'runner', 'browse'),
+(21, 'runner', 'changeState'),
+(21, 'runner', 'create'),
+(21, 'runner', 'delete'),
+(21, 'runner', 'edit'),
 (21, 'serverroom', 'browse'),
 (21, 'serverroom', 'create'),
 (21, 'serverroom', 'delete'),
@@ -13031,11 +12995,6 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'provider', 'create'),
 (21, 'provider', 'edit'),
 (21, 'provider', 'delete'),
-(21, 'runner', 'browse'),
-(21, 'runner', 'changeState'),
-(21, 'runner', 'create'),
-(21, 'runner', 'edit'),
-(21, 'runner', 'delete'),
 (22, 'codescan', 'browse'),
 (22, 'codescan', 'issue'),
 (22, 'codescan', 'issueView'),
@@ -13050,6 +13009,15 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (22, 'codescan', 'taskLog'),
 (22, 'codescan', 'taskView'),
 (22, 'codescan', 'view'),
+(22, 'deploy', 'browse'),
+(22, 'deploy', 'cases'),
+(22, 'deploy', 'steps'),
+(22, 'deploy', 'view'),
+(22, 'deploy', 'viewStep'),
+(22, 'env', 'browse'),
+(22, 'host', 'browse'),
+(22, 'host', 'treemap'),
+(22, 'host', 'view'),
 (22, 'pipeline', 'browse'),
 (22, 'pipeline', 'execution'),
 (22, 'pipeline', 'execView'),
@@ -13073,6 +13041,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (22, 'repo', 'view'),
 (22, 'repobranchtype', 'browse'),
 (22, 'reporeviewflow', 'browse'),
+(22, 'runner', 'browse'),
 (22, 'serverroom', 'browse'),
 (22, 'serverroom', 'view'),
 (22, 'space', 'browse'),
@@ -13082,7 +13051,6 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (22, 'system', 'view'),
 (22, 'artifact', 'browse'),
 (22, 'provider', 'browse'),
-(22, 'runner', 'browse'),
 (23, 'artifact', 'browse'),
 (23, 'artifact', 'createDir'),
 (23, 'artifact', 'deleteDir'),
@@ -13115,21 +13083,39 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (23, 'codescan', 'taskLog'),
 (23, 'codescan', 'taskView'),
 (23, 'codescan', 'view'),
-(23, 'pipeline', 'edit'),
+(23, 'deploy', 'activate'),
+(23, 'deploy', 'assignTo'),
+(23, 'deploy', 'browse'),
+(23, 'deploy', 'cases'),
+(23, 'deploy', 'create'),
+(23, 'deploy', 'delete'),
+(23, 'deploy', 'edit'),
+(23, 'deploy', 'finish'),
+(23, 'deploy', 'finishStep'),
+(23, 'deploy', 'manageStep'),
+(23, 'deploy', 'steps'),
+(23, 'deploy', 'view'),
+(23, 'deploy', 'viewStep'),
+(23, 'env', 'browse'),
+(23, 'host', 'browse'),
+(23, 'host', 'treemap'),
+(23, 'host', 'view'),
+(23, 'pipeline', 'arrange'),
 (23, 'pipeline', 'browse'),
 (23, 'pipeline', 'create'),
 (23, 'pipeline', 'delete'),
 (23, 'pipeline', 'execution'),
 (23, 'pipeline', 'execView'),
 (23, 'pipeline', 'exec'),
-(23, 'pipeline', 'arrange'),
 (23, 'ppm', 'browse'),
 (23, 'ppm', 'view'),
 (23, 'ppm', 'create'),
 (23, 'ppm', 'delete'),
 (23, 'ppm', 'edit'),
 (23, 'ppm', 'merge'),
+(23, 'repo', 'activeBranch'),
 (23, 'repo', 'addComment'),
+(23, 'repo', 'archiveBranch'),
 (23, 'repo', 'blame'),
 (23, 'repo', 'browse'),
 (23, 'repo', 'browseBranch'),
@@ -13155,6 +13141,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (23, 'repo', 'view'),
 (23, 'repobranchtype', 'browse'),
 (23, 'reporeviewflow', 'browse'),
+(23, 'runner', 'browse'),
 (23, 'serverroom', 'browse'),
 (23, 'serverroom', 'view'),
 (23, 'space', 'browse'),
@@ -13162,8 +13149,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (23, 'space', 'group'),
 (23, 'space', 'members'),
 (23, 'system', 'view'),
-(23, 'provider', 'browse'),
-(23, 'runner', 'browse');
+(23, 'provider', 'browse');
 
 REPLACE INTO `zt_grouppriv`(`module`, `method`,`group`)
 SELECT `module`, `method`, 14 FROM `zt_grouppriv` WHERE `group` = 1;
@@ -13289,7 +13275,7 @@ CREATE TABLE IF NOT EXISTS `zt_workflowdatasource` (
   `name` varchar(30) NOT NULL DEFAULT '',
   `code` varchar(30) NOT NULL DEFAULT '',
   `datasource` text DEFAULT NULL,
-  `view` varchar(20) NOT NULL DEFAULT '',
+  `view` varchar(50) NOT NULL DEFAULT '',
   `keyField` varchar(50) NOT NULL DEFAULT '',
   `valueField` varchar(50) NOT NULL DEFAULT '',
   `buildin` tinyint unsigned NOT NULL DEFAULT 0,
@@ -13352,6 +13338,9 @@ CREATE TABLE IF NOT EXISTS `zt_workflowlayout` (
   `ditto` tinyint unsigned NOT NULL DEFAULT 0,
   `readonly` tinyint unsigned NOT NULL DEFAULT 0,
   `mobileShow` tinyint unsigned NOT NULL DEFAULT 1,
+  `foldable` tinyint unsigned NOT NULL DEFAULT 0,
+  `wrapBefore` tinyint unsigned NOT NULL DEFAULT 0,
+  `wrapAfter` tinyint unsigned NOT NULL DEFAULT 0,
   `summary` varchar(20) NOT NULL DEFAULT '',
   `defaultValue` text DEFAULT NULL,
   `layoutRules` varchar(255) NOT NULL DEFAULT '',
@@ -13436,7 +13425,6 @@ CREATE TABLE IF NOT EXISTS `zt_workflowrule` (
   `type` varchar(10) NOT NULL DEFAULT 'regex',
   `name` varchar(30) NOT NULL DEFAULT '',
   `rule` text DEFAULT NULL,
-  `builtin` tinyint unsigned NOT NULL DEFAULT 0,
   `createdBy` varchar(30) NOT NULL DEFAULT '',
   `createdDate` datetime DEFAULT NULL,
   `editedBy` varchar(30) NOT NULL DEFAULT '',
@@ -13510,15 +13498,15 @@ CREATE TABLE IF NOT EXISTS `zt_workflowreport` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
-REPLACE INTO `zt_workflowrule`(`type`, `name`, `rule`, `builtin`, `createdBy`, `createdDate`) VALUES
-('system','必填','notempty',1,'admin','2020-10-14 14:06:14'),
-('system','唯一','unique',1,'admin','2020-10-14 14:06:14'),
-('system','日期','date',1,'admin','2020-10-14 14:06:14'),
-('system','日期时间','datetime',1,'admin','2020-10-14 14:06:14'),
-('system','email','email',1,'admin','2020-10-14 14:06:14'),
-('system','数字','float',1,'admin','2020-10-14 14:06:14'),
-('system','电话','phone',1,'admin','2020-10-14 14:06:14'),
-('system','IP','ip',1,'admin','2020-10-14 14:06:14');
+REPLACE INTO `zt_workflowrule`(`type`, `name`, `rule`, `createdBy`, `createdDate`) VALUES
+('system','必填','notempty','admin','2020-10-14 14:06:14'),
+('system','唯一','unique','admin','2020-10-14 14:06:14'),
+('system','日期','date','admin','2020-10-14 14:06:14'),
+('system','日期时间','datetime','admin','2020-10-14 14:06:14'),
+('system','email','email','admin','2020-10-14 14:06:14'),
+('system','数字','float','admin','2020-10-14 14:06:14'),
+('system','电话','phone','admin','2020-10-14 14:06:14'),
+('system','IP','ip','admin','2020-10-14 14:06:14');
 
 INSERT INTO `zt_workflowgroup` (`id`, `objectID`, `type`, `projectModel`, `projectType`, `name`, `code`, `desc`, `disabledModules`, `status`, `vision`, `main`, `exclusive`, `createdBy`, `createdDate`, `editedBy`, `editedDate`, `deliverable`, `deleted`) VALUES
 (1,	  0,	'product',	'',	'project',	'默认流程',	'productproject',	NULL,	'',	'normal',	'rnd',	'1',	'0',	'',	NULL,	'',	NULL,	NULL,	'0'),
@@ -13660,7 +13648,15 @@ INSERT INTO `zt_workflowdatasource` (`type`, `name`, `code`, `buildin`, `vision`
 ('sql',         '需求池',           'demandPool',                '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`name` FROM zt_demandpool WHERE `deleted`=\'0\'', 'view_datasource_119', 'id', 'name'),
 ('sql',         '需求池需求',       'demand',                    '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`title` FROM zt_demand WHERE `deleted`=\'0\'',    'view_datasource_120', 'id', 'title'),
 ('sql',         '路标',             'roadmap',                   '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`name` FROM zt_roadmap WHERE `deleted`=\'0\'',    'view_datasource_121', 'id', 'name'),
-('sql',         '分发需求',         'demandStory',               '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`name` FROM zt_story WHERE `deleted`=\'0\'',      'view_datasource_122', 'id', 'title');
+('sql',         '分发需求',         'demandStory',               '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`name` FROM zt_story WHERE `deleted`=\'0\'',      'view_datasource_122', 'id', 'title'),
+('lang',        '任务模式',         'taskMode',                  '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'taskMode',    '',     '',     ''),
+('lang',        '需求类型',         'storyCategory',             '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'storyCategory',   '',     '',     ''),
+('sql',         '相关文档',         'taskDocs',                  '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`title` FROM zt_doc WHERE `deleted`=\'0\'',       'view_datasource_taskDocs',  'id', 'title'),
+('sql',         '所属场景',         'caseScene',                 '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'SELECT `id`,`title` FROM zt_scene WHERE `deleted`=\'0\'',     'view_datasource_caseScene', 'id', 'title'),
+('lang',        '注入环节',         'bugInjection',              '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'bugInjection',    '',     '',     ''),
+('lang',        '发现环节',         'bugIdentify',               '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'bugIdentify',     '',     '',     ''),
+('lang',        '关闭原因',         'ticketClosedReason',        '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'ticketClosedReason', '',     '',     ''),
+('lang',        '反馈优先级',       'feedbackPri',               '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'feedbackPri',            '', '', '');
 
 -- DROP TABLE IF EXISTS `zt_durationestimation`;
 CREATE TABLE IF NOT EXISTS `zt_durationestimation` (
@@ -14190,23 +14186,6 @@ CREATE TABLE IF NOT EXISTS `zt_review` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
--- DROP TABLE IF EXISTS `zt_reviewdeliverable`;
-CREATE TABLE IF NOT EXISTS `zt_reviewdeliverable` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `review` int unsigned NOT NULL DEFAULT 0 COMMENT '评审流程',
-  `projectdeliverable` int unsigned NOT NULL DEFAULT 0 COMMENT '项目交付物',
-  `deliverableReview` int unsigned NOT NULL DEFAULT 0 COMMENT '交付物评审',
-  `version` varchar(255) NOT NULL DEFAULT '' COMMENT '交付物版本',
-  `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
-  `createdDate` datetime NULL COMMENT '创建时间',
-  `editedBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁编辑',
-  `editedDate` datetime NULL COMMENT '编辑时间',
-  `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
-CREATE UNIQUE INDEX `uk_review_projectdeliverable` ON `zt_reviewdeliverable` (`review`, `projectdeliverable`);
-CREATE INDEX `idx_projectdeliverable` ON `zt_reviewdeliverable` (`projectdeliverable`);
-
 -- DROP TABLE IF EXISTS `zt_reviewcl`;
 CREATE TABLE IF NOT EXISTS `zt_reviewcl` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
@@ -14320,32 +14299,6 @@ CREATE TABLE IF NOT EXISTS `zt_solutions` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
--- DROP TABLE IF EXISTS `zt_art`;
-CREATE TABLE IF NOT EXISTS `zt_art` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '名称',
-  `status` char(30) NOT NULL DEFAULT 'normal' COMMENT '状态',
-  `product` text DEFAULT NULL COMMENT '关联产品',
-  `RTE` varchar(255) NOT NULL DEFAULT '' COMMENT 'RTE',
-  `manager` varchar(255) NOT NULL DEFAULT '' COMMENT '负责人',
-  `PO` varchar(255) NOT NULL DEFAULT '' COMMENT 'PO',
-  `architect` varchar(255) NOT NULL DEFAULT '' COMMENT '架构师',
-  `team` varchar(255) NOT NULL DEFAULT '' COMMENT '团队',
-  `desc` longtext DEFAULT NULL COMMENT '描述',
-  `acl` varchar(30) NOT NULL DEFAULT 'open' COMMENT '访问控制',
-  `whitelist` text DEFAULT NULL COMMENT '白名单',
-  `createdBy` varchar(255) NOT NULL DEFAULT '' COMMENT '由谁创建',
-  `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
-  `lastEditedBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁编辑',
-  `lastEditedDate` datetime DEFAULT NULL COMMENT '编辑时间',
-  `closedBy` varchar(255) NOT NULL DEFAULT '' COMMENT '由谁关闭',
-  `closedDate` datetime DEFAULT NULL COMMENT '关闭时间',
-  `activatedBy` varchar(255) NOT NULL DEFAULT '' COMMENT '由谁激活',
-  `activatedDate` datetime DEFAULT NULL COMMENT '激活时间',
-  `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB COMMENT='项目组表';
-
 -- DROP TABLE IF EXISTS `zt_artifactrepo`;
 CREATE TABLE IF NOT EXISTS `zt_artifactrepo` (
   `id` smallint unsigned NOT NULL AUTO_INCREMENT,
@@ -14425,8 +14378,6 @@ CREATE TABLE IF NOT EXISTS `zt_risk` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `project` int unsigned NOT NULL DEFAULT 0,
   `execution` int unsigned NOT NULL DEFAULT 0,
-  `PI` int unsigned NOT NULL DEFAULT 0 COMMENT '规划',
-  `team` int unsigned NOT NULL DEFAULT 0 COMMENT '团队',
   `name` varchar(255) NOT NULL DEFAULT '',
   `source` varchar(30) NOT NULL DEFAULT '',
   `category` varchar(30) NOT NULL DEFAULT '',
@@ -14600,51 +14551,6 @@ REPLACE INTO `zt_approvalflowobject` (`id`, `root`, `flow`, `objectType`, `objec
 (2,   '0',  '3', 'charter',     '0',   'completionApproval'),
 (3,   '0',  '4', 'charter',     '0',   'cancelProjectApproval'),
 (4,   '0',  '5', 'charter',     '0',   'activateProjectApproval');
-
--- DROP TABLE IF EXISTS `zt_pi`;
-CREATE TABLE IF NOT EXISTS `zt_pi` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `ART` int unsigned NOT NULL DEFAULT 0 COMMENT '项目组 ID',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '名称',
-  `product` text DEFAULT NULL COMMENT '关联产品',
-  `team` text DEFAULT NULL COMMENT '关联团队',
-  `status` char(30) NOT NULL DEFAULT 'normal' COMMENT '状态',
-  `desc` text DEFAULT NULL COMMENT '描述',
-  `acl` char(30) NOT NULL DEFAULT 'extends' COMMENT '访问控制',
-  `whitelist` text DEFAULT NULL COMMENT '白名单',
-  `teamkanban` int unsigned NOT NULL DEFAULT 0 COMMENT '团队看板',
-  `plankanban` int unsigned NOT NULL DEFAULT 0 COMMENT '项目看板',
-  `createdBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
-  `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
-  `lastEditedBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁编辑',
-  `lastEditedDate` datetime DEFAULT NULL COMMENT '编辑时间',
-  `closedBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁关闭',
-  `closedDate` datetime DEFAULT NULL COMMENT '关闭时间',
-  `closedReason` text DEFAULT NULL COMMENT '关闭原因',
-  `activatedBy` char(30) NOT NULL DEFAULT '' COMMENT '由谁激活',
-  `activatedDate` datetime DEFAULT NULL COMMENT '激活时间',
-  `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB COMMENT='PI表';
-
--- DROP TABLE IF EXISTS `zt_pistory`;
-CREATE TABLE IF NOT EXISTS `zt_pistory` (
-  `pi` int unsigned NOT NULL DEFAULT 0 COMMENT 'PI ID',
-  `story` int unsigned NOT NULL DEFAULT 0 COMMENT '需求 ID',
-  `order` int unsigned NOT NULL DEFAULT 0 COMMENT '顺序'
-) ENGINE=InnoDB COMMENT='PI需求关联表';
-CREATE UNIQUE INDEX `uk_pistory` ON `zt_pistory` (`pi`,`story`);
-
--- DROP TABLE IF EXISTS `zt_piexecution`;
-CREATE TABLE IF NOT EXISTS `zt_piexecution` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `pi` int unsigned NOT NULL DEFAULT 0 COMMENT 'PI ID',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT '名称',
-  `begin` date DEFAULT NULL COMMENT '开始时间',
-  `end` date DEFAULT NULL COMMENT '结束时间',
-  `order` int unsigned NOT NULL DEFAULT 0 COMMENT '顺序',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB COMMENT='PI执行表';
 
 -- DROP TABLE IF EXISTS `zt_pivot`;
 CREATE TABLE IF NOT EXISTS `zt_pivot` (
@@ -15104,19 +15010,14 @@ CREATE TABLE IF NOT EXISTS `zt_ai_model` (
 CREATE TABLE IF NOT EXISTS `zt_ai_agent` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(30) NOT NULL DEFAULT '' COMMENT '内部 code',
-  `type` varchar(20) NOT NULL DEFAULT 'normal' COMMENT '智能体类型：normal普通/timer定时',
   `name` varchar(20) NOT NULL DEFAULT '',
   `desc` text DEFAULT NULL,
   `model` varchar(255) NOT NULL DEFAULT '',
   `knowledgeLib` varchar(255) NOT NULL DEFAULT '' COMMENT '关联的知识库ID列表',
-  `skill` varchar(255) NOT NULL DEFAULT '' COMMENT '关联的技能ID列表',
+  `skill` int unsigned NOT NULL DEFAULT 0 COMMENT '关联的技能ID',
   `module` varchar(30) NOT NULL DEFAULT '',
   `displayPosition` varchar(20) NOT NULL DEFAULT '' COMMENT '显示位置，目前包括：详情页（detail）、表单页（form）',
   `actionPurpose` varchar(100) NOT NULL DEFAULT '' COMMENT '操作目的编码',
-  `operation` varchar(30) NOT NULL DEFAULT '' COMMENT '定时操作目的：report/risk/notify',
-  `cycleType` varchar(10) NOT NULL DEFAULT '' COMMENT '周期类型：day/week/month',
-  `cycleConfig` text NULL DEFAULT NULL COMMENT '周期配置',
-  `notifyRule` text NULL DEFAULT NULL COMMENT '通知规则JSON：roles/users/methods',
   `source` text DEFAULT NULL,
   `targetForm` varchar(30) NOT NULL DEFAULT '',
   `purpose` text DEFAULT NULL,
@@ -15128,41 +15029,9 @@ CREATE TABLE IF NOT EXISTS `zt_ai_agent` (
   `createdDate` datetime DEFAULT NULL,
   `editedBy` varchar(30) NOT NULL DEFAULT '',
   `editedDate` datetime DEFAULT NULL,
-  `lastRunDate` datetime NULL DEFAULT NULL COMMENT '最近一次定时执行时间',
   `deleted` tinyint unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
-
--- DROP TABLE IF EXISTS `zt_ai_timerlog`;
-CREATE TABLE IF NOT EXISTS `zt_ai_timerlog` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `agent` int unsigned NOT NULL DEFAULT 0 COMMENT '智能体ID',
-  `status` varchar(20) NOT NULL DEFAULT '' COMMENT '执行状态：success/fail/partial',
-  `successCount` int unsigned NOT NULL DEFAULT 0 COMMENT '成功数量',
-  `failCount` int unsigned NOT NULL DEFAULT 0 COMMENT '失败数量',
-  `message` varchar(500) NOT NULL DEFAULT '' COMMENT '展示文案',
-  `error` varchar(1000) NOT NULL DEFAULT '' COMMENT '错误摘要',
-  `createdDate` datetime NULL DEFAULT NULL COMMENT '执行时间',
-  `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
-
--- DROP TABLE IF EXISTS `zt_ai_timerqueue`;
-CREATE TABLE IF NOT EXISTS `zt_ai_timerqueue` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `agent` int unsigned NOT NULL DEFAULT 0 COMMENT '智能体ID',
-  `objectType` varchar(30) NOT NULL DEFAULT '' COMMENT '对象类型',
-  `objectID` int unsigned NOT NULL DEFAULT 0 COMMENT '对象ID',
-  `status` varchar(10) NOT NULL DEFAULT 'wait' COMMENT '状态：wait/doing/done',
-  `content` mediumtext NULL DEFAULT NULL COMMENT 'AI通知正文',
-  `toList` varchar(1000) NOT NULL DEFAULT '' COMMENT '通知人账号列表',
-  `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
-  `createdDate` datetime NULL DEFAULT NULL COMMENT '创建时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
-
-CREATE INDEX `idx_agent_status` ON `zt_ai_timerqueue`(`agent`, `status`);
-CREATE INDEX `idx_agent_object` ON `zt_ai_timerqueue`(`agent`, `objectType`, `objectID`);
 
 INSERT INTO `zt_ai_agent` (`id`, `code`, `name`, `desc`, `model`, `module`, `displayPosition`, `actionPurpose`, `source`, `targetForm`, `purpose`, `elaboration`, `role`, `characterization`, `createdBy`, `createdDate`, `status`) VALUES
 (1, 'zt_story_polishing', '需求润色', '优化需求中标题、描述和验收标准等字段，使表述清晰准确。', 0, 'story', 'detail', 'story.change', ',story.title,story.spec,story.verify,story.product,story.module,story.pri,story.category,story.estimate,', 'story.change', '帮忙优化其中各字段的表述，使表述清晰准确。必要时可以修改需求使其更加合理。', '需求描述格式建议使用：作为一名<某种类型的用户>，我希望<达成某些目的>，这样可以<开发的价值>。验收标准建议列举多条。直接给出你的润色结果，无需建议。', '请你扮演一名资深的产品经理。', '负责产品战略、设计、开发、数据分析、用户体验、团队管理、沟通协调等方面，需要具备多种技能和能力，以实现产品目标和公司战略。', 'system', '2023-08-10 13:24:14', 'active'),
@@ -15290,7 +15159,6 @@ CREATE TABLE `zt_ai_useragent` (
   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `account` varchar(30) NOT NULL DEFAULT '' COMMENT '禅道用户名',
   `agent` varchar(255) NOT NULL DEFAULT '' COMMENT 'ZAI agent ID',
-  `type` varchar(30) NOT NULL DEFAULT '' COMMENT '类型：'' | executor',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 CREATE UNIQUE INDEX `uk_account_agent` ON `zt_ai_useragent` (`account`, `agent`);
@@ -15456,21 +15324,6 @@ CREATE TABLE `zt_ai_skill` (
   `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
-
--- DROP TABLE IF EXISTS `zt_ai_vectorqueue`;
-CREATE TABLE IF NOT EXISTS `zt_ai_vectorqueue` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `objectType` varchar(255) NOT NULL DEFAULT '' COMMENT '对象类型',
-  `objectID` int unsigned NOT NULL DEFAULT 0 COMMENT '对象ID',
-  `retries` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '重试次数',
-  `lastError` text NULL DEFAULT NULL COMMENT '最后错误',
-  `lastSyncTime` datetime NULL DEFAULT NULL COMMENT '最后同步时间',
-  `createdDate` datetime NULL DEFAULT NULL COMMENT '创建时间',
-  `editedDate` datetime NULL DEFAULT NULL COMMENT '更新时间',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
-CREATE UNIQUE INDEX `uk_object` ON `zt_ai_vectorqueue` (`objectType`, `objectID`);
-CREATE INDEX `idx_retries` ON `zt_ai_vectorqueue` (`retries`);
 
 -- DROP TABLE IF EXISTS `zt_market`;
 CREATE TABLE IF NOT EXISTS `zt_market` (
@@ -15661,6 +15514,46 @@ CREATE INDEX `idx_account` ON `zt_mark`(`account`);
 
 INSERT INTO `zt_config`(`vision`, `owner`, `module`, `section`, `key`, `value`) VALUES ('', 'system', 'common', 'global', 'metriclibShowed', 1);
 
+DROP VIEW IF EXISTS `view_datasource_2`;
+DROP VIEW IF EXISTS `view_datasource_3`;
+DROP VIEW IF EXISTS `view_datasource_4`;
+DROP VIEW IF EXISTS `view_datasource_5`;
+DROP VIEW IF EXISTS `view_datasource_6`;
+DROP VIEW IF EXISTS `view_datasource_10`;
+DROP VIEW IF EXISTS `view_datasource_11`;
+DROP VIEW IF EXISTS `view_datasource_12`;
+DROP VIEW IF EXISTS `view_datasource_41`;
+DROP VIEW IF EXISTS `view_datasource_54`;
+DROP VIEW IF EXISTS `view_datasource_55`;
+DROP VIEW IF EXISTS `view_datasource_119`;
+DROP VIEW IF EXISTS `view_datasource_120`;
+DROP VIEW IF EXISTS `view_datasource_121`;
+DROP VIEW IF EXISTS `view_datasource_122`;
+DROP VIEW IF EXISTS `view_datasource_taskDocs`;
+DROP VIEW IF EXISTS `view_datasource_caseScene`;
+DROP VIEW IF EXISTS `ztv_projectnotpl`;
+DROP VIEW IF EXISTS `ztv_tasknotpl`;
+
+CREATE VIEW `view_datasource_2`   AS SELECT `id`,`title` FROM `zt_story`       WHERE `deleted` = '0' AND type = 'epic';
+CREATE VIEW `view_datasource_3`   AS SELECT `id`,`title` FROM `zt_story`       WHERE `deleted` = '0' AND type = 'requirement';
+CREATE VIEW `view_datasource_4`   AS SELECT `id`,`title` FROM `zt_story`       WHERE `deleted` = '0' AND type = 'story';
+CREATE VIEW `view_datasource_5`   AS SELECT `id`,`name`  FROM `zt_task`        WHERE `deleted` = '0' AND vision = 'rnd';
+CREATE VIEW `view_datasource_6`   AS SELECT `id`,`title` FROM `zt_bug`         WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_10`  AS SELECT `id`,`name`  FROM `zt_build`       WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_11`  AS SELECT `id`,`name`  FROM `zt_module`      WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_12`  AS SELECT `id`,`title` FROM `zt_productplan` WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_41`  AS SELECT `id`,`title` FROM `zt_case`        WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_54`  AS SELECT `id`,`name`  FROM `zt_task`        WHERE `deleted` = '0' AND vision = 'lite';
+CREATE VIEW `view_datasource_55`  AS SELECT `id`,`title` FROM `zt_feedback`    WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_119` AS SELECT `id`,`name`  FROM `zt_demandpool`  WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_120` AS SELECT `id`,`title` FROM `zt_demand`      WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_121` AS SELECT `id`,`name`  FROM `zt_roadmap`     WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_122` AS SELECT `id`,`title` FROM `zt_story`       WHERE `deleted` = '0';
+CREATE VIEW `ztv_projectnotpl`    AS SELECT *            FROM `zt_project`     WHERE `deleted` = '0' AND `isTpl` = 0;
+CREATE VIEW `ztv_tasknotpl`       AS SELECT *            FROM `zt_task`        WHERE `deleted` = '0' AND `isTpl` = 0;
+CREATE VIEW `view_datasource_taskDocs`  AS SELECT `id`,`title` FROM `zt_doc`        WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_caseScene` AS SELECT `id`,`title` FROM `zt_scene`      WHERE `deleted` = '0';
+
 -- DROP TABLE IF EXISTS `ops_artifact_assets`;
 CREATE TABLE IF NOT EXISTS `ops_artifact_assets` (
   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
@@ -15733,7 +15626,6 @@ CREATE TABLE IF NOT EXISTS `ops_artifact_libs` (
   `spaceID` int unsigned NOT NULL DEFAULT 0 COMMENT '所属空间ID，0表示全局级',
   `repoID` int unsigned NOT NULL DEFAULT 0 COMMENT '所属代码库ID，0表示非代码库级',
   `name` varchar(100) NOT NULL DEFAULT '' COMMENT '制品库名称',
-  `code` varchar(50) NOT NULL DEFAULT '' COMMENT '唯一标识',
   `desc` varchar(500) NOT NULL DEFAULT '' COMMENT '制品库描述',
   `type` varchar(50) NOT NULL DEFAULT '' COMMENT '制品类型:file/container/raw/helm/pypi/npm/maven/composer',
   `scope` varchar(30) NOT NULL DEFAULT '' COMMENT '制品库类型:global/space/repo',
@@ -15744,7 +15636,6 @@ CREATE TABLE IF NOT EXISTS `ops_artifact_libs` (
   `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB COMMENT='制品库主表（支持全局/空间/代码库三级作用域）';
-CREATE UNIQUE INDEX `uk_spaceID_repoID_code` ON `ops_artifact_libs` (`spaceID`, `repoID`, `code`);
 CREATE INDEX `idx_spaceID_repoID_name` ON `ops_artifact_libs` (`spaceID`, `repoID`, `name`);
 CREATE INDEX `idx_spaceID_deleted` ON `ops_artifact_libs` (`spaceID`, `deleted`);
 CREATE INDEX `idx_repoID_deleted` ON `ops_artifact_libs` (`repoID`, `deleted`);
@@ -16001,7 +15892,7 @@ CREATE TABLE IF NOT EXISTS `ops_ppm` (
   `mergeTargetSHA` char(40) NOT NULL DEFAULT '' COMMENT '合并时目标分支的 SHA,用于验证目标分支未变更',
   `mergeBaseSHA` char(40) NOT NULL DEFAULT '' COMMENT '合并基准 SHA(源分支和目标分支的共同祖先)',
   `mergeSHA` char(40) NOT NULL DEFAULT '' COMMENT '合并后生成的 commit SHA',
-  `mergeCheckStatus` varchar(255) NOT NULL DEFAULT 'unchecked' COMMENT '合并前检查状态unchecked=未检查，conflict=有冲突，mergeable=无冲突）',
+  `mergeCheckStatus` varchar(255) NOT NULL DEFAULT '' COMMENT '合并前检查状态unchecked=未检查，conflict=有冲突，mergeable=无冲突）',
   `mergeConflicts` text DEFAULT NULL COMMENT 'merge/squash 冲突文件列表,换行符分隔',
   `rebaseCheckStatus` varchar(255) NOT NULL DEFAULT 'unchecked' COMMENT '变基检查状态（unchecked=未检查，conflict=有冲突，mergeable=无冲突）',
   `rebaseConflicts` text DEFAULT NULL COMMENT '变基时产生的冲突详情（文件路径、冲突内容，未变基/无冲突则为NULL）',
@@ -16187,13 +16078,11 @@ CREATE TABLE IF NOT EXISTS `ops_runner` (
   `ip` varchar(45) NOT NULL DEFAULT '' COMMENT 'IP地址',
   `os` varchar(50) NOT NULL DEFAULT '' COMMENT '操作系统',
   `arch` varchar(20) NOT NULL DEFAULT '' COMMENT '系统架构',
-  `runtime` varchar(50) NOT NULL DEFAULT '' COMMENT '运行方式',
-  `labels` varchar(255) NOT NULL DEFAULT '' COMMENT '标签',
+  `labels` text DEFAULT NULL COMMENT '标签（JSON格式）',
   `token` varchar(255) NOT NULL DEFAULT '' COMMENT '认证令牌',
   `heartBeat` int unsigned NOT NULL DEFAULT 0 COMMENT '心跳时间戳',
   `online` varchar(20) NOT NULL DEFAULT 'offline' COMMENT '在线状态 (online:离线, offline:在线)',
   `status` varchar(20) NOT NULL DEFAULT 'disable' COMMENT 'Runner状态 (disable:停用, enable:启用)',
-  `isDefault` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否为默认 runner(0:不是, 1:是)',
   `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
   `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
   `editedBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁编辑',
@@ -16220,32 +16109,23 @@ CREATE INDEX `idx_issueID` ON `ops_scan_issue_task_binds` (`issueID`);
 CREATE TABLE IF NOT EXISTS `ops_scan_issues` (
   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `issueKey` varchar(255) NOT NULL DEFAULT '' COMMENT '问题唯一标识（SHA1）',
-  `ppmID` int unsigned NOT NULL DEFAULT 0 COMMENT '合并请求ID',
   `ruleID` int unsigned NOT NULL DEFAULT 0 COMMENT '关联规则ID',
-  `title` varchar(500) NOT NULL DEFAULT '' COMMENT '问题描述信息',
-  `content` text DEFAULT NULL COMMENT '问题详细内容',
+  `message` text DEFAULT NULL COMMENT '问题描述信息',
   `path` varchar(500) NOT NULL DEFAULT '' COMMENT '文件路径',
-  `startLine` int unsigned NOT NULL DEFAULT 0 COMMENT '问题起始行',
-  `endLine` int unsigned NOT NULL DEFAULT 0 COMMENT '问题结束行',
-  `oldCode` text DEFAULT NULL COMMENT '原代码片段',
-  `newCode` text DEFAULT NULL COMMENT '建议代码片段',
+  `line` bigint unsigned NOT NULL DEFAULT 0 COMMENT '行号',
   `repoID` int unsigned NOT NULL DEFAULT 0 COMMENT '仓库ID',
   `repoBranch` varchar(255) NOT NULL DEFAULT '' COMMENT '仓库分支',
   `createdByTaskID` int unsigned NOT NULL DEFAULT 0 COMMENT '创建该问题的任务ID',
   `updatedByTaskID` int unsigned NOT NULL DEFAULT 0 COMMENT '最后更新该问题的任务ID',
   `status` varchar(20) NOT NULL DEFAULT 'wait' COMMENT '问题状态（wait/todo/solving/solved/closed/ignore）',
-  `scanMethod` varchar(20) NOT NULL DEFAULT '' COMMENT '扫描方法（check/smell/ai）',
-  `category` varchar(30) NOT NULL DEFAULT 'other' COMMENT '问题类别（critical,high,medium,low）',
-  `severity` varchar(30) NOT NULL DEFAULT '' COMMENT '严重程度（bug,security,performance,maintainability,test,style,documentation,other）',
+  `scanMethod` varchar(20) NOT NULL DEFAULT '' COMMENT '扫描方法（check/smell）',
   `payload` text DEFAULT NULL COMMENT '扩展数据（JSON）',
-  `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '创建人',
   `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
-  `editedBy` varchar(30) NOT NULL DEFAULT '' COMMENT '更新人',
   `editedDate` datetime DEFAULT NULL COMMENT '编辑时间',
   `resolution` varchar(50) NOT NULL DEFAULT '' COMMENT '问题解决方案（bydesign/duplicate/external/fixed/notrepro/postponed/willnotfix/tostory）',
-  `resolvedDate` datetime DEFAULT NULL COMMENT '问题解决时间',
-  `closedDate` datetime DEFAULT NULL COMMENT '问题关闭时间',
-  `ignoredDate` bigint NOT NULL DEFAULT 0 COMMENT '问题忽略到期时间',
+  `resolved` datetime DEFAULT NULL COMMENT '问题解决时间',
+  `closed` datetime DEFAULT NULL COMMENT '问题关闭时间',
+  `ignored` bigint unsigned NOT NULL DEFAULT 0 COMMENT '问题忽略到期时间',
   `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB COMMENT='扫描问题表';
@@ -16256,8 +16136,6 @@ CREATE INDEX `idx_status` ON `ops_scan_issues` (`status`);
 CREATE INDEX `idx_scanMethod` ON `ops_scan_issues` (`scanMethod`);
 CREATE INDEX `idx_deleted` ON `ops_scan_issues` (`deleted`);
 CREATE INDEX `idx_resolution` ON `ops_scan_issues` (`resolution`);
-CREATE INDEX `idx_createdByTaskID` ON `ops_scan_issues` (`createdByTaskID`);
-CREATE INDEX `idx_ppmID` ON `ops_scan_issues` (`ppmID`);
 
 -- DROP TABLE IF EXISTS `ops_scan_plan_conditions`;
 CREATE TABLE IF NOT EXISTS `ops_scan_plan_conditions` (

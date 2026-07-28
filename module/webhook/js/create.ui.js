@@ -1,8 +1,7 @@
 window.changeType = function()
 {
     var type = $('[name=type]').val();
-    if(type == undefined) return;
-
+    $('#sendTypeTR').toggle(type != 'dinggroup' && type != 'dinguser' && type != 'wechatuser' && type != 'wechatgroup' && type != 'feishuuser' && type != 'feishugroup');
     $('#secretTR').toggle(type == 'dinggroup' || type == 'feishugroup');
     $('#urlTR').toggle(type != 'dinguser' && type != 'wechatuser' && type != 'feishuuser');
     $('.dinguserTR').toggle(type == 'dinguser');
@@ -11,3 +10,4 @@ window.changeType = function()
     $('#paramsTR').toggle(type != 'bearychat' && type != 'dinggroup' && type != 'dinguser' && type != 'wechatuser' && type != 'wechatgroup' && type != 'feishuuser' && type != 'feishugroup');
     $('#urlNote').html(urlNote[type]);
 }
+changeType();

@@ -942,8 +942,5 @@ class upgradeZen extends upgrade
         if(file_exists($installFile)) @unlink($installFile);
         if(file_exists($upgradeFile)) @unlink($upgradeFile);
         unset($_SESSION['upgrading']);
-
-        /* 清理数据处理步骤的完成标记，保证下一次升级重新执行数据处理。*/
-        $this->loadModel('setting')->deleteItems('owner=system&module=upgrade&section=dataProcessStep');
     }
 }

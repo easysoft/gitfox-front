@@ -28,12 +28,12 @@ class modulesEntry extends entry
         if($objectType == 'task')
         {
             $control = $this->loadController('tree', 'browsetask');
-            $control->browseTask((int)$objectID);
+            $control->browseTask($objectID);
         }
         else
         {
             $control = $this->loadController('tree', 'browse');
-            $control->browse((int)$objectID, $objectType);
+            $control->browse($objectID, $objectType);
         }
         $data = $this->getData();
         if(isset($data->status) and $data->status == 'success') return $this->send(200, array('modules' => $data->data->tree));

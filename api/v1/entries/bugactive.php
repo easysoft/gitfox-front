@@ -25,7 +25,7 @@ class bugActiveEntry extends entry
         $fields = 'assignedTo,uid,openedBuild,comment';
         $this->batchSetPost($fields);
 
-        $control->activate((int)$bugID);
+        $control->activate($bugID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

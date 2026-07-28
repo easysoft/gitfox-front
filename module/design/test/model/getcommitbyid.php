@@ -1,10 +1,8 @@
 #!/usr/bin/env php
 <?php
-
 /**
 
 title=测试 designModel->getCommitByID();
-timeout=0
 cid=15990
 
 - 测试提交记录的ID为0的情况 @0
@@ -22,7 +20,7 @@ cid=15990
 include dirname(__FILE__, 5) . '/test/lib/init.php';
 include dirname(__FILE__, 2) . '/lib/model.class.php';
 
-zenData('ops_repohistory')->loadYaml('repohistory')->gen(1);
+zenData('repohistory')->loadYaml('repohistory')->gen(1);
 zenData('user')->gen(5);
 
 $revisions = array(0, 1, 2);

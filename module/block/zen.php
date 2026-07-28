@@ -26,7 +26,7 @@ class blockZen extends block
 
             /* 根据module和code生成区块的宽度和高度。 */
             $sizeConfig = !empty($this->config->block->size[$block['module']][$block['code']]) ? $this->config->block->size[$block['module']][$block['code']] : $this->config->block->defaultSize;
-            if(empty($block['width'])) $block['width'] = array_key_first($sizeConfig);
+            if(empty($block['width'])) $block['width'] = reset(array_keys($sizeConfig));
             $block['height'] = zget($sizeConfig, $block['width'], reset($sizeConfig));
 
             $block['account']   = $account;   // 所属用户。
@@ -239,7 +239,7 @@ class blockZen extends block
             $sizeConfig = !empty($this->config->block->size[$block->module][$block->code]) ? $this->config->block->size[$block->module][$block->code] : $this->config->block->defaultSize;
 
             /* 设置区块的默认宽度和高度。 */
-            if(empty($block->width))  $block->width  = array_key_first($sizeConfig);
+            if(empty($block->width))  $block->width  = reset(array_keys($sizeConfig));
             if(empty($block->height)) $block->height = zget($sizeConfig, $block->width, reset($sizeConfig));
 
             /* 设置区块距离左侧的宽度和距离顶部的高度。 */
@@ -603,7 +603,7 @@ class blockZen extends block
         $cases = array();
         if($block->params->type == 'assigntome')
         {
-            $cases = $this->dao->select('t1.`assignedTo` AS `assignedTo`, t2.*')->from(TABLE_TESTRUN)->alias('t1')
+            $cases = $this->dao->select('t1.`assignedTo` AS assignedTo, t2.*')->from(TABLE_TESTRUN)->alias('t1')
                 ->leftJoin(TABLE_CASE)->alias('t2')->on('t1.case = t2.id')
                 ->leftJoin(TABLE_TESTTASK)->alias('t3')->on('t1.task = t3.id')
                 ->Where('t1.`assignedTo`')->eq($this->app->user->account)
@@ -2047,10 +2047,10 @@ class blockZen extends block
      */
     protected function printQaOverviewBlock(object $block): void
     {
-        $casePairs = $this->dao->select('`lastRunResult`, COUNT(1) AS count')->from(TABLE_CASE)
+        $casePairs = $this->dao->select('lastRunResult, COUNT(1) AS count')->from(TABLE_CASE)
             ->where('1=1')
             ->beginIF($block->module != 'my' && $this->session->project)->andWhere('project')->eq((int)$this->session->project)->fi()
-            ->groupBy('`lastRunResult`')
+            ->groupBy('lastRunResult')
             ->fetchPairs();
 
         $total = array_sum($casePairs);
@@ -2530,7 +2530,7 @@ class blockZen extends block
         $involveds     = $this->product->getOrderedProducts('involved', 0, 0, 'all');
         $productIdList = array_merge(array_keys($products), array_keys($involveds));
 
-        $stmt = $this->dao->select('id,product,lib,title,type,`addedBy`,`addedDate`,`editedDate`,status,acl,`groups`,`readGroups`,users,`readUsers`,deleted')->from(TABLE_DOC)->alias('t1')
+        $stmt = $this->dao->select('id,product,lib,title,type,addedBy,addedDate,editedDate,status,acl,`groups`,readGroups,users,readUsers,deleted')->from(TABLE_DOC)->alias('t1')
             ->where('deleted')->eq(0)
             ->andWhere('product')->in($productIdList)
             ->beginIF($this->config->doc->notArticleType)->andWhere('t1.type')->notIN($this->config->doc->notArticleType)->fi()
@@ -3587,15 +3587,7 @@ class blockZen extends block
             $project->sv = isset($SVGroup[$projectID]['value']) ? sprintf('%.4f', $SVGroup[$projectID]['value']) * 100 : 0;
             $project->cv = isset($CVGroup[$projectID]['value']) ? sprintf('%.4f', $CVGroup[$projectID]['value']) * 100 : 0;
         }
-        if($project->end != LONG_TIME && !in_array($project->status, array('suspended', 'done', 'closed')))
-        {
-            $delayDays = $this->loadModel('holiday')->getActualWorkingDays($project->end, helper::today());
-            if(!empty($delayDays))
-            {
-                $delay = count($delayDays) - 1;
-                if($delay > 0) $project->remainingDays = $delay;
-            }
-        }
+        if($project->end != LONG_TIME) $project->remainingDays = helper::diffDate($project->end, helper::today());
         $project->risks  = isset($riskCountGroup[$projectID]['value']) ? (int)$riskCountGroup[$projectID]['value'] : 0;
         $project->issues = isset($issueCountGroup[$projectID]['value']) ? (int)$issueCountGroup[$projectID]['value'] : 0;
 

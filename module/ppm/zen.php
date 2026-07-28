@@ -50,7 +50,6 @@ class ppmZen extends ppm
 
         unset($this->config->product->search['fields']['plan']);
         unset($this->config->product->search['params']['plan']);
-        unset($this->config->product->search['fields']['release'], $this->config->product->search['params']['release']);
         unset($this->config->product->search['fields']['module']);
         unset($this->config->product->search['params']['module']);
         unset($this->config->product->search['fields']['product']);
@@ -212,14 +211,12 @@ class ppmZen extends ppm
      * @access public
      * @return object
      */
-    public function getCheckResult(object $ppm, string $reviewResult, array $issues = array(), string $mergeType = 'rebase'): object
+    public function getCheckResult(object $ppm, string $reviewResult, array $issues = array()): object
     {
         $result = new stdClass();
-        $mergeCheck = $this->ppm->merge($ppm->id, $mergeType, true);
-        $result->mergeable     = zget($mergeCheck, 'mergeable', true);
+        $mergeCheck = $this->loadModel('gitfox')->apiGetMergeCheckMessage($ppm->repoID, $ppm->sourceBranch, $ppm->targetBranch);
         $result->conflictFiles = empty($mergeCheck) ? array() : zget($mergeCheck, 'conflictFiles', array());
-        $result->message       = empty($result->message) ? '' : $result->message;
-        if(dao::isError()) $result->message = zget(dao::getError(), 'apiMessage', $result->message);
+        $result->message       = empty($mergeCheck) ? '' : zget($mergeCheck, 'message', '');
 
         $rule          = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
         $ppmHandLeUser = empty($rule) ? array() : explode(',', zget($rule, 'ppmHandleUser', ''));
@@ -274,7 +271,7 @@ class ppmZen extends ppm
             }
         }
 
-        $result->canMerge = empty($result->conflictFiles) && ($reviewResult == 'approved' || $ppm->reviewStatus == 'approved') && !$result->message && $result->mergeable;
+        $result->canMerge = empty($result->conflictFiles) && ($reviewResult == 'approved' || $ppm->reviewStatus == 'approved') && !$result->message;
         return $result;
     }
 }

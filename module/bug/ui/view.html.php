@@ -31,9 +31,7 @@ jsVar('isInModal',        isInModal());
 jsVar('executions',       $executions);
 jsVar('disableExecution', $lang->project->disableExecution);
 
-$canModify = $app->tab == 'project' && !empty($project) ? common::canModify('project', $project) : true;
-if($canModify && $app->tab == 'execution' && !empty($execution)) $canModify = common::canModify('execution', $execution);
-
+$canModify    = !empty($project) ? common::canModify('project', $project) : true;
 $isInModal    = isInModal();
 $canCreateBug = $canModify && $this->app->tab != 'devops' && hasPriv('bug', 'create');
 $canViewRepo  = hasPriv('repo', 'revision');

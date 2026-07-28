@@ -129,8 +129,6 @@ $lang->install->dbEncoding     = 'Datenbank Charset';
 $lang->install->dbUser         = 'Datenbank User';
 $lang->install->dbPassword     = 'Datenbank Passwort';
 $lang->install->dbName         = 'Datenbank Name';
-$lang->install->dbSchema       = 'Datenbank-Schema';
-$lang->install->dbSchemaNote   = 'Schema für Gauss/PostgreSQL; wird von MySQL ignoriert.';
 $lang->install->dbPrefix       = 'Tabellen-Prefix';
 $lang->install->clearDB        = 'Tabellen leeren sofern diese scon existieren.';
 $lang->install->importDemoData = 'Import Demo Daten';
@@ -148,7 +146,6 @@ $lang->install->workingList['full']      = 'Volles Development Management';
 
 $lang->install->errorConnectDB      = 'Verbindung zur Datenbank fehlgeschlagen. ';
 $lang->install->errorDBName         = 'Datenbankname darf keinen Punkt enthalten';
-$lang->install->errorDBSchema       = 'Ungültiger Schema-Name.';
 $lang->install->errorCreateDB       = 'Erstellung der Datenbank fehlgeschlagen.';
 $lang->install->errorTableExists    = 'Die Tabellen existieren bereits. Wenn ZenTao bereits installiert war, kehren Sie zum letzen Schritt zurück und wählen Sie den Punkt Tabellen leeren. Dann fahren Sie fort.';
 $lang->install->errorCreateTable    = 'Erstellung der Tabellen fehlgeschlagen.';
@@ -295,7 +292,6 @@ $lang->install->cronList['moduleName=backup&methodName=backup']         = 'Backu
 $lang->install->cronList['moduleName=mail&methodName=asyncSend']        = 'Async Nachrichten Sendung';
 $lang->install->cronList['moduleName=webhook&methodName=asyncSend']     = 'Async Webhook Sendung';
 $lang->install->cronList['moduleName=admin&methodName=deleteLog']       = 'Überfällige Logs löschen';
-$lang->install->cronList['moduleName=errorlog&methodName=deleteLog']    = 'Überfällige Fehler-Logs löschen';
 $lang->install->cronList['moduleName=todo&methodName=createCycle']      = 'Erstelle wiederkehrende ToDos';
 $lang->install->cronList['moduleName=ci&methodName=initQueue']          = 'Create recurring jenkins';
 $lang->install->cronList['moduleName=ci&methodName=checkCompileStatus'] = 'Synchronize Jenkins Status';

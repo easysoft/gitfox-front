@@ -33,16 +33,6 @@ if($config->edition != 'open')
     }
 }
 
-/* Get workingDays. */
-$today       = helper::today();
-$earliestEnd = $today;
-foreach($programs as $program)
-{
-    if($program->type != 'project') continue;
-    if(!empty($program->end) && !helper::isZeroDate($program->end) && $program->end < $earliestEnd) $earliestEnd = $program->end;
-}
-$workingDays = $this->loadModel('holiday')->getActualWorkingDays($earliestEnd, $today);
-
 foreach($programs as $program)
 {
     if($program->type == 'project')
@@ -60,16 +50,11 @@ foreach($programs as $program)
     /* Delay status. */
     if($program->status != 'done' and $program->status != 'closed' and $program->status != 'suspended')
     {
-        $betweenDays = $this->holiday->getDaysBetween($program->end, $today);
-        if($betweenDays)
+        $delay = helper::diffDate(helper::today(), $program->end);
+        if($delay > 0)
         {
-            $delayDays = array_intersect($betweenDays, $workingDays);
-            $delay     = count($delayDays) - 1;
-            if($delay > 0)
-            {
-                $program->postponed = true;
-                $program->delayInfo = sprintf($lang->project->delayInfo, $delay);
-            }
+            $program->postponed = true;
+            $program->delayInfo = sprintf($lang->project->delayInfo, $delay);
         }
     }
 

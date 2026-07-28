@@ -18,7 +18,7 @@ $app->loadLang('install');
 jsVar('copySuccess', $lang->upgrade->copySuccess);
 jsVar('copyFail', $lang->upgrade->copyFail);
 jsVar('nextLink', 'javascript:checkGitFoxServer();');
-jsVar('adminRegisterLink', inLink('installGitFox', "inPage={$inPage}&skipInstall=1&fromVersion={$fromVersion}"));
+jsVar('adminRegisterLink', $nextLink);
 
 div
 (
@@ -26,6 +26,7 @@ div
     setClass('flex justify-center'),
     div
     (
+        setID('mainContent'),
         setClass('px-1 mt-2 w-full max-w-7xl'),
         panel
         (
@@ -40,16 +41,14 @@ div
                     setClass('block overflow-hidden h-auto p-3'),
                     col
                     (
-                        div(html($lang->gitfox->devopsDescription)),
                         div
                         (
-                            setClass('font-bold text-danger mt-2 mb-4'),
+                            setClass('font-bold mt-2 mb-4'),
                             $lang->gitfox->installGitFoxTip
                         ),
                         div
                         (
-                            setClass('mb-2 mt-5'),
-                            div(setClass('font-bold'), $lang->gitfox->InstallScript),
+                            setClass('mb-2'),
                             h::pre
                             (
                                 setID('script'),
@@ -57,6 +56,17 @@ div
                                 $script,
                                 btn(setClass('ghost ml-2'), set(array('icon' => 'copy', 'url' => 'javascript:copyCommand("#script");'))),
                             ),
+                        ),
+                        div
+                        (
+                            setClass('mt-2 mb-2'),
+                            checkbox
+                            (
+                                on::change('agreeChange'),
+                                set::primary(false),
+                                set::checked(false),
+                                html($lang->gitfox->checkInstall)
+                            )
                         )
                     )
                 ),
@@ -64,16 +74,17 @@ div
                 (
                     array
                     (
-                        $inPage != 'devops' ? array
+                        $isInstall ? array
                         (
                             'text'  => $lang->install->solution->skip,
                             'class' => 'gray-200',
-                            'url'   => inlink('installGitFox', "inPage={$inPage}&skipInstall=1&fromVersion={$fromVersion}")
+                            'url'   => $nextLink
                         ) : null,
                         array
                         (
-                            'text'  => $lang->gitfox->completedInstall,
+                            'text'  => $isInstall ? $lang->install->next : $lang->gitfox->startUse,
                             'type'  => 'primary',
+                            'class' => 'btn-install',
                             'url'   => 'javascript:checkGitFoxServer();'
                         )
                     )
@@ -83,4 +94,4 @@ div
     )
 );
 
-if($inPage != 'devops')render('pagebase');
+render('pagebase');

@@ -130,14 +130,14 @@ class ppmModel extends model
         if(dao::isError()) return false;
         if(!empty($diffStats))
         {
-            $ppm->additions    = zget($diffStats, 'additions', 0);
-            $ppm->deletions    = zget($diffStats, 'deletions', 0);
-            $ppm->commitCount  = zget($diffStats, 'commits', 0);
-            $ppm->fileCount    = zget($diffStats, 'filesChanged', 0);
-            $ppm->mergeBaseSHA = zget($diffStats, 'mergeBaseSHA', '');
+            $ppm->additions   = zget($diffStats, 'additions', 0);
+            $ppm->deletions   = zget($diffStats, 'deletions', 0);
+            $ppm->commitCount = zget($diffStats, 'commits', 0);
+            $ppm->fileCount   = zget($diffStats, 'filesChanged', 0);
         }
         $ppm = $this->loadModel('file')->processImgURL($ppm, $this->config->ppm->editor->create['id'], (string)$this->post->uid);
 
+        $ppm->mergeBaseSHA = $ppm->mergeTargetSHA;
         $ppmID = $this->insertMr($ppm);
         if(dao::isError()) return false;
         $this->file->updateObjectID($this->post->uid, $ppmID, 'ppm');
@@ -211,10 +211,7 @@ class ppmModel extends model
     {
         if(empty($actionDate)) $actionDate = helper::now();
 
-        $users = $this->loadModel('user')->getPairs('noletter');
-        $actor = zget($users, $this->app->user->account, $this->app->user->account);
-
-        $mrAction = $actionDate . '::' . $actor . '::' . helper::createLink($this->moduleName, 'view', "id={$id}");
+        $mrAction = $actionDate . '::' . $this->app->user->account . '::' . helper::createLink($this->moduleName, 'view', "id={$id}");
 
         $this->loadModel('action');
         foreach(array('story', 'task', 'bug') as $objectType)
@@ -256,7 +253,7 @@ class ppmModel extends model
                 $response = json_decode(commonModel::http($apiURL, null, array(), $apiRoot->header));
                 if(empty($response) || empty($response->data)) break;
                 $commitList = array_merge($commitList, $response->data);
-                if(count($response->data) < 100) break;
+                if(!empty($response->listArgs) && $response->listArgs->pageSize < 100) break;
             }
 
             return $commitList;
@@ -379,11 +376,11 @@ class ppmModel extends model
         if($type == 'task') $orderBy = str_replace('title_', 'name_', $orderBy);
 
         return $this->dao->select('t1.*')->from($this->config->objectTables[$type])->alias('t1')
-            ->leftJoin(TABLE_RELATION)->alias('t2')->on('t1.id=t2.`BID`')
+            ->leftJoin(TABLE_RELATION)->alias('t2')->on('t1.id=t2.BID')
             ->where('t2.relation')->eq('interrated')
-            ->andWhere('t2.`AType`')->eq($this->moduleName)
-            ->andWhere('t2.`AID`')->eq($ppmID)
-            ->andWhere('t2.`BType`')->eq($type)
+            ->andWhere('t2.AType')->eq($this->moduleName)
+            ->andWhere('t2.AID')->eq($ppmID)
+            ->andWhere('t2.BType')->eq($type)
             ->andWhere('t1.deleted')->eq(0)
             ->orderBy($orderBy)
             ->page($pager)
@@ -404,10 +401,10 @@ class ppmModel extends model
     {
         if(!$module) $module = $this->moduleName;
         return $this->dao->select("t2.id,t2.title,t2.status")->from(TABLE_RELATION)->alias('t1')
-            ->leftJoin(TABLE_PPM)->alias('t2')->on('t1.`AID` = t2.id')
-            ->where('t1.`AType`')->eq($module)
-            ->andWhere('t1.`BType`')->eq($objectType)
-            ->andWhere('t1.`BID`')->eq($objectID)
+            ->leftJoin(TABLE_PPM)->alias('t2')->on('t1.AID = t2.id')
+            ->where('t1.AType')->eq($module)
+            ->andWhere('t1.BType')->eq($objectType)
+            ->andWhere('t1.BID')->eq($objectID)
             ->andWhere('t2.id')->ne(0)
             ->fetchAll('id');
     }
@@ -772,12 +769,12 @@ class ppmModel extends model
             if(!empty($commits->pager) && $commits->pager->pageSize < 100) break;
         }
 
-        $relationList = $this->dao->select('t1.`BID` as id, t1.`BType` as type')->from(TABLE_RELATION)->alias('t1')
-            ->leftJoin(TABLE_REPOHISTORY)->alias('t2')->on('t1.`AID` = t2.id')
+        $relationList = $this->dao->select('t1.BID as id, t1.BType as type')->from(TABLE_RELATION)->alias('t1')
+            ->leftJoin(TABLE_REPOHISTORY)->alias('t2')->on('t1.AID = t2.id')
             ->where('t2.revision')->in(array_column($commitList, 'sha'))
             ->andWhere('t2.repo')->eq(zget($repo, 'id', 0))
-            ->andWhere('t1.`AType`')->eq('revision')
-            ->beginIF($type)->andWhere('t1.`BType`')->eq($type)->fi()
+            ->andWhere('t1.AType')->eq('revision')
+            ->beginIF($type)->andWhere('t1.BType')->eq($type)->fi()
             ->fetchGroup('type', 'id');
 
         $objectList = array();
@@ -948,10 +945,10 @@ class ppmModel extends model
      */
     public function getReviewResults(array $ppmList, int $repoID): array
     {
-        $reviewers = $this->dao->select('distinct t1.*, t2.`reviewFlowID`')->from(TABLE_PPMREVIEWERS)->alias('t1')
+        $reviewers = $this->dao->select('distinct t1.*, t2.reviewFlowID')->from(TABLE_PPMREVIEWERS)->alias('t1')
             ->leftJoin(TABLE_PPM)->alias('t2')
-            ->on('t1.`requestID`', 't2.id')
-            ->where('t1.`requestID`')->in($ppmList)
+            ->on('t1.requestID', 't2.id')
+            ->where('t1.requestID')->in($ppmList)
             ->fetchAll();
         $repoFlows = $this->loadModel('reporeviewflow')->getList($repoID);
 
@@ -1168,20 +1165,11 @@ class ppmModel extends model
 
         $commitList = array_column($commits, 'sha');
 
-        $bugs = $this->dao->select('*, `entry`, concat("code") as source')->from(TABLE_BUG)
+        return $this->dao->select('*, concat("code") as source')->from(TABLE_BUG)
             ->where('repo')->eq($repoID)
-            ->andWhere('(v2')->in($commitList)
-            ->orWhere('mr')->eq($ppmID)
-            ->markRight()
+            ->andWhere('v2')->in($commitList)
             ->andWhere('deleted')->eq(0)
             ->page($pager)
             ->fetchAll('id');
-
-        $this->loadModel('repo');
-        foreach($bugs as $bug)
-        {
-            $bug->file = $this->repo->decodePath($bug->entry);
-        }
-        return $bugs;
     }
 }

@@ -5,10 +5,6 @@ namespace zin;
 $viewType = $this->cookie->aiPromptsViewType ? $this->cookie->aiPromptsViewType : 'card';
 
 featureBar(set::current($status), set::linkParams("module={$module}&status={key}"));
-
-$canCreate       = $this->config->edition != 'open' && common::hasPriv('ai', 'createprompt');
-$createLink      = inlink('promptbasicinfo', "promptID=0&module={$module}");
-$timerCreateItem = $canCreate ? array('text' => $lang->ai->timer->create, 'url' => inlink('timerbasicinfo')) : null;
 toolbar
 (
     item(set(array
@@ -29,47 +25,36 @@ toolbar
             )
         )
     ))),
-    $canCreate ? btngroup
-    (
-        btn(setClass('btn primary'), set::icon('plus'), set::url($createLink), $lang->ai->prompts->create),
-        dropdown
-        (
-            btn(setClass('btn primary dropdown-toggle'),
-            setStyle(array('padding' => '6px', 'border-radius' => '0 2px 2px 0'))),
-            set::items(array($timerCreateItem)),
-            set::placement('bottom-end')
-        )
-    ) : null
+    $this->config->edition != 'open' && common::hasPriv('ai', 'createprompt') ? item(set(array(
+        'class'       => 'primary',
+        'icon'        => 'plus',
+        'text'        => $lang->ai->prompts->create,
+        'url'         => inlink('promptbasicinfo')
+    ))) : null
 );
 
-$timerType = isset($lang->ai->agentType->timer) ? $lang->ai->agentType->timer : 'timer';
-$timerTag  = isset($lang->ai->timer->tag) ? $lang->ai->timer->tag : '';
-jsVar('timerAgentType', $timerType);
-jsVar('timerAgentTag', $timerTag);
-
-$cols = $config->ai->dtable->prompts;
-$cols['actions']['list'] = $config->ai->actionList;
+$cols    = $config->ai->dtable->prompts;
 $prompts = initTableData($prompts, $cols, $this->ai);
-initTableActions($cols, 'timerbasicinfo');
 foreach($prompts as $prompt)
 {
     if($prompt->actionPurpose)
     {
-        $prompt->targetFormLabel = $this->ai->getTargetFormLabel($prompt->actionPurpose, true, $prompt->module);
-    }
-
-    $designAction = $this->ai->getPromptDesignAction($prompt);
-    $isTimerAgent = !empty($prompt->type) && $prompt->type === $timerType;
-    if(!empty($prompt->actions) && ($designAction != 'promptbasicinfo' || $isTimerAgent))
-    {
-        foreach($prompt->actions as $actionKey => &$action)
+        $targetFormPath = explode('.', $prompt->actionPurpose);
+        if(count($targetFormPath) == 2)
         {
-            if(!is_array($action) || empty($action['name'])) continue;
-            if($action['name'] == 'promptbasicinfo' && $designAction != 'promptbasicinfo') $action['name'] = $designAction;
-            if($isTimerAgent && $action['name'] == 'promptaudit') unset($prompt->actions[$actionKey]);
+            if($prompt->actionPurpose == 'empty.empty')
+            {
+                $prompt->targetFormLabel = isset($lang->ai->prompts->noRedirect) ? $lang->ai->prompts->noRedirect : $prompt->actionPurpose;
+            }
+            elseif(isset($lang->ai->targetForm[$targetFormPath[0]]['common']) && isset($lang->ai->targetForm[$targetFormPath[0]][$targetFormPath[1]]))
+            {
+                $prompt->targetFormLabel = $lang->ai->targetForm[$targetFormPath[0]]['common'] . ' / ' . $lang->ai->targetForm[$targetFormPath[0]][$targetFormPath[1]];
+            }
+            else
+            {
+                $prompt->targetFormLabel = $prompt->actionPurpose;
+            }
         }
-        unset($action);
-        if($isTimerAgent) $prompt->actions = array_values($prompt->actions);
     }
 }
 
@@ -79,11 +64,8 @@ foreach($userList as $user)
     $userListMap[$user->account] = $user;
 }
 
-$promptProcessObjectList = $lang->ai->prompts->modules;
-if(method_exists($this->ai, 'getPromptProcessObjectList')) $promptProcessObjectList = $this->ai->getPromptProcessObjectList();
-unset($promptProcessObjectList['']);
-
-$moduleList = $this->config->edition == 'open' ? array_intersect_key($promptProcessObjectList, array_flip($promptModules)) : $promptProcessObjectList;
+unset($lang->ai->prompts->modules['']);
+$moduleList = $this->config->edition == 'open' ? array_intersect_key($lang->ai->prompts->modules, array_flip($promptModules)) : $lang->ai->prompts->modules;
 $moduleTree = array();
 $index      = 1;
 $activeKey  = 0;
@@ -170,14 +152,11 @@ $buildDropdown = function($prompt) use ($config)
     );
 };
 
-$promptCard = function($prompt) use ($lang, $buildDropdown, $userListMap, $timerType, $timerTag)
+$promptCard = function($prompt) use ($lang, $buildDropdown, $userListMap)
 {
     $creator = isset($userListMap[$prompt->createdBy]) ? $userListMap[$prompt->createdBy] : null;
     $creatorName = $creator ? $creator->realname : $prompt->createdBy;
 
-    $timerLabel = (!empty($prompt->type) && $prompt->type === $timerType && $timerTag !== '')
-        ? span(setClass('timer-tag'), $timerTag)
-        : null;
     $draftTag = $prompt->status === 'draft'
         ? span(
             setClass('draft-tag'),
@@ -187,12 +166,11 @@ $promptCard = function($prompt) use ($lang, $buildDropdown, $userListMap, $timer
     return div(
         setClass('prompt-card'),
         a(
-            hasPriv('ai', 'promptview') ? set::href(inlink('promptview', "id={$prompt->id}")) : null,
+            set::href(inlink('promptview', "id={$prompt->id}")),
             h3(
                 setClass('card-title'),
                 set::title($prompt->name),
-                span(setClass('prompt-name'), $prompt->name),
-                $timerLabel,
+                span($prompt->name),
                 $draftTag
             ),
             div(
@@ -245,7 +223,6 @@ function renderListView($cols, $prompts, $users, $module, $status, $orderBy, $pa
         set::userMap($users),
         set::orderBy($orderBy),
         set::sortLink(inlink('prompts', "module={$module}&status={$status}&orderBy={name}_{sortType}&recTotal={$pager->recTotal}&recPerPage={$pager->recPerPage}&pageID={$pager->pageID}")),
-        set::onRenderCell(jsRaw('window.onRenderPromptNameCell')),
         set::footPager(usePager()),
         set::emptyTip($lang->ai->prompts->emptyList)
     );

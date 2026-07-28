@@ -11,103 +11,67 @@ namespace zin;
 
 include './sidebar.html.php';
 
-$panelClass = array('mb-4', 'relative');
-foreach(array_keys($lang->zai->vectorizedStatusList) as $statusType)
-{
-    $panelClass[] = $statusType === $status ? "is-status-{$statusType}" : "not-status-{$statusType}";
-}
-$panelClass[] = ($status === 'syncing' || $status === 'wait') ? 'is-syncing-loop' : 'not-syncing-loop';
-
 $toolbarItems = array();
-if($status === 'unavailable')
-{
-    $toolbarItems[] = setting()->text($lang->zai->addSetting)->type('primary')->url(createLink('zai', 'setting', 'mode=edit'))->toArray();
-}
+$toolbarItems[] = setting()->text($lang->zai->addSetting)->className('hide-not-unavailable')->type('primary')->url(createLink('zai', 'setting', 'mode=edit'))->toArray();
+$toolbarItems[] = setting()->text($lang->zai->syncActions->enable)->className('hide-not-disabled')->type('primary')->set('zui-command', 'enable')->toArray();
+$toolbarItems[] = setting()->text($lang->zai->syncActions->startSync)->className('hide-not-wait')->type('primary')->set('zui-command', 'startSync')->toArray();
+$toolbarItems[] = setting()->text($lang->zai->syncActions->resync)->className('hide-not-synced')->type('primary')->set('zui-command', 'resync')->toArray();
+$toolbarItems[] = setting()->text($lang->zai->syncActions->resetSync)->className('show-on-failed-success-paused')->type('danger-pale')->set('zui-command', 'resetSync')->toArray();
+$toolbarItems[] = setting()->text($lang->zai->syncActions->pauseSync)->className('hide-not-syncing')->type('primary')->set('zui-command', 'pauseSync')->toArray();
+$toolbarItems[] = setting()->text($lang->zai->syncActions->resumeSync)->className('hide-not-paused')->type('primary')->set('zui-command', 'resumeSync')->toArray();
 
 $progressItems = array();
-foreach($progressList as $item)
+foreach($syncTypes as $type => $text)
 {
     $progressItems[] = wg
     (
         div
         (
             setClass('vectorized-progress row items-center border-t'),
-            setData('type', $item->type),
+            setData('type', $type),
             div
             (
                 setClass('vectorized-sync-type border-r pr-4 mr-4 pt-2 w-24 text-right pb-6'),
-                $item->text
+                $text
             ),
             div
             (
                 setClass('flex-none'),
+                html('<div class="vectorized-sync-progress progress progress-striped overflow-hidden h-4"><div class="progress-bar is-synced" style="width: 100%; min-width: 1px"></div><div class="progress-bar is-failed danger" style="width: 0%"></div></div>'),
                 div
                 (
-                    setClass('vectorized-sync-progress progress overflow-hidden h-4'),
-                    setStyle('width', $item->barWidth . 'px'),
-                    div
-                    (
-                        setClass('progress-bar is-synced'),
-                        setStyle('width', $item->total ? "{$item->syncedPct}%" : '1px'),
-                        setStyle('min-width', '1px')
-                    ),
-                    div
-                    (
-                        setClass('progress-bar is-failed danger'),
-                        setStyle('width', $item->total ? "{$item->failedPct}%" : '0')
-                    )
-                ),
-                div
-                (
-                    setClass('text-sm mt-1 flex items-center gap-1 flex-wrap'),
+                    setClass('text-sm mt-1 flex items-center gap-1'),
                     div
                     (
                         setClass('vectorized-finished-info flex-none'),
                         $lang->zai->finished . ' ',
-                        span(setClass('vectorized-finished-count'), $item->synced)
+                        span(setClass('vectorized-finished-count'))
                     ),
                     div
                     (
-                        setClass('vectorized-failed-info pl-2 flex-none', $item->failed ? '' : 'hidden'),
+                        setClass('vectorized-failed-info pl-2 flex-none'),
                         $lang->zai->failed . ' ',
-                        span(setClass('vectorized-failed-count'), $item->failed)
-                    )
+                        span(setClass('vectorized-failed-count'))
+                    ),
+                    icon('spinner-indicator spin mx-2 text-gray vectorized-loading-icon')
                 )
             )
         )
     );
 }
 
-$alertContent = [];
-if($status == 'disabled')    $alertContent[] = p(setClass('vectorized-intro mb-3'), $lang->zai->vectorizedIntro);
-if($status == 'unavailable') $alertContent[] = p(setClass('vectorized-intro mb-3'), $lang->zai->vectorizedUnavailableHint);
-if($status == 'disabled')    $alertContent[] = form
-(
-    setClass('not-watch form-horz'),
-    set::actions(array('submit')),
-    set::submitBtnText($lang->zai->syncActions->enable),
-    input(set::type('hidden'), set::name('enable'), set::value('1'))
-);
-if($toolbarItems) $alertContent[] = toolbar(setClass('vectorized-actions gap-4'), set::items($toolbarItems));
-if($status != 'disabled' && $status != 'unavailable' && !empty($pendingEnqueue)) $alertContent[] = div
-(
-    setID('enqueueResult'),
-    setClass('mt-3'),
-    setData('auto-enqueue', !empty($pendingEnqueue) ? '1' : '0'),
-    !empty($pendingEnqueue) ? button
-    (
-        setID('continueEnqueueBtn'),
-        setClass('btn primary mb-2'),
-        on::click('enqueueTargets'),
-        $lang->zai->enqueueContinue
-    ) : null
-);
-
 panel
 (
     set::title($lang->zai->vectorized),
     set::size('lg'),
-    setClass(implode(' ', $panelClass)),
+    setClass('vectorized-panel mb-4 load-indicator loading relative'),
+    zui::vectorizedPanel
+    (
+        set((array)$info),
+        set::langData($lang->zai->vectorizedPanelLang),
+        set::zaiSetting($zaiSetting)
+    ),
+    on::init()->call('updateVectorizedState', jsRaw('$element')),
     div
     (
         setClass('vectorized-alert alert bg-gray-pale'),
@@ -118,25 +82,34 @@ panel
             (
                 setClass('alert-heading flex items-center gap-1'),
                 text($lang->zai->vectorizedStatus . $lang->colon),
-                span(setClass('vectorized-status'), $lang->zai->vectorizedStatusList[$displayStatus])
+                span(setClass('vectorized-status'), $lang->zai->vectorizedStatusList[$info->status]),
+                icon('spinner-indicator spin text-gray hide-not-syncing-loop'),
+                icon('check-circle text-lg text-success hide-not-synced hide-on-synced-failed')
             ),
-            $lastSyncTime ? div
+            div
             (
-                setClass('vectorized-last-sync-info'),
+                setClass('vectorized-last-sync-info hidden'),
                 text($lang->zai->lastSyncTime . $lang->colon),
-                span(setClass('vectorized-last-sync-time'), $lastSyncTime)
-            ) : null,
-            ($status == 'syncing' || $status == 'wait') ? div
+                span(setClass('vectorized-last-sync-time')),
+                span(setClass('vectorized-synced-with-failed hidden ml-2 text-danger'), $lang->zai->syncedWithFailedHint)
+            ),
+            div
             (
-                setClass('text-gray'),
-                empty($pendingEnqueue) ? $lang->zai->syncingHint : $lang->zai->enqueueHint
-            ) : null,
-            $alertContent ? div(setClass('alert-text'), $alertContent) : null,
+                setClass('hide-not-syncing text-gray'),
+                $lang->zai->syncingHint
+            ),
+            div
+            (
+                setClass('alert-text'),
+                p(setClass('vectorized-intro mb-3 hide-not-disabled'), $lang->zai->vectorizedIntro),
+                p(setClass('vectorized-intro mb-3 hide-not-unavailable'), $lang->zai->vectorizedUnavailableHint),
+                toolbar(setClass('vectorized-actions gap-4'), set::items($toolbarItems))
+            )
         )
     ),
-    ($status !== 'disabled' && $status !== 'unavailable') ? div
+    div
     (
-        setClass('vectorized-states border rounded p-4 pb-2 mt-4'),
+        setClass('vectorized-states hide-on-disabled hide-on-unavailable border rounded p-4 pb-2 mt-4'),
         div
         (
             setClass('mb-2 row items-center'),
@@ -146,9 +119,9 @@ panel
                 setClass('text-gray ml-4'),
                 $lang->zai->totalSync . $lang->colon . ' ',
                 $lang->zai->finished,
-                span(setClass('vectorized-finished-total-count ml-2 mr-4'), (int)$info->syncedCount),
+                span(setClass('vectorized-finished-total-count ml-2 mr-4'), 0),
                 $lang->zai->failed,
-                span(setClass('vectorized-failed-total-count ml-2'), (int)$info->syncFailedCount)
+                span(setClass('vectorized-failed-total-count ml-2'), 0)
             )
         ),
         div
@@ -156,5 +129,5 @@ panel
             setClass('vectorized-progresses'),
             $progressItems
         )
-    ) : null
+    )
 );

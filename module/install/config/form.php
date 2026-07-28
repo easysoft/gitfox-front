@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 $config->install->form = new stdclass();
 
 $config->install->form->step2 = array();
@@ -11,7 +13,6 @@ $config->install->form->step2['dbEncoding']  = array('type' => 'string', 'requir
 $config->install->form->step2['dbUser']      = array('type' => 'string', 'required' => true, 'filter' => 'trim');
 $config->install->form->step2['dbPassword']  = array('type' => 'string', 'required' => true, 'filter' => 'trim');
 $config->install->form->step2['dbName']      = array('type' => 'string', 'required' => true, 'filter' => 'trim');
-$config->install->form->step2['dbSchema']    = array('type' => 'string', 'required' => false, 'default' => 'public', 'filter' => 'trim');
 $config->install->form->step2['dbPrefix']    = array('type' => 'string', 'required' => true, 'filter' => 'trim');
 $config->install->form->step2['clearDB']     = array('type' => 'int',    'required' => false, 'default' => 0);
 

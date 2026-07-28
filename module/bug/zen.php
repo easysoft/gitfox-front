@@ -900,13 +900,10 @@ class bugZen extends bug
         $executionID = (int)$bug->executionID;
         $product     = $this->product->getByID($productID);
 
-        if(($this->app->tab == 'execution' || $this->app->tab == 'qa') && $executionID && !$projectID)
-        {
-            $projectID = $this->dao->select('project')->from(TABLE_EXECUTION)->where('id')->eq($executionID)->fetch('project');
-        }
-
         $projects  = $this->product->getProjectPairsByProduct($productID, $branch);
         $projectID = isset($projects[$projectID]) ? $projectID : '';
+
+        if($this->app->tab == 'execution' && $executionID && !$projectID) $projectID = $this->dao->select('project')->from(TABLE_EXECUTION)->where('id')->eq($executionID)->fetch('project');
         if($product->shadow && !$projectID) $projectID = key($projects);
 
         $project = array();
@@ -1068,6 +1065,7 @@ class bugZen extends bug
         $bug = $this->getProjectsForCreate($bug);
         $bug = $this->getExecutionsForCreate($bug);
         $bug = $this->getBuildsForCreate($bug);
+        $bug = $this->getStoriesForCreate($bug);
         $bug = $this->gettasksForCreate($bug);
 
         $productMembers = $this->getProductMembersForCreate($bug);
@@ -1104,10 +1102,11 @@ class bugZen extends bug
         $this->view->bug                   = $bug;
         $this->view->allBuilds             = !empty($bug->allBuilds) ? $bug->allBuilds : '';
         $this->view->allUsers              = !empty($bug->allUsers)  ? $bug->allUsers  : '';
+        $this->view->releasedBuilds        = $this->loadModel('release')->getReleasedBuilds((int)$bug->productID, (string)$bug->branch);
         $this->view->resultFiles           = $resultFiles;
         $this->view->contactList           = $this->loadModel('user')->getContactLists();
         $this->view->branchID              = $bug->branch != 'all' ? $bug->branch : '0';
-        $this->view->cases                 = array();
+        $this->view->cases                 = $this->loadModel('testcase')->getPairsByProduct((int)$bug->product, array(0, $this->view->branchID));
         $this->view->copyBugID             = isset($bugID) ? $bugID : 0;
         $this->view->plans                 = $this->loadModel('productplan')->getPairs($bug->productID, $bug->branch, 'noclosed', true);
     }
@@ -1268,7 +1267,7 @@ class bugZen extends bug
         if(!in_array($this->app->tab, array('execution', 'project')) and empty($stories)) $stories = $this->story->getProductStoryPairs($bug->product, $bug->branch, 0, 'active', 'id_desc', 0, '', 'story', false);
         if(!isset($stories[$bug->story])) $stories[$bug->story] = $bug->story . ':' . $bug->storyTitle;
 
-        $resolvedBuildPairs = $this->build->getBuildPairs(array($bug->product), $bug->branch, 'noempty,noterminate');
+        $resolvedBuildPairs = $this->build->getBuildPairs(array($bug->product), $bug->branch, 'noempty');
         $this->view->resolvedBuildPairs = $resolvedBuildPairs;
         $this->view->resolvedBuilds     = $this->build->addReleaseLabelForBuilds($bug->product, $resolvedBuildPairs);
 
@@ -1305,14 +1304,10 @@ class bugZen extends bug
             ->get();
 
         /* If the resolved build is not the trunk, get test plan id. */
-        if(!empty($bug->resolvedBuild) && $bug->resolvedBuild != 'trunk')
+        if(isset($bug->resolvedBuild) && $bug->resolvedBuild != 'trunk')
         {
-            $buildId = (int)$bug->resolvedBuild;
-            if($buildId)
-            {
-                $testtaskID = (int)$this->dao->select('id')->from(TABLE_TESTTASK)->where('build')->eq($bug->resolvedBuild)->orderBy('id_desc')->limit(1)->fetch('id');
-                if($testtaskID and empty($oldBug->testtask)) $bug->testtask = $testtaskID;
-            }
+            $testtaskID = (int)$this->dao->select('id')->from(TABLE_TESTTASK)->where('build')->eq($bug->resolvedBuild)->orderBy('id_desc')->limit(1)->fetch('id');
+            if($testtaskID and empty($oldBug->testtask)) $bug->testtask = $testtaskID;
         }
 
         return $this->loadModel('file')->processImgURL($bug, $this->config->bug->editor->resolve['id'], $this->post->uid);
@@ -1343,7 +1338,7 @@ class bugZen extends bug
             $bug->openedBy    = $this->app->user->account;
             $bug->openedDate  = helper::now();
             $bug->product     = $productID;
-            $bug->steps       = helper::textarea2Html((string)$bug->steps);
+            $bug->steps       = nl2br($bug->steps);
 
             /* Assign the bug to the person in charge of the module. */
             if(!empty($moduleOwners[$bug->module]))
@@ -1378,7 +1373,7 @@ class bugZen extends bug
         if($executionID)
         {
             /* Get builds, stories and branches of this execution. */
-            $builds          = $this->loadModel('build')->getBuildPairs(array($product->id), $branch, 'noempty,noterminate,noreleased', $executionID, 'execution');
+            $builds          = $this->loadModel('build')->getBuildPairs(array($product->id), $branch, 'noempty,noreleased', $executionID, 'execution');
             $stories         = $this->story->getExecutionStoryPairs($executionID);
             $productBranches = $product->type != 'normal' ? $this->loadModel('execution')->getBranchByProduct(array($product->id), $executionID) : array();
             $branches        = isset($productBranches[$product->id]) ? $productBranches[$product->id] : array();
@@ -1391,7 +1386,7 @@ class bugZen extends bug
         else
         {
             /* Get builds, stories and branches of the product. */
-            $builds   = $this->loadModel('build')->getBuildPairs(array($product->id), $branch, 'noempty,noterminate,noreleased');
+            $builds   = $this->loadModel('build')->getBuildPairs(array($product->id), $branch, 'noempty,noreleased');
             $stories  = $this->story->getProductStoryPairs($product->id, $branch);
             $branches = $product->type != 'normal' ? $this->loadModel('branch')->getPairs($product->id, 'active') : array();
         }
@@ -1820,45 +1815,6 @@ class bugZen extends bug
             }
         }
 
-        /* 将 Bug 当前的影响版本补充到下拉选项，与编辑页逻辑保持一致，避免批量编辑时被清空。 */
-        foreach($bugs as $bug)
-        {
-            $bugOpenedBuilds = array_filter(array_map('trim', explode(',', $bug->openedBuild ?? '')));
-            if(empty($bugOpenedBuilds)) continue;
-
-            if($bug->execution)
-            {
-                $openedBuildListKey = $bug->execution;
-                $openedBuildList    = &$executionOpenedBuilds;
-            }
-            elseif($bug->project)
-            {
-                $openedBuildListKey = $bug->project;
-                $openedBuildList    = &$projectOpenedBuilds;
-            }
-            else
-            {
-                $openedBuildListKey = $bug->product;
-                $openedBuildList    = &$productOpenedBuilds;
-            }
-
-            if(!isset($openedBuildList[$openedBuildListKey])) $openedBuildList[$openedBuildListKey] = array();
-
-            $existingBuildIdList = array_column($openedBuildList[$openedBuildListKey], 'value');
-            foreach($bugOpenedBuilds as $bugOpenedBuild)
-            {
-                if(in_array($bugOpenedBuild, $existingBuildIdList)) continue;
-
-                $build = $this->build->getByID((int)$bugOpenedBuild);
-                if($build)
-                {
-                    $openedBuildList[$openedBuildListKey][] = array('text' => $build->name, 'value' => $build->id, 'keys' => $build->name);
-                    $existingBuildIdList[] = $build->id;
-                }
-            }
-        }
-        unset($openedBuildList);
-
         $this->view->noProductProjects     = $noProductProjects;
         $this->view->noSprintProjects      = $noSprintProjects;
         $this->view->deletedProjects       = $deletedProjects;
@@ -2017,7 +1973,7 @@ class bugZen extends bug
         $this->action->create('todo', $todoID, 'finished', '', "BUG:$bugID");
         if($this->config->edition != 'open')
         {
-            $todo = $this->dao->select('type, `objectID`')->from(TABLE_TODO)->where('id')->eq($todoID)->fetch();
+            $todo = $this->dao->select('type, objectID')->from(TABLE_TODO)->where('id')->eq($todoID)->fetch();
             if($todo->type == 'feedback' && $todo->objectID) $this->loadModel('feedback')->updateStatus('todo', $todo->objectID, 'done', '', $todoID);
         }
 
@@ -2173,7 +2129,7 @@ class bugZen extends bug
     protected function responseAfterOperate(int $bugID, array $changes = array(), string $message = '', bool $isInKanban = false): bool|int
     {
         if(!$message) $message = $this->lang->saveSuccess;
-        if(helper::isApiRequest()) return $this->send(array('status' => 'success', 'message' => $message, 'data' => $bugID));
+        if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'success', 'message' => $message, 'data' => $bugID));
 
         /* 如果 bug 转任务并且 bug 的状态发生变化，提示是否更新任务状态。*/
         /* This bug has been converted to a task, update the status of the related task or not. */
@@ -2237,7 +2193,7 @@ class bugZen extends bug
         /* Return bug id when call the API. */
         if(!$message) $message = $this->lang->saveSuccess;
         if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $message, 'id' => $bug->id));
-        if(helper::isApiRequest()) return $this->send(array('status' => 'success', 'data' => $bug->id));
+        if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'success', 'data' => $bug->id));
 
         if(isInModal()) return $this->send($this->responseInModal());
 

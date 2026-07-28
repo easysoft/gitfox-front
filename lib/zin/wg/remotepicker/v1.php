@@ -23,18 +23,17 @@ class remotePicker extends wg
         if(!$items)
         {
             $type   = $this->prop('type');
-            $value  = $this->prop('value');
             $params = $this->prop('params') ? $this->prop('params') : 'noclosed,nodeleted';
             switch($type)
             {
                 case 'user':
-                    $items = createLink('user', 'ajaxGetItems', 'params=' . $params . '&search=&maxCount=0' . ($value ? "&appendUser=$value" : ''));
+                    $items = createLink('user', 'ajaxGetItems', 'params=' . $params);
                     break;
                 case 'casestories':
                     $items = createLink('story', 'ajaxGetCaseStories', $params);
                     break;
                 default:
-                    $items = createLink('user', 'ajaxGetItems', 'params=' . $params . '&search=&maxCount=0' . ($value ? "&appendUser=$value" : ''));
+                    $items = createLink('user', 'ajaxGetItems', 'params=' . $params);
                     break;
             }
             $this->setProp('items', $items);

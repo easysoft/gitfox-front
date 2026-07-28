@@ -26,11 +26,12 @@ $lang->ppm->removeAction      = '%s, <strong>%s</strong> deleted <a href="%s">Me
 $lang->ppm->submitType        = 'Submit type';
 $lang->ppm->linkedObject      = 'Linked items';
 $lang->ppm->object            = 'Object';
-$lang->ppm->mergeInfo         = 'check Info';
+$lang->ppm->mergeInfo         = 'Merge View';
 $lang->ppm->locateView        = 'View';
 $lang->ppm->codeConflict      = 'Conflict';
 $lang->ppm->hasConflict       = 'Check Conflict';
 $lang->ppm->request           = 'Request';
+$lang->ppm->AIReview          = 'AI Review';
 $lang->ppm->AICodeScore       = 'Score';
 $lang->ppm->AISevereIssue     = 'Severe Issue';
 $lang->ppm->AIOrdinaryIssue   = 'Ordinary Issue';
@@ -284,8 +285,8 @@ $lang->ppm->confirmUnlinkTask = "Are you sure to remove this task?";
 $lang->ppm->taskSummary       = "There are <strong>%s</strong> tasks on this page";
 $lang->ppm->notDelbranch      = "The source branch cannot be deleted when it is a protected branch";
 $lang->ppm->addForApp         = "There are no projects under this server, do you want to go to add?";
-$lang->ppm->checkSuccess      = 'The merge check has been passed, and this branch is allowed to be merged';
-$lang->ppm->checkFailed       = 'The merge check failed, and this branch cannot be merged';
+$lang->ppm->checkSuccess      = 'The inspection has been passed, and this branch is allowed to be merged';
+$lang->ppm->checkFailed       = 'The check failed, and this branch cannot be merged';
 $lang->ppm->MRHistory         = "This merge was created by <strong>%s</strong> on <strong>%s</strong>，merging <label class='label primary size-sm px-2 cursor-pointer' data-on='click' data-call='copy' data-params='event'>%s<icon class='icon-copy ml-1'/></label> <strong>%s</strong> commits，Merge into <label class='label primary size-sm px-2 cursor-pointer' data-on='click' data-call='copy' data-params='event'>%s<icon class='icon-copy ml-1'/></label> 。";
 
 $lang->ppm->checkStatusList = array();
@@ -312,8 +313,8 @@ $lang->ppm->bug->status   = 'Type';
 
 $lang->ppm->mergeTypeInfoList = array();
 $lang->ppm->mergeTypeInfoList['merge']  = 'All commits on this branch will be added to the base branch via a merge commit.';
-$lang->ppm->mergeTypeInfoList['squash'] = 'All commits on this branch will be merged into a single commit and added to the base branch. This merge method will alter commit IDs, resulting in missing associated items.';
-$lang->ppm->mergeTypeInfoList['rebase'] = 'All commits on this branch will be rebased and added to the base branch. This merge method will alter commit IDs, resulting in missing associated items.';
+$lang->ppm->mergeTypeInfoList['squash'] = 'All commits on this branch will be merged into a single commit and added to the base branch.';
+$lang->ppm->mergeTypeInfoList['rebase'] = 'All commits on this branch will be rebased and added to the base branch.';
 $lang->ppm->mergeTypeInfoList['fast']   = 'All commits on this branch will be added directly to the base branch without generating merge commits, and rebasing may be required.';
 
 $lang->ppm->notice = new stdclass();
@@ -321,11 +322,10 @@ $lang->ppm->notice->confirmClose                 = 'Are you sure to close this m
 $lang->ppm->notice->confirmReopen                = 'Are you sure to reopen this merge request?';
 $lang->ppm->notice->fastNotice                   = 'The target branch already has new commits, cannot be merged quickly';
 $lang->ppm->notice->sameBranch                   = 'Source branch and target branch cannot be the same';
-$lang->ppm->notice->userNotAllowMerge            = 'Only the following users are allowed to merge: %s';
+$lang->ppm->notice->userNotAllowMerge            = 'User does not allow merge';
 $lang->ppm->notice->userNotAllowCreate           = 'Only the following users are allowed to create: %s';
 $lang->ppm->notice->hasUnresolvedIssues          = 'There are unresolved issues, please resolve them first.';
 $lang->ppm->notice->hasUnresolvedSpecifiedIssues = 'There are unresolved %s type issues, please resolve them first.';
-$lang->ppm->notice->noHasReviewer                = 'No reviewers have been added';
 
 $lang->ppm->featureBar['view']['all']   = 'All';
 $lang->ppm->featureBar['view']['story'] = 'Story';
@@ -335,28 +335,3 @@ $lang->ppm->featureBar['view']['bug']   = 'Bug';
 $lang->ppm->issueSourceList = array();
 $lang->ppm->issueSourceList['code']  = 'Code';
 $lang->ppm->issueSourceList['scan']  = 'Scan';
-
-$lang->ppm->diffHub = new stdclass();
-$lang->ppm->diffHub->labels['files']                   = 'Files';
-$lang->ppm->diffHub->labels['close']                   = 'Close';
-$lang->ppm->diffHub->labels['product']                 = 'Product';
-$lang->ppm->diffHub->labels['module']                  = 'Module';
-$lang->ppm->diffHub->labels['save']                    = 'Save';
-$lang->ppm->diffHub->labels['unified-view']            = 'Switch to unified view';
-$lang->ppm->diffHub->labels['split-view']              = 'Switch to split view';
-$lang->ppm->diffHub->labels['collapse-all']            = 'Collapse all files';
-$lang->ppm->diffHub->labels['expand-all']              = 'Expand all files';
-$lang->ppm->diffHub->labels['collapse-diff']           = 'Collapse diff';
-$lang->ppm->diffHub->labels['expand-diff']             = 'Expand diff';
-$lang->ppm->diffHub->labels['content-placeholder']     = 'Enter review comments. Markdown is supported';
-$lang->ppm->diffHub->labels['edit-range']              = 'Click to edit range';
-$lang->ppm->diffHub->labels['range-start']             = 'Start line';
-$lang->ppm->diffHub->labels['range-end']               = 'End line';
-$lang->ppm->diffHub->labels['range-not-visible']       = 'Line %s is not in the visible range';
-$lang->ppm->diffHub->labels['status-active']           = 'Activated';
-$lang->ppm->diffHub->labels['status-resolved']         = 'Resolved';
-$lang->ppm->diffHub->labels['status-closed']           = 'Closed';
-$lang->ppm->diffHub->labels['status-active-confirmed'] = 'Activated';
-$lang->ppm->diffHub->labels['operate-confirm']         = 'Confirm';
-$lang->ppm->diffHub->labels['operate-assign']          = 'Assign';
-$lang->ppm->diffHub->labels['operate-resolve']         = 'Resolve';

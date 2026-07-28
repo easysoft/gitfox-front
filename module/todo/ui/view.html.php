@@ -17,26 +17,12 @@ jsVar('vision',          $config->vision);
 
 $isInModal = isAjaxRequest('modal');
 
-$objectTypes    = array('bug', 'task', 'story');
-$canViewObject  = in_array($todo->type, $objectTypes) && !empty($todo->objectID) && hasPriv($todo->type, 'view');
-$objectViewUrl  = $canViewObject ? createLink($todo->type, 'view', "id={$todo->objectID}") : '';
-$objectLinkData = array('toggle' => 'modal', 'size' => 'lg');
-
 /* Generate title suffix for bug,task,story type. */
-$fnGenerateTitleSuffix = function() use($todo, $objectTypes, $canViewObject, $objectViewUrl, $objectLinkData)
+$fnGenerateTitleSuffix = function() use($todo)
 {
-    if(!in_array($todo->type, $objectTypes) || empty($todo->objectID)) return null;
-
-    $text = strtoupper($todo->type) . '#' . $todo->objectID;
-    if(!$canViewObject) return span(setClass('ml-1'), $text);
-
-    return a
-    (
-        setClass('ml-1'),
-        set::href($objectViewUrl),
-        setData($objectLinkData),
-        $text
-    );
+    if($todo->type == 'bug')   return btn(set::url(createLink('bug',   'view', "id={$todo->objectID}")), set::text('  BUG#'   . $todo->objectID), setClass('ghost'));
+    if($todo->type == 'task')  return btn(set::url(createLink('task',  'view', "id={$todo->objectID}")), set::text('  TASK#'  . $todo->objectID), setClass('ghost'));
+    if($todo->type == 'story') return btn(set::url(createLink('story', 'view', "id={$todo->objectID}")), set::text('  STORY#' . $todo->objectID), setClass('ghost'));
 };
 
 /* Render modal for creating story. */
@@ -290,7 +276,7 @@ $fnGenerateFloatToolbarBtns = function() use ($lang, $config, $todo, $projects, 
 $actionList = $fnGenerateFloatToolbarBtns();
 
 /* Generate from data and item. */
-$fnGenerateFrom = function() use ($app, $lang, $config, $todo, $canViewObject, $objectViewUrl, $objectLinkData)
+$fnGenerateFrom = function() use ($app, $lang, $config, $todo)
 {
     if(!in_array($todo->type, array('story', 'task', 'bug')) || empty($todo->object)) return array(null, null);
 
@@ -315,9 +301,7 @@ $fnGenerateFrom = function() use ($app, $lang, $config, $todo, $canViewObject, $
             entityLabel
             (
                 set::entityID($todo->objectID),
-                set::text($todo->name),
-                $canViewObject ? set::href($objectViewUrl) : null,
-                $canViewObject ? set::labelProps(array('data-toggle' => 'modal', 'data-size' => 'lg')) : null
+                set::text($todo->name)
             ),
             $objectData
         )
@@ -327,12 +311,20 @@ $fnGenerateFrom = function() use ($app, $lang, $config, $todo, $canViewObject, $
     $fromItem = item
     (
         set::name(zget($lang->todo->fromList, $todo->type)),
-        $canViewObject ? a
+        a
         (
-            set::href($objectViewUrl),
-            setData($objectLinkData),
+            set::href(createLink($todo->type, 'view', "id={$todo->objectID}", '', false)),
+            setData
+            (
+                array
+                (
+                    'toggle'    => 'modal',
+                    'data-type' => 'html',
+                    'type'      => 'ajax'
+                )
+            ),
             $todo->name
-        ) : $todo->name
+        )
     );
 
     return array($fromItem, $fromItemData);

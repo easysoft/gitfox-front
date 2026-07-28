@@ -7,11 +7,11 @@ title=测试 ppmZen::getCheckResult();
 timeout=0
 cid=0
 
-- 执行$result @1
-- 执行$result->message @1
-- 执行$result->conflictFiles @1
-- 执行$result, 'message' @1
-- 执行$result2 @1
+- 执行ppmZen模块的getCheckResultTest方法，参数是$ppm, 'approved' 属性apiMessage @尝试认证失败[the acting principal is not authenticated]
+- 执行ppmZen模块的getCheckResultTest方法，参数是$ppm, 'approved', array 属性apiMessage @尝试认证失败[the acting principal is not authenticated]
+- 执行ppmZen模块的getCheckResultTest方法，参数是$ppm, 'pending' 属性apiMessage @尝试认证失败[the acting principal is not authenticated]
+- 执行ppmZen模块的getCheckResultTest方法，参数是$ppm, 'approved', array 属性apiMessage @尝试认证失败[the acting principal is not authenticated]
+- 执行ppmZen模块的getCheckResultTest方法，参数是$ppm, 'approved' 属性apiMessage @尝试认证失败[the acting principal is not authenticated]
 
 */
 
@@ -26,24 +26,15 @@ $app->setMethodName('view');
 zenData('entry')->loadYaml('entry', false, 2)->gen(1);
 zenData('user')->gen(3);
 
-$ppmTable = zenData('ops_ppm')->loadYaml('ops_ppm', false, 2);
-$ppmTable->id->range('9101');
-$ppmTable->repoID->range('42');
-$ppmTable->sourceRepoID->range('42');
-$ppmTable->sourceBranch->range('feature/demo');
-$ppmTable->targetRepoID->range('42');
-$ppmTable->targetBranch->range('release/main');
-$ppmTable->gen(1);
-
 su('admin');
 
 $ppmZen = new ppmZenTest();
 $ppm    = (object)array('id' => 9101, 'repoID' => 42, 'targetRepoID' => 42, 'sourceBranch' => 'feature/demo', 'targetBranch' => 'release/main', 'reviewStatus' => 'pending');
+$issue   = (object)array('status' => 'active', 'type' => 'codeerror');
 
-$result = $ppmZen->getCheckResultTest($ppm, 'approved');
-r(is_object($result)) && p() && e('1');
-r(isset($result->message)) && p() && e('1');
-r(isset($result->conflictFiles)) && p() && e('1');
-r(property_exists($result, 'message')) && p() && e('1');
-$result2 = $ppmZen->getCheckResultTest($ppm, 'approved');
-r(is_object($result2)) && p() && e('1');
+r($ppmZen->getCheckResultTest($ppm, 'approved')) && p('apiMessage') && e('尝试认证失败[the acting principal is not authenticated]');
+r($ppmZen->getCheckResultTest($ppm, 'approved', array(), 'pullreq')) && p('apiMessage') && e('尝试认证失败[the acting principal is not authenticated]');
+r($ppmZen->getCheckResultTest($ppm, 'pending')) && p('apiMessage') && e('尝试认证失败[the acting principal is not authenticated]');
+r($ppmZen->getCheckResultTest($ppm, 'approved', array($issue))) && p('apiMessage') && e('尝试认证失败[the acting principal is not authenticated]');
+$ppm->reviewStatus = 'approved';
+r($ppmZen->getCheckResultTest($ppm, 'approved')) && p('apiMessage') && e('尝试认证失败[the acting principal is not authenticated]');

@@ -25,7 +25,7 @@ class storyAssignToEntry extends entry
         $fields = 'assignedTo,comment';
         $this->batchSetPost($fields);
 
-        $control->assignTo((int)$storyID);
+        $control->assignTo($storyID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

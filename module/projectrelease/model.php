@@ -47,7 +47,7 @@ class projectreleaseModel extends model
         }
 
         $branchGroup = $this->loadModel('branch')->getByProducts($productIdList);
-        $builds      = $this->dao->select("id, project, product, branch, execution, name, `scmPath`, `filePath`")->from(TABLE_BUILD)->where('id')->in(array_unique($buildIdList))->fetchAll('id');
+        $builds      = $this->dao->select("id, project, product, branch, execution, name, scmPath, filePath")->from(TABLE_BUILD)->where('id')->in(array_unique($buildIdList))->fetchAll('id');
 
         foreach($releases as $release) $this->projectreleaseTao->processRelease($release, $branchGroup, $builds);
 
@@ -114,7 +114,6 @@ class projectreleaseModel extends model
 
         $action = strtolower($action);
 
-        if($release->status == 'terminate' && !in_array($action, array('play', 'delete'))) return false;
         if($action == 'notify')  return ($release->bugs || $release->stories) && $release->status == 'normal';
         if($action == 'play')    return $release->status == 'terminate';
         if($action == 'pause')   return $release->status == 'normal';

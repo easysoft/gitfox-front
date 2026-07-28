@@ -19,8 +19,6 @@ extension/max/*
 extension/xuan/*
 extension/custom/*
 test/data/sql/
-skills-lock.json
-.agents
 .bak
 .idea
 .tree
@@ -28,7 +26,6 @@ skills-lock.json
 .gitignore
 .DS_Store
 docker
-.codegraph
 .docker-sync
 CodeSniffer.conf
 test/runtime

@@ -1,21 +1,13 @@
-function setStory(event)
+window.setStory = function(event)
 {
     var $form         = $(event.target).closest('form');
     var closedReason  = $form.find('#closedReason').find('.pick-value').val();
     var $duplicateBox = $form.find('#duplicateStoryBox');
 
-    $duplicateBox.toggleClass('hidden', closedReason != 'duplicate');
+    $duplicateBox.closest('.form-row').toggleClass('hidden', closedReason != 'duplicate');
 }
 
-async function checkUndoneTasks()
+$(function()
 {
-    if(undoneTasks == 0) return true;
-
-     const confirmed = await zui.Modal.confirm(confirmCloseTips);
-    return confirmed;
-}
-
-window.checkSubmit = function()
-{
-    return checkUndoneTasks();
-};
+    $('#duplicateStoryBox').closest('.form-row').addClass('hidden');
+});

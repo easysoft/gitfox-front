@@ -173,11 +173,10 @@ class release extends control
             $result  = $this->executeHooks($releaseID);
             $message = $result ? $result : $this->lang->saveSuccess;
 
-            $objectChanges = array('type' => 'add', 'objectType' => 'release', 'objectList' => array($releaseID));
-            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $message, 'id' => $releaseID, 'changes' => $objectChanges));
-            if(isInModal()) return $this->send(array('result' => 'success', 'message' => $message, 'closeModal' => true, 'callback' => 'refreshProductBuild', 'changes' => $objectChanges));
+            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $message, 'id' => $releaseID));
+            if(isInModal()) return $this->send(array('result' => 'success', 'message' => $message, 'closeModal' => true, 'callback' => 'refreshProductBuild'));
 
-            return $this->send(array('result' => 'success', 'message' => $message, 'load' => inlink('view', "releaseID={$releaseID}"), 'changes' => $objectChanges));
+            return $this->send(array('result' => 'success', 'message' => $message, 'load' => inlink('view', "releaseID={$releaseID}")));
         }
 
         $builds         = $this->loadModel('build')->getBuildPairs(array($productID), $branch, 'notrunk|withbranch|hasproject', 0, 'execution', '', false);
@@ -251,7 +250,7 @@ class release extends control
 
             $result  = $this->executeHooks($releaseID);
             $message = $result ? $result : $this->lang->saveSuccess;
-            return $this->send(array('result' => 'success', 'message' => $message, 'load' => inlink('view', "releaseID={$releaseID}"), 'changes' => array('type' => 'update', 'objectType' => 'release', 'objectList' => array($releaseID))));
+            return $this->send(array('result' => 'success', 'message' => $message, 'load' => inlink('view', "releaseID={$releaseID}")));
         }
 
         /* Get release and build. */
@@ -324,27 +323,9 @@ class release extends control
 
         $this->executeHooks($releaseID);
 
-        /* 收集解决Bug列表中的需求与任务ID，用于高级表格字段映射。 */
-        $storyIdList = $taskIdList = array();
-        foreach($this->view->bugs as $bug)
-        {
-            if($bug->story)  $storyIdList[$bug->story] = $bug->story;
-            if($bug->task)   $taskIdList[$bug->task]   = $bug->task;
-            if($bug->toTask) $taskIdList[$bug->toTask] = $bug->toTask;
-        }
-
         $this->view->appList        = $this->loadModel('system')->getPairs();
         $this->view->linkedReleases = $release->releases ? $this->release->getListByCondition(explode(',', $release->releases)) : array();
         $this->view->includedApps   = $this->release->getListByCondition(array(), $release->id);
-        $this->view->modules        = $this->loadModel('bug')->getDatatableModules($release->product);
-        $this->view->projectPairs   = $this->loadModel('project')->getPairsByProgram();
-        $this->view->executions     = $this->loadModel('execution')->fetchPairs($this->app->tab == 'project' ? (int)$this->session->project : 0, 'all', false);
-        $this->view->bugStories     = $this->loadModel('story')->getPairsByList($storyIdList);
-        $this->view->bugTasks       = $this->loadModel('task')->getPairsByIdList($taskIdList);
-
-        /* 页签切换时同步 URL 中的 type 参数,保证自定义列保存等整页刷新后仍停留在当前页签。 */
-        $releaseModule  = $this->app->rawModule == 'projectrelease' ? 'projectrelease' : 'release';
-        $this->view->tabUrl = $this->createLink($releaseModule, 'view', "releaseID=$releaseID&type=%s&link=$link&param=$param&orderBy=$orderBy&recTotal=$recTotal&recPerPage=$recPerPage&pageID=$pageID");
         $this->display();
     }
 

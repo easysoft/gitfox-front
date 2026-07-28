@@ -52,7 +52,6 @@ class ssoTao extends ssoModel
      */
     protected function addZTUser(object $data): object|false
     {
-        $data->passwordPlain = isset($data->password1) ? trim((string)$data->password1) : '';
         if(!$this->loadModel('user')->checkPassword($data)) return false;
         $user = $this->dao->select('*')->from(TABLE_USER)->where('account')->eq($data->account)->fetch();
         if($user)
@@ -80,3 +79,4 @@ class ssoTao extends ssoModel
         return $user;
     }
 }
+

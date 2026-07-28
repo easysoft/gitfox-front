@@ -1372,26 +1372,10 @@ class projectModelTest extends baseTest
      * @access public
      * @return array|object
      */
-    public function computeScheduleTest(string $begin, string $end, array $schedule, ?object $project = null): array|object
+    public function computeScheduleTest(string $begin, string $end, array $schedule, object $project = null): array|object
     {
         $result = $this->instance->computeSchedule($begin, $end, $schedule, $project);
         if(dao::isError()) return dao::getError();
-        return $result;
-    }
-
-    /**
-     * 测试获取项目的邮件通知收件人。
-     * Test getToAndCcList method.
-     *
-     * @param  object $project
-     * @access public
-     * @return array|false|string
-     */
-    public function getToAndCcListTest(object $project): array|false|string
-    {
-        $result = $this->instance->getToAndCcList($project);
-        if(dao::isError()) return dao::getError();
-
         return $result;
     }
 }

@@ -61,7 +61,6 @@ class mail extends control
             $mailConfig = $this->mail->autoDetect($this->post->fromAddress);
             $mailConfig->fromAddress = $this->post->fromAddress;
             $mailConfig->domain      = common::getSysURL();
-            $mailConfig->async       = 1;
             $this->session->set('mailConfig', $mailConfig);
 
             $response['load'] = inlink('edit');
@@ -214,12 +213,8 @@ class mail extends control
         if($queue and $queue->status == 'sended') return $this->sendSuccess(array('message' => $this->lang->mail->noticeResend, 'load' => true));
 
         if(isset($this->config->mail->async)) $this->config->mail->async = 0;
-        $log = $queue ? $this->mailZen->sendQueue($queue) : false;
-        if(empty($log) || $log['result'] == 'fail')
-        {
-            $message = (!empty($log) && !empty($log['message'])) ? $log['message'] : $this->lang->fail;
-            return $this->send(array('result' => 'fail', 'callback' => "zui.Modal.alert(" . json_encode(array('message' => array('html' => str_replace("\n", '<br />', $message)))) . ")"));
-        }
+        $log = $this->mailZen->sendQueue($queue);
+        if($log && $log['result'] == 'fail') return $this->send(array('result' => 'fail', 'callback' => "zui.Modal.alert(" . json_encode(array('message' => array('html' => str_replace("\n", '<br />', $log['message'])))) . ")"));
         return $this->sendSuccess(array('result' => 'success', 'message' => $this->lang->mail->noticeResend, 'load' => true));
     }
 

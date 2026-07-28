@@ -194,7 +194,7 @@ class classlist
         {
             if(!$toggle) continue;
 
-            $name = is_int($name) ? "$name" : trim($name);
+            $name = trim($name);
             if(!strlen($name)) continue;
 
             $names[] = $name;

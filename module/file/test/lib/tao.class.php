@@ -348,14 +348,14 @@ class fileTaoTest extends baseTest
     {
         foreach($file as $key => $value) $_POST[$key] = $value;
 
-        $result = $this->objectModel->saveExportTemplate($module);
+        $objectID = $this->objectModel->saveExportTemplate($module);
 
         unset($_POST);
 
-        if($result['result'] == 'fail') return $result['message'];
+        if(dao::isError()) return dao::getError()['title'][0];
 
         global $tester;
-        $object = $tester->dao->select('*')->from(TABLE_USERTPL)->where('id')->eq($result['templateID'])->fetch();
+        $object = $tester->dao->select('*')->from(TABLE_USERTPL)->where('id')->eq($objectID)->fetch();
         return $object;
     }
 

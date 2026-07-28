@@ -251,7 +251,6 @@ $lang->execution->manageProducts            = '关联' . $lang->productCommon;
 $lang->execution->linkStory                 = "关联需求";
 $lang->execution->linkStoryByPlan           = "按照计划关联";
 $lang->execution->linkPlan                  = "关联计划";
-$lang->execution->plans                     = $lang->execution->linkPlan;
 $lang->execution->unlinkStoryTasks          = "未关联{$lang->SRCommon}任务";
 $lang->execution->linkedProducts            = '已关联';
 $lang->execution->unlinkedProducts          = '未关联';
@@ -298,7 +297,7 @@ $lang->execution->treeViewStory             = "树状图查看{$lang->SRCommon}"
 $lang->execution->storyKanban               = "{$lang->SRCommon}看板";
 $lang->execution->storySort                 = "{$lang->SRCommon}排序";
 $lang->execution->importPlanStory           = "创建{$lang->executionCommon}成功！\n是否导入计划关联的相关%s？导入时只能导入激活状态的%s。";
-$lang->execution->importEditPlanStory       = "编辑{$lang->executionCommon}成功！\n是否导入计划关联的相关%s？导入时只能导入激活状态的%s。";
+$lang->execution->importEditPlanStory       = "编辑{$lang->executionCommon}成功！\n是否导入计划关联的相关%s？导入时将自动过滤掉草稿状态的%s。";
 $lang->execution->importBranchPlanStory     = "创建{$lang->executionCommon}成功！\n是否导入计划关联的相关%s？导入时将只关联本" . $lang->executionCommon . '所关联分支的激活%s。';
 $lang->execution->importBranchEditPlanStory = "编辑{$lang->executionCommon}成功！\n是否导入计划关联的相关%s？导入时将只关联本" . $lang->executionCommon . '所关联分支的激活%s。';
 $lang->execution->needLinkProducts          = "该执行还未关联任何{$lang->productCommon}，相关功能无法使用，请先关联{$lang->productCommon}后再试。";
@@ -566,22 +565,8 @@ $lang->execution->featureBar['all']['suspended'] = $lang->execution->statusList[
 $lang->execution->featureBar['all']['delayed']   = $lang->execution->delayed;
 $lang->execution->featureBar['all']['closed']    = $lang->execution->statusList['closed'];
 
-$lang->execution->featureBar['bug']['all']          = '全部';
-$lang->execution->featureBar['bug']['unclosed']     = '未关闭';
-$lang->execution->featureBar['bug']['openedbyme']   = '由我创建';
-$lang->execution->featureBar['bug']['assigntome']   = '指派给我';
-$lang->execution->featureBar['bug']['resolvedbyme'] = '由我解决';
-$lang->execution->featureBar['bug']['assignedbyme'] = '由我指派';
-$lang->execution->featureBar['bug']['more']         = $lang->more;
-
-$lang->execution->moreSelects['bug']['more']['unresolved']    = '未解决';
-$lang->execution->moreSelects['bug']['more']['unconfirmed']   = '未确认';
-$lang->execution->moreSelects['bug']['more']['assigntonull']  = '未指派';
-$lang->execution->moreSelects['bug']['more']['longlifebugs']  = '久未处理';
-$lang->execution->moreSelects['bug']['more']['toclosed']      = '待关闭';
-$lang->execution->moreSelects['bug']['more']['postponedbugs'] = '被延期';
-$lang->execution->moreSelects['bug']['more']['overduebugs']   = '过期Bug';
-$lang->execution->moreSelects['bug']['more']['needconfirm']   = "{$lang->SRCommon}变动";
+$lang->execution->featureBar['bug']['all']        = '全部';
+$lang->execution->featureBar['bug']['unresolved'] = '未解决';
 
 $lang->execution->featureBar['build']['all'] = '全部构建';
 

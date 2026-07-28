@@ -51,140 +51,153 @@ class pipelineZenTest extends baseTest
         );
     }
 
-    public function checkRepoEmptyTest(): void
-    {
-        $oldLevel = error_reporting(0);
-        ob_start();
-        try { $this->invokeArgs('checkRepoEmpty', []); } catch(Throwable $e) {}
-        ob_end_clean();
-        error_reporting($oldLevel);
-    }
-
-    public function buildSearchFormTest(array $searchConfig, string|int $queryID, string $actionURL)
-    {
-        $oldLevel = error_reporting(0);
-        ob_start();
-        try { $result = $this->invokeArgs('buildSearchForm', [$searchConfig, $queryID, $actionURL]); } catch(Throwable $e) { $result = ''; }
-        ob_end_clean();
-        error_reporting($oldLevel);
-        return $result;
-    }
-
-    public function getPipelineSearchQueryTest(int $queryID, string $queryName = 'pipelineQuery'): string
-    {
-        $result = $this->invokeArgs('getPipelineSearchQuery', [$queryID, $queryName]);
-        if(dao::isError()) return false;
-        return $result;
-    }
-
-    public function getExistPipelinesTest(int $repoID = 0)
-    {
-        $result = $this->invokeArgs('getExistPipelines', [$repoID]);
-        if(dao::isError()) return false;
-        return $result;
-    }
-
     /**
      * Test buildJenkinsTree method.
      *
+     * @param  array $tasks
+     * @access public
+     * @return array
+     */
+    public function buildJenkinsTreeTest(array $tasks): array
+    {
+        $result = $this->invokeArgs('buildJenkinsTree', [$tasks]);
+        if(dao::isError()) return dao::getError();
+
+        return array(
+            'count'         => count($result),
+            'firstText'     => $result[0]['text'] ?? '',
+            'firstValue'    => $result[0]['value'] ?? '',
+            'firstType'     => $result[0]['type'] ?? '',
+            'firstChildren' => isset($result[0]['items']) ? count($result[0]['items']) : 0,
+        );
+    }
+}
+
+class jobZenTest extends baseTest
+{
+    protected $moduleName = 'job';
+    protected $className  = 'zen';
+
+    /**
+     * Test buildSearchForm method.
+     *
+     * @param  array      $searchConfig
+     * @param  string|int $queryID
+     * @param  string     $actionURL
      * @access public
      * @return mixed
      */
-    public function buildJenkinsTreeTest(...$args)
+    public function buildSearchFormTest($searchConfig = array(), $queryID = '', $actionURL = '')
     {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('buildJenkinsTree', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
+        $result = $this->invokeArgs('buildSearchForm', [$searchConfig, $queryID, $actionURL]);
+        if(dao::isError()) return dao::getError();
+        return $result;
     }
 
-
     /**
-     * Test renderSchemaKeywords method.
+     * Test getCompileData method.
      *
+     * @param  object $compile
      * @access public
-     * @return mixed
+     * @return array
      */
-    public function renderSchemaKeywordsTest(...$args)
+    public function getCompileDataTest($compile)
     {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('renderSchemaKeywords', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
+        $this->invokeArgs('getCompileData', [$compile]);
+        if(dao::isError()) return array('error' => dao::getError());
+
+        $view = $this->getProperty('view');
+        if(!$view) return array('error' => 'View not found');
+
+        $result = array(
+            'groupCases' => isset($view->groupCases) ? count($view->groupCases) : 0,
+            'suites'     => isset($view->suites) ? count($view->suites) : 0,
+            'summary'    => isset($view->summary) ? count($view->summary) : 0,
+            'taskID'     => isset($view->taskID) ? $view->taskID : 0
+        );
+
+        return $result;
     }
 
     /**
-     * Test buildArtifactLibSchemaItems method.
+     * Test getJobList method.
      *
-     * @param  string $scope
-     * @param  string $type
+     * @param  int    $repoID
+     * @param  string $jobQuery
+     * @param  string $orderBy
+     * @param  object $pager
      * @access public
-     * @return mixed
+     * @return array
      */
-    public function buildArtifactLibSchemaItemsTest(string $scope = 'space,repo', string $type = 'container')
+    public function getJobListTest($spaceID = 0, $repoID = 0, $jobQuery = '', $orderBy = 'id_desc', $pager = null)
     {
-        try
-        {
-            $result = $this->invokeArgs('buildArtifactLibSchemaItems', array($scope, $type));
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-
-            $values = array();
-            $this->collectLeafValues($result, $values);
-            sort($values, SORT_STRING);
-
-            return array('groupCount' => count($result), 'values' => implode(',', $values));
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
+        if($pager === null) $pager = new pager(0, 20, 1);
+        $result = $this->invokeArgs('getJobList', [$spaceID, $repoID, $jobQuery, $orderBy, $pager]);
+        if(dao::isError()) return dao::getError();
+        return $result;
     }
 
     /**
-     * 收集嵌套树中所有叶子节点的 value，跳过带子项的分组节点。
-     * Collect leaf node values in nested picker items.
+     * Test getJobSearchQuery method.
      *
-     * @param  array $nodes
-     * @param  array $values
-     * @access private
-     * @return void
+     * @param  int $queryID
+     * @access public
+     * @return string
      */
-    private function collectLeafValues(array $nodes, array &$values): void
+    public function getJobSearchQueryTest($queryID = 0)
     {
-        foreach($nodes as $node)
-        {
-            if(isset($node['items']) && !empty($node['items']))
-            {
-                $this->collectLeafValues($node['items'], $values);
-                continue;
-            }
-
-            if(array_key_exists('value', $node)) $values[] = (string)$node['value'];
-        }
+        $result = $this->invokeArgs('getJobSearchQuery', [$queryID]);
+        if(dao::isError()) return dao::getError();
+        return $result;
     }
 
+    /**
+     * Test getSubversionDir method.
+     *
+     * @param  object $repo
+     * @access public
+     * @return array
+     */
+    public function getSubversionDirTest($repo)
+    {
+        $this->invokeArgs('getSubversionDir', [$repo]);
+        if(dao::isError()) return array('error' => dao::getError());
+
+        $view = $this->getProperty('view');
+        if(!$view) return array('error' => 'View not found');
+
+        $result = array(
+            'dirs'            => isset($view->dirs) ? $view->dirs : array(),
+            'triggerTypeList' => $this->getProperty('lang')->job->triggerTypeList
+        );
+
+        return $result;
+    }
+
+    /**
+     * Test reponseAfterCreateEdit method.
+     *
+     * @param  int    $repoID
+     * @param  array  $errors
+     * @param  string $engine
+     * @param  int    $repo
+     * @access public
+     * @return array
+     */
+    public function reponseAfterCreateEditTest($repoID = 0, $errors = array(), $engine = '', $repo = 0)
+    {
+        global $tester;
+
+        if(!empty($errors)) dao::$errors = $errors;
+        if($engine) $_POST['engine'] = $engine;
+        if($repo) $_POST['repo'] = $repo;
+
+        $result = $this->invokeArgs('reponseAfterCreateEdit', [$repoID]);
+
+        dao::$errors = array();
+        unset($_POST['engine']);
+        unset($_POST['repo']);
+
+        return $result;
+    }
 }

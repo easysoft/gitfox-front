@@ -8,13 +8,8 @@ zenData('action')->loadYaml('action')->gen(25);
 zenData('actionrecent')->gen(0);
 zenData('product')->loadYaml('product')->gen(2);
 zenData('project')->loadYaml('execution')->gen(111);
-zenData('ops_repo')->loadYaml('repo')->gen(3);
-$providerTable = zenData('ops_provider');
-$providerTable->id->range('1');
-$providerTable->type->range('gitlab');
-$providerTable->name->range('server1');
-$providerTable->deleted->range('0');
-$providerTable->gen(1);
+zenData('repo')->loadYaml('repo')->gen(3);
+zenData('pipeline')->gen(1);
 zenData('projectproduct')->loadYaml('projectproduct')->gen(1);
 zenData('module')->loadYaml('module')->gen(3);
 zenData('review')->loadYaml('review')->gen(2);
@@ -29,10 +24,6 @@ zenData('doclib')->loadYaml('doclib')->gen(2);
 zenData('productplan')->loadYaml('productplan')->gen(2);
 zenData('task')->loadYaml('task')->gen(2);
 
-/* repo无服务器的镜像库校验：repo1无服务器，repo2、repo3挂接server1。 */
-$tester->dao->update(TABLE_REPO)->set('mirror')->eq('1')->set('providerID')->eq('999')->where('id')->eq('1')->exec();
-$tester->dao->update(TABLE_REPO)->set('mirror')->eq('1')->set('providerID')->eq('1')->where('id')->in('2,3')->exec();
-
 /**
 
 title=测试 actionModel->undelete();
@@ -44,6 +35,9 @@ cid=14934
 - 测试还原action 2, objectType execution 的数据。 @该执行没有所属的项目，请先还原项目再还原执行
 - 测试还原action 3, objectType execution 的数据,并且测试是否恢复了用户访问权限。 @1
 - 测试还原action 3, objectType execution 的数据,并且测试是否恢复了用户访问权限。 @1
+- 测试还原action 5, objectType repo 的数据。 @该代码库没有所属的服务器，请先还原服务器再还原代码库
+- 测试还原action 6, objectType repo 的数据。 @1
+- 测试还原action 7, objectType repo 的数据。 @1
 - 测试还原action 8, objectType program 的数据,并且测试是否恢复了用户访问权限。 @0
 - 测试还原action 9, objectType program 的数据,并且测试是否恢复了用户访问权限。 @1
 - 测试还原action 10, objectType project 的数据,并且测试是否恢复了用户访问权限。 @0
@@ -59,7 +53,7 @@ cid=14934
 - 测试还原action 22, objectType scene 的数据。 @1
 - 测试还原action 23, objectType doc 的数据。 @1
 - 测试还原action 24, objectType productplan 的数据。 @1
-- 测试还原action 25, objectType task 的数据。 @1
+- 测试还原action 25, objectType task 的数据。 @0
 
 */
 
@@ -81,6 +75,10 @@ r($result && strpos($userView->products . ',', ',1,') !== false && !$doclib->del
 $result   = $action->undeleteTest($actionIDList[4]);
 $userView = $tester->dao->select('*')->from('zt_userview')->where('account')->eq('admin')->fetch();
 r($result && strpos($userView->products . ',', ',1,') !== false && strpos($userView->sprints . ',', ',4,') !== false) && p('') && e('1'); // 测试还原action 3, objectType execution 的数据,并且测试是否恢复了用户访问权限。
+
+r($action->undeleteTest($actionIDList[5])) && p('') && e('该代码库没有所属的服务器，请先还原服务器再还原代码库');                         // 测试还原action 5, objectType repo 的数据。
+r($action->undeleteTest($actionIDList[6])) && p('') && e('1');                                                                            // 测试还原action 6, objectType repo 的数据。
+r($action->undeleteTest($actionIDList[7])) && p('') && e('1');                                                                            // 测试还原action 7, objectType repo 的数据。
 
 $tester->dao->update('zt_userview')->set('sprints')->eq('')->set('programs')->eq('')->set('products')->eq('')->set('projects')->eq('')->where('account')->eq('admin')->exec();
 

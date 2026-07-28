@@ -14,7 +14,6 @@ set::zui(true);
 
 jsVar('fromVersion', $fromVersion);
 jsVar('upgradeVersions', array_keys($upgradeVersions));
-jsVar('executeFailed', $lang->upgrade->executeFailed);
 $isEn = $app->getClientLang() == 'en';
 
 $editionNames = [];
@@ -73,7 +72,7 @@ $buildChanges = function() use ($app, $lang, $upgradeChanges)
             (
                 setClass("label gray-pale text-gray-400 px-2.5 py-1 {$width}"),
                 setData(['text' => $lang->upgrade->changeModes[$change['mode']]]),
-                icon(setClass('animate-spin'), 'spinner-indicator')
+                icon('spinner-indicator')
             ),
             span
             (
@@ -111,7 +110,7 @@ div
         ),
         row
         (
-            setClass('bg-gray-100 gap-2 p-2 flex-1 min-h-0'),
+            setClass('bg-gray-100 gap-2 p-2'),
             setStyle(['max-height' => 'calc(100% - 6rem)']),
             col
             (

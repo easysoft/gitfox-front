@@ -513,21 +513,6 @@ class baseValidater
     }
 
     /**
-     * 检查 SQL 字段名是否合法，只允许标识符字符，防止拼接 SQL 时注入。
-     * Check field name, only accept SQL identifier characters to prevent SQL injection.
-     *
-     * @param  mixed $var
-     * @static
-     * @access public
-     * @return bool
-     */
-    public static function checkFieldName($var): bool
-    {
-        if(!is_string($var)) return false;
-        return preg_match('/^[A-Za-z_][A-Za-z0-9_.]*$/', $var) === 1;
-    }
-
-    /**
      * 检查敏感词。
      * Check sensitive words.
      *
@@ -1082,7 +1067,7 @@ class baseFixer
         $fields = $this->processFields($fieldName);
         foreach($fields as $fieldName)
         {
-            if(!isset($this->stripedFields[$fieldName]) and !helper::isRunMode('admin'))
+            if(!isset($this->stripedFields[$fieldName]) and (!defined('RUN_MODE') or RUN_MODE != 'admin'))
             {
                 $this->data->$fieldName = self::stripDataTags($this->data->$fieldName, $allowedTags, $attributes);
 
@@ -1137,16 +1122,9 @@ class baseFixer
             $purifier = new HTMLPurifier($purifierConfig);
             $htmlDef  = $purifierConfig->getHTMLDefinition(true);
 
-            /*
-             * Keep mention metadata on span for every editor field in one request.
-             * Register these before the first purify(); HTMLPurifier finalizes the
-             * definition then, so later addAttribute() calls would be ignored.
-             */
+            /* Keep mention metadata on span.mention-label. */
             $defaultAttributes = array(
                 'a|target|Enum#_blank,_self,_target,_top',
-                'span|data-id|Text',
-                'span|data-type|Text',
-                'span|data-label|Text',
             );
 
             foreach($defaultAttributes as $attribute)
@@ -1154,6 +1132,22 @@ class baseFixer
                 list($element, $name, $values) = explode('|', $attribute);
                 $htmlDef->addAttribute($element, $name, $values);
                 $registeredAttributes[$attribute] = true;
+            }
+        }
+
+        /* Allow all data-* attributes that appear on span.mention-label. */
+        if(preg_match_all('/<span\b[^>]*class=(["\'])[^"\']*\bmention-label\b[^"\']*\1[^>]*>/i', $data, $spanMatches))
+        {
+            foreach($spanMatches[0] as $spanTag)
+            {
+                if(!preg_match_all('/\s(data-[a-z0-9:_-]+)\s*=/i', $spanTag, $dataAttributes)) continue;
+                foreach($dataAttributes[1] as $dataAttribute)
+                {
+                    $attribute = "span|{$dataAttribute}|Text";
+                    if(isset($registeredAttributes[$attribute])) continue;
+                    $htmlDef->addAttribute('span', $dataAttribute, 'Text');
+                    $registeredAttributes[$attribute] = true;
+                }
             }
         }
 

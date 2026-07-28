@@ -45,17 +45,8 @@ $lang->aiapp->viewAiToolkit      = 'View AI Toolkit';
 
 $lang->aiapp->id                 = 'ID';
 $lang->aiapp->model              = 'Model Name';
-$lang->aiapp->modelID            = 'Model ID';
-$lang->aiapp->abilities          = 'Abilities';
 $lang->aiapp->converse           = 'Converse';
 $lang->aiapp->pageSummary        = 'Total %s items.';
-$lang->aiapp->searchModels       = 'Search Models';
-$lang->aiapp->abilityTypes       = [];
-
-$lang->aiapp->abilityTypes['chat']             = 'Chat';
-$lang->aiapp->abilityTypes['function-calling'] = 'Function Calling';
-$lang->aiapp->abilityTypes['reasoning']        = 'Reasoning';
-$lang->aiapp->abilityTypes['embedding']        = 'Embedding';
 
 $lang->aiapp->tips = new stdClass();
 $lang->aiapp->tips->noData = 'No data';
@@ -89,7 +80,7 @@ $lang->aiapp->langData->recentChats        = 'Recent Chats';
 $lang->aiapp->langData->aiTeammateTasks    = 'Digital Teammate Tasks';
 
 $lang->aiapp->langData->processedDataResult = "The processed data is as follows:\n```json\n{data}\n```";
-$lang->aiapp->langData->agentResultSummary  = 'Explain the data changes in the solution with a short, easy-to-understand sentence. Do not use line breaks.';
+$lang->aiapp->langData->agentResultSummary  = 'Explain the changes of the data in the solution, try to explain each changed attribute.';
 $lang->aiapp->langData->promptResultTitle   = 'Solution title, if no suitable title can be omitted';
 $lang->aiapp->langData->searchTasks         = 'Search Digital Teammate Tasks';
 $lang->aiapp->langData->formFillTitle       = 'Form Filling';
@@ -100,9 +91,10 @@ $lang->aiapp->langData->formFillableFields  = 'Fillable fields';
 $lang->aiapp->langData->formFieldDefinition = 'Field definitions';
 $lang->aiapp->langData->formRequiredField   = 'Required';
 $lang->aiapp->langData->formReturnJSONArray = 'Please return a JSON array, each array element corresponds to a row of data, keys correspond to the fillable field names. Required fields must have values.';
-$lang->aiapp->langData->formZentaoAPITip    = "Please first use the zentao-api-readonly tool to obtain the required context data, then use the submitFormData tool to return the filled form data. Required fields must have values.\nUsually submitFormData only needs to be called once, unless the user requires multiple solutions.";
+$lang->aiapp->langData->formZentaoAPITip    = "Please first use the zentao-api tools to obtain the required context data, then use the submitFormData tool to return the filled form data. Required fields must have values.\nUsually submitFormData only needs to be called once, unless the user requires multiple solutions.";
 $lang->aiapp->langData->formResultGenerated = 'Form data has been generated.';
 $lang->aiapp->langData->formCurrentTarget   = 'Current';
+$lang->aiapp->langData->formApplyDataTip    = 'Please click the "Apply to the current form" button to fill the data into the form.';
 $lang->aiapp->langData->stepDescription     = 'Step description';
 $lang->aiapp->langData->expectDescription   = 'Expected result';
 

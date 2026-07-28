@@ -198,23 +198,6 @@ div
                             )
                         )
                     ),
-                    count($lang->install->dbDriverList) > 1 ? h::tr
-                    (
-                        $config->inQuickon ? setClass('hidden') : null,
-                        h::th(setClass('text-right'), $lang->install->dbSchema),
-                        h::td
-                        (
-                            formGroup
-                            (
-                                input
-                                (
-                                    set::name('dbSchema'),
-                                    set::value('public')
-                                )
-                            )
-                        ),
-                        h::td($lang->install->dbSchemaNote)
-                    ) : null,
                 ),
                 formHidden('dbPrefix', $config->db->defaultPrefix),
                 contactUs()

@@ -902,16 +902,9 @@ class storyZenTest
      * @access public
      * @return object|bool
      */
-    public function buildStoryForEditTest($storyID): object|bool
+    public function buildStoryForEditTest(int $storyID): object|bool
     {
-        try
-        {
-            $result = callZenMethod('story', 'buildStoryForEdit', [$storyID]);
-        }
-        catch(TypeError $e)
-        {
-            return false;
-        }
+        $result = callZenMethod('story', 'buildStoryForEdit', [$storyID]);
         if(dao::isError()) return dao::getError();
         return $result;
     }
@@ -1218,8 +1211,6 @@ class storyZenTest
         // 获取story和product数据用于测试
         $story = $tester->loadModel('story')->getByID($storyID);
         if(empty($story)) return array();
-        $story->id      = (int)$story->id;
-        $story->version = (int)$story->version;
 
         $product = $tester->loadModel('product')->getByID($story->product);
 

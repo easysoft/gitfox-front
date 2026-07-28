@@ -11,9 +11,29 @@ window.addItem = function(obj)
     const $currentTr = $(obj).closest('tr');
 
     $currentTr.after(item);
+    const $newRow = $currentTr.next();
     itemIndex ++;
 
-    setTimeout(resetAccountItems, 100);
+    setTimeout(function()
+    {
+        let selectedAccounts = [];
+        $('#teamForm [name^=account]').each(function()
+        {
+            if(!$(this).val()) return true;
+            selectedAccounts.push($(this).val());
+        });
+
+        let $accountPicker = $newRow.find('input[name^=account]').zui('picker');
+        if(typeof $accountPicker == 'undefined') return true;
+
+        let userItems = $accountPicker.options.items;
+        for(let key in userItems)
+        {
+            let disabled = selectedAccounts.includes(userItems[key].value) ? true : false;
+            userItems[key].disabled = disabled;
+        }
+        $accountPicker.render({items: userItems});
+    }, 100);
 }
 
 /**
@@ -82,13 +102,7 @@ window.setRole = function(roleID)
     resetAccountItems();
 }
 
-/**
- * Get already selected accounts.
- *
- * @access public
- * @return array
- */
-function getSelectedAccounts()
+function resetAccountItems()
 {
     let selectedAccounts = [];
     $('#teamForm [name^=account]').each(function()
@@ -96,38 +110,19 @@ function getSelectedAccounts()
         if(!$(this).val()) return true;
         selectedAccounts.push($(this).val());
     });
-    return selectedAccounts;
-}
-
-/**
- * Disable selected accounts in picker menu.
- *
- * @param  object $item
- * @access public
- * @return object
- */
-window.getAccountMenuItem = function(item)
-{
-    item.disabled = getSelectedAccounts().includes(item.value) && !item.selected;
-    return item;
-}
-
-function resetAccountItems()
-{
-    const selectedAccounts = getSelectedAccounts();
 
     $('#teamForm [name^=account]').each(function()
     {
-        let $accountPicker = $(this).zui('picker');
-        if(!$accountPicker || typeof $accountPicker == 'undefined') return true;
+        let $accountPicker = $(this).closest('input[name^=account]').zui('picker');
+        if(typeof $accountPicker == 'undefined') return true;
 
-        let userItems = $accountPicker.options.items;
-        if(!Array.isArray(userItems)) return true;
-
+        let userItems      = $accountPicker.options.items;
         let currentAccount = $(this).val();
-        $accountPicker.render({items: userItems.map(function(item)
+        for(let key in userItems)
         {
-            return $.extend({}, item, {disabled: selectedAccounts.includes(item.value) && item.value != currentAccount});
-        })});
+            let disabled = selectedAccounts.includes(userItems[key].value) && userItems[key].value != currentAccount ? true : false;
+            userItems[key].disabled = disabled;
+        }
+        $accountPicker.render({items: userItems});
     });
 }

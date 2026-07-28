@@ -43,7 +43,7 @@ class departmentEntry extends entry
         $this->batchSetPost($fields, $oldDept);
 
         $this->requireFields('name');
-        $control->edit((int)$departmentID);
+        $control->edit($departmentID);
 
         $this->getData();
         $department = $this->dept->getByID($departmentID);
@@ -60,7 +60,7 @@ class departmentEntry extends entry
     public function delete($departmentID)
     {
         $control = $this->loadController('dept', 'delete');
-        $control->delete((int)$departmentID, 'true');
+        $control->delete($departmentID, 'true');
 
         $data = $this->getData();
         if(isset($data->status) and $data->status == 'fail') return $this->sendError(400, $data->message);

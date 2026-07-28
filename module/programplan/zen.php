@@ -456,10 +456,6 @@ class programplanZen extends programplan
             $this->loadModel('execution')->buildTaskSearchForm($projectID, $executions, $queryID, $actionURL, 'projectTask');
         }
 
-        $frozenStageCount = $this->dao->select('COUNT(*) AS count')->from(TABLE_PROJECT)->where('project')->eq($projectID)->andWhere('frozen')->ne('')->fetch('count');
-        $this->view->hasFrozenStage   = $frozenStageCount > 0;
-        $this->view->canRollbackGantt = $this->programplan->canRollbackGanttVersion($project);
-
         $this->view->title       = $this->lang->programplan->browse;
         $this->view->projectID   = $projectID;
         $this->view->productID   = $productID;

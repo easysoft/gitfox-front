@@ -229,7 +229,8 @@ $tabs['caseRelatedList'] = setting()
     ->control('caseRelatedList');
 
 $caseVersion = 0;
-if(in_array($from, array('testsuite', 'testtask'))) $caseVersion = '{version}';
+if($from == 'testsuite') $caseVersion = '{caseVersion}';
+if($from == 'testtask') $caseVersion = '{version}';
 
 detail
 (

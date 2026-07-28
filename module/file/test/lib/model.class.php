@@ -433,14 +433,14 @@ class fileModelTest extends baseTest
     {
         foreach($file as $key => $value) $_POST[$key] = $value;
 
-        $result = $this->instance->saveExportTemplate($module);
+        $objectID = $this->instance->saveExportTemplate($module);
 
         unset($_POST);
 
-        if($result['result'] == 'fail') return $result['message'];
+        if(dao::isError()) return dao::getError()['title'][0];
 
         global $tester;
-        $object = $tester->dao->select('*')->from(TABLE_USERTPL)->where('id')->eq($result['templateID'])->fetch();
+        $object = $tester->dao->select('*')->from(TABLE_USERTPL)->where('id')->eq($objectID)->fetch();
         return $object;
     }
 
@@ -1386,30 +1386,4 @@ class fileModelTest extends baseTest
 
         return $result;
     }
-
-    /**
-     * Test updateStoryFiles method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function updateStoryFilesTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('updateStoryFiles', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
 }

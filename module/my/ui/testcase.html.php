@@ -37,9 +37,10 @@ if($canBatchAction)
     ), 'btnProps' => array('size' => 'sm', 'btnType' => 'secondary'));
 }
 
-if($app->rawMethod == 'contribute')
+if($browseType == 'openedbyme' || $app->rawMethod == 'contribute')
 {
     unset($config->my->testcase->dtable->fieldList['taskName']);
+    unset($config->my->testcase->dtable->fieldList['openedBy']);
 }
 
 if($browseType == 'assigntome')
@@ -61,21 +62,18 @@ if(isset($cols['status']))
     $cols['status']['statusMap']['changed']     = $lang->story->changed;
     $cols['status']['statusMap']['casechanged'] = $lang->testcase->changed;
 }
-if(isset($cols['story'])) $cols['story']['map'] = $stories;
-if(isset($cols['scene'])) $cols['scene']['map'] = $scenePairs;
 $cases = initTableData($cases, $cols, $this->testcase);
 $data  = array_values($cases);
 
 $defaultSummary = sprintf($lang->testcase->failSummary, count($cases), $failCount);
-$customExtra = ($app->rawMethod == 'contribute') ? 'openedbyme' : $browseType;
 dtable
 (
     set::data($data),
     set::cols($cols),
     set::onRenderCell(jsRaw('window.onRenderCell')),
-    set::customCols(array('url' => createLink('datatable', 'ajaxcustom', "module={$app->moduleName}&method={$app->methodName}&extra={$customExtra}"))),
+    set::customCols(true),
     set::userMap($users),
-    set::rowKey($browseType == 'assigntome' ? 'run' : 'id'),
+    set::rowKey('run'),
     set::checkable(true),
     set::defaultSummary(array('html' => $defaultSummary)),
     set::checkedSummary($lang->testcase->failCheckedSummary),

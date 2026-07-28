@@ -408,7 +408,7 @@ class codescanModel extends model
         $apiRoot = $this->loadModel('gitfox')->getApiRoot();
         $url     = sprintf($apiRoot->url, "/scan/solutions/{$solutionID}");
 
-        $rulesets = explode(',', (string)$formData->rulesets);
+        $rulesets = explode(',', $formData->rulesets);
         unset($formData->rulesets);
 
         $formData->updatedBy = $this->app->user->account;
@@ -447,7 +447,7 @@ class codescanModel extends model
      * @access public
      * @return array|object
      */
-    public function getSolutionUnlinkRulesets(int $solutionID, array $param): array|object|bool
+    public function getSolutionUnlinkRulesets(int $solutionID, array $param): array|object
     {
         $apiRoot = $this->loadModel('gitfox')->getApiRoot();
         $url     = sprintf($apiRoot->url, "/scan/solutions/{$solutionID}/rulesets/unbind");
@@ -696,7 +696,7 @@ class codescanModel extends model
      * @access public
      * @return array|object
      */
-    public function getScanTasks(int $repoID, int $planID, array $params): array|object|bool
+    public function getScanTasks(int $repoID, int $planID, array $params): array|object
     {
         if(!isset($params['repoID'])) $params['repoID'] = (int)$repoID;
         if(!isset($params['planID'])) $params['planID'] = (int)$planID;
@@ -757,7 +757,7 @@ class codescanModel extends model
      * @access public
      * @return array|object
      */
-    public function getScanTask(int $taskID): array|object|bool
+    public function getScanTask(int $taskID): array|object
     {
         $apiRoot = $this->loadModel('gitfox')->getApiRoot();
         $url     = sprintf($apiRoot->url, "/scan/tasks/{$taskID}");
@@ -844,7 +844,7 @@ class codescanModel extends model
         foreach($issueIdList as $issueID)
         {
             $issue = $this->getScanIssue($issueID, false);
-            $extra = empty($issue) || empty($repoPair[$issue->repoID]) ? '' : "{$issue->title}|issueID={$issueID}&repoID={$repoPair[$issue->repoID]}";
+            $extra = empty($issue) || empty($repoPair[$issue->repoID]) ? '' : "{$issue->message}|issueID={$issueID}&repoID={$repoPair[$issue->repoID]}";
             $this->action->create('codescanissue', $issueID, $status . 'ScanIssue', '', $extra);
         }
 
@@ -862,9 +862,6 @@ class codescanModel extends model
      */
     public function getScanIssueList(int $taskID, array $params = array()): object|array
     {
-        $file = zget($params, 'file', '');
-        if($file != '') $params['path'] = $file;
-        unset($params['file']);
         if(isset($params['repoID']))   $params['repoID'] = (int)$params['repoID'];
         if(isset($params['ruleID']))   $params['ruleID'] = (int)$params['ruleID'];
         if(isset($params['planID']))   $params['planID'] = (int)$params['planID'];
@@ -883,7 +880,7 @@ class codescanModel extends model
 
         if(empty($result) || empty($result->data)) return array();
 
-        $bugList = $this->dao->select('`issueKey`,id')->from(TABLE_BUG)->where('issueKey')->in(array_column($result->data, 'id'))->fetchPairs();
+        $bugList = $this->dao->select('issueKey,id')->from(TABLE_BUG)->where('issueKey')->in(array_column($result->data, 'id'))->fetchPairs();
         foreach($result->data as $issue)
         {
             $issue->bugID     = isset($bugList[$issue->id]) ? $bugList[$issue->id] : 0;
@@ -903,7 +900,7 @@ class codescanModel extends model
      * @access public
      * @return object|array
      */
-    public function getScanIssueListByIdList(array $issueIdList): object|array|bool
+    public function getScanIssueListByIdList(array $issueIdList): object|array
     {
         $IdList = array();
         foreach($issueIdList as $issueID) $IdList[] = (int)$issueID;
@@ -921,14 +918,13 @@ class codescanModel extends model
      * @access public
      * @return array|object
      */
-    public function getScanIssue(int $issueID, bool $showBug = true): array|object|bool
+    public function getScanIssue(int $issueID, bool $showBug = true): array|object
     {
         $apiRoot = $this->loadModel('gitfox')->getApiRoot();
         $url     = sprintf($apiRoot->url, "/scan/issues/{$issueID}");
 
         $result = json_decode(common::http($url, array(), array(), $apiRoot->header, 'json', 'GET'));
         $result = $this->gitfox->getResponse($result);
-        if(empty($result)) return array();
 
         if($showBug)
         {
@@ -938,15 +934,13 @@ class codescanModel extends model
         $result->tool               = zget($result->payload, 'tool', '');
         $result->snippet            = zget($result->payload, 'snippet', '');
         $result->snippetWithContext = zget($result->payload, 'snippetWithContext', '');
-        $location = !empty($result->payload) ? zget($result->payload, 'location', new stdclass()) : new stdclass();
-        $range    = !empty($location) ? zget($location, 'range', new stdclass()) : new stdclass();
-        $result->rangeStartLine     = (int)zget($range, 'startLine', 0);
-        $result->rangeEndLine       = (int)zget($range, 'endLine', 0);
-        $result->commit             = zget($location, 'commit', array());
-        if($result->rangeStartLine < 1 && !empty($result->startLine))
+        $result->rangeStartLine     = (int)zget($result->payload->location->range, 'startLine', 0);
+        $result->rangeEndLine       = (int)zget($result->payload->location->range, 'endLine', 0);
+        $result->commit             = zget($result->payload->location, 'commit', array());
+        if($result->rangeStartLine < 1 && !empty($result->line))
         {
-            $result->rangeStartLine = (int)$result->startLine;
-            $result->rangeEndLine   = !empty($result->endLine) ? (int)$result->endLine : (int)$result->startLine;
+            $result->rangeStartLine = (int)$result->line;
+            $result->rangeEndLine   = (int)$result->line;
         }
         elseif($result->rangeEndLine < $result->rangeStartLine || ($result->rangeEndLine === 0 && $result->rangeStartLine > 0))
         {
@@ -1034,12 +1028,12 @@ class codescanModel extends model
     {
         return $this->dao->select('t2.realname, count(t1.id) as count')->from(TABLE_BUG)->alias('t1')
             ->leftJoin(TABLE_USER)->alias('t2')
-            ->on('t1.`resolvedBy` = t2.account')
+            ->on('t1.resolvedBy = t2.account')
             ->where('t1.deleted')->eq(0)
-            ->andWhere('t1.`issueKey`')->ne('')
+            ->andWhere('t1.issueKey')->ne('')
             ->andWhere('t1.resolution')->eq('fixed')
             ->beginIF($repoID)->andWhere('t1.repo')->eq($repoID)->fi()
-            ->groupBy('t1.`resolvedBy`')
+            ->groupBy('t1.resolvedBy')
             ->orderBy('count_desc')
             ->limit($top)
             ->fetchPairs();
@@ -1051,16 +1045,14 @@ class codescanModel extends model
      *
      * @param  int    $repoID
      * @param  int    $taskID
-     * @param  string $type        file|rule
-     * @param  array  $scanMethods 扫描方法过滤，如 array('check', 'smell') 或 array('ai')
+     * @param  string $type      file|rule
      * @access public
      * @return array
      */
-    public function getIssueTreeList(int $repoID, int $taskID, string $type = 'file', array $scanMethods = array()): array
+    public function getIssueTreeList(int $repoID, int $taskID, string $type = 'file'): array
     {
         $url    = "/scan/issues/{$type}-tree";
         $params = array('repoID' => $repoID, 'taskID' => $taskID);
-        if(!empty($scanMethods)) $params['scanMethods'] = $scanMethods;
         $result = $this->loadModel('gitfox')->request($url, 'GET', $params);
         return array($result);
     }
@@ -1147,7 +1139,7 @@ class codescanModel extends model
      * @access public
      * @return array
      */
-    public function getIssueTrendsByRepo(int $repoID, int $beginDate = 0, string $scope = 'day'): array|bool
+    public function getIssueTrendsByRepo(int $repoID, int $beginDate = 0, string $scope = 'day'): array
     {
         $apiRoot = $this->loadModel('gitfox')->getApiRoot();
         $url     = sprintf($apiRoot->url, "/scan/metrics/repo/{$repoID}/query");

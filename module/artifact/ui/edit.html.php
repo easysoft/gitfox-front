@@ -30,13 +30,5 @@ formPanel
         set::required(true),
         set::value($artifactLib->name),
         set::placeholder($artifactLib->type == 'file' ? $lang->artifact->placeholder->name : $lang->artifact->notice->nameNotSupportChinese)
-    ),
-    formGroup
-    (
-        set::label($lang->artifact->code),
-        set::name('code'),
-        set::required(true),
-        set::disabled(true),
-        set::value($artifactLib->code)
     )
 );

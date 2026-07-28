@@ -225,13 +225,6 @@ $mirrorStatus = zget($repo, 'status', 'active');
 
 toolbar
 (
-    /* 普通仓库最后更新时间。 */
-    empty($repo->mirror) ? a
-    (
-        set::className('last-sync-time'),
-        empty($lastRevision->link) ? null : set::href($lastRevision->link),
-        $lang->repo->notice->lastSyncTime . (isset($lastRevision->time) ? date('m-d H:i', strtotime($lastRevision->time)) : date('m-d H:i'))
-    ) : null,
     /* 镜像仓库状态工具栏区块。 */
     !empty($repo->mirror) ? div
     (
@@ -265,8 +258,7 @@ toolbar
         ) : div
         (
             setClass('flex items-center'),
-            $mirrorStatus == 'active' ? span(setClass('text-primary sync-next-executed mr-3'), $lang->repo->mirror->nextSync . (zget($this->view, 'mirrorNextExecuted', '') ?: '--')) : null,
-            $mirrorStatus == 'active' ? span(setClass('text-primary sync-last-executed mr-3'), $lang->repo->mirror->lastUpdated . (zget($this->view, 'mirrorLastExecuted', '') ?: '--')) : null,
+            $mirrorStatus == 'active' ? span(setClass('text-primary sync-last-executed mr-3'), $lang->repo->mirror->lastUpdated . zget($this->view, 'mirrorLastExecuted', '--')) : null,
             btn
             (
                 setClass('primary sync-code-btn ajax-submit'),

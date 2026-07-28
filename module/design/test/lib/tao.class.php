@@ -19,14 +19,14 @@ class designTaoTest extends baseTest
     public function createTest(array $param = array()): object|array
     {
         $designData   = new stdClass();
-        $createFields = array('project' => 11, 'desc' => '', 'version' => 1, 'createdBy' => $this->instance->app->user->account, 'createdDate' => helper::now());
+        $createFields = array('project' => 11, 'desc' => '', 'version' => 1, 'createdBy' => $this->objectModel->app->user->account, 'createdDate' => helper::now());
         foreach($createFields as $field => $defaultValue) $designData->{$field} = $defaultValue;
         foreach($param as $key => $value) $designData->{$key} = $value;
 
-        $objectID = $this->instance->create($designData);
+        $objectID = $this->objectModel->create($designData);
 
         if(dao::isError()) return dao::getError();
-        return $this->instance->getByID($objectID);
+        return $this->objectModel->getByID($objectID);
     }
 
     /**
@@ -50,13 +50,13 @@ class designTaoTest extends baseTest
             $designs[] = $design;
         }
 
-        $this->instance->dao->delete()->from(TABLE_DESIGN)->exec();
-        $this->instance->batchCreate(11, 1, $designs);
+        $this->objectModel->dao->delete()->from(TABLE_DESIGN)->exec();
+        $this->objectModel->batchCreate(11, 1, $designs);
 
         unset($_POST);
 
         if(dao::isError()) return current(dao::getError());
-        return $this->instance->dao->select('*')->from(TABLE_DESIGN)->where('project')->eq(11)->andwhere('product')->eq(1)->fetchAll();
+        return $this->objectModel->dao->select('*')->from(TABLE_DESIGN)->where('project')->eq(11)->andwhere('product')->eq(1)->fetchAll();
     }
 
     /**
@@ -70,11 +70,11 @@ class designTaoTest extends baseTest
      */
     public function updateTest(int $designID, array $data = array()): array|bool
     {
-        $oldDesign = $this->instance->dao->select('*')->from(TABLE_DESIGN)->where('id')->eq($designID)->fetch();
+        $oldDesign = $this->objectModel->dao->select('*')->from(TABLE_DESIGN)->where('id')->eq($designID)->fetch();
         $fields    = array('product', 'name', 'story', 'desc', 'type');
 
         $design = new stdClass();
-        $design->editedBy   = $this->instance->app->user->account;
+        $design->editedBy   = $this->objectModel->app->user->account;
         $design->editedDate = helper::now();
         $design->docs       = '';
         if($oldDesign)
@@ -82,7 +82,7 @@ class designTaoTest extends baseTest
             foreach($fields as $field) $design->{$field} = isset($data[$field]) ? $data[$field] : $oldDesign->{$field};
         }
 
-        $changes = $this->instance->update($designID, $design);
+        $changes = $this->objectModel->update($designID, $design);
 
         if(dao::isError()) return dao::getError();
         return $changes;
@@ -102,7 +102,7 @@ class designTaoTest extends baseTest
         $design = new stdclass();
         $design->assignedTo = $assignTo;
 
-        $changes = $this->instance->assign($designID, $design);
+        $changes = $this->objectModel->assign($designID, $design);
 
         if(dao::isError()) return dao::getError();
         return $changes;
@@ -120,14 +120,14 @@ class designTaoTest extends baseTest
      */
     public function linkCommitTest(int $designID, int $repoID, array $revisions = array()): array|string
     {
-        if($revisions) $this->instance->session->designRevisions = $this->instance->dao->select('*')->from(TABLE_REPOHISTORY)->where('repo')->eq($repoID)->andWhere('revision')->in($revisions)->fetchAll();
+        if($revisions) $this->objectModel->session->designRevisions = $this->objectModel->dao->select('*')->from(TABLE_REPOHISTORY)->where('repo')->eq($repoID)->andWhere('revision')->in($revisions)->fetchAll();
 
-        $this->instance->linkCommit($designID, $repoID, $revisions);
+        $this->objectModel->linkCommit($designID, $repoID, $revisions);
 
         if(dao::isError()) return dao::getError();
 
         $commit = '';
-        $design = $this->instance->dao->select('*')->from(TABLE_DESIGN)->where('id')->eq($designID)->fetch();
+        $design = $this->objectModel->dao->select('*')->from(TABLE_DESIGN)->where('id')->eq($designID)->fetch();
         if(!empty($design->commit)) $commit = str_replace(',', ';', $design->commit);
         return $commit;
     }
@@ -143,10 +143,10 @@ class designTaoTest extends baseTest
      */
     public function unlinkCommitTest($designID = 0, $commitID = 0): array
     {
-        $this->instance->unlinkCommit($designID, $commitID);
+        $this->objectModel->unlinkCommit($designID, $commitID);
 
         if(dao::isError()) return dao::getError();
-        return $this->instance->dao->select('*')->from(TABLE_RELATION)->where('AType')->eq('design')->andWhere('AID')->eq($designID)->fetchAll();
+        return $this->objectModel->dao->select('*')->from(TABLE_RELATION)->where('AType')->eq('design')->andWhere('AID')->eq($designID)->fetchAll();
     }
 
     /**
@@ -161,9 +161,9 @@ class designTaoTest extends baseTest
      */
     public function getCommitTest($designID = 0, int $recPerPage = 20, int $pageID = 1): array|string
     {
-        $this->instance->app->loadClass('pager', true);
+        $this->objectModel->app->loadClass('pager', true);
         $pager  = pager::init(0, $recPerPage, $pageID);
-        $design = $this->instance->getCommit($designID, $pager);
+        $design = $this->objectModel->getCommit($designID, $pager);
 
         if(dao::isError()) return dao::getError();
 
@@ -191,7 +191,7 @@ class designTaoTest extends baseTest
      */
     public function getBySearchTest(int $projectID = 0, int $productID = 0, int $queryID = 0, string $orderBy = 'id_desc'): array
     {
-        $designs = $this->instance->getBySearch($projectID, $productID, $queryID, $orderBy);
+        $designs = $this->objectModel->getBySearch($projectID, $productID, $queryID, $orderBy);
 
         if(dao::isError()) return dao::getError();
         return $designs;
@@ -211,7 +211,7 @@ class designTaoTest extends baseTest
      */
     public function getListTest(int $projectID = 0, int $productID = 0, string $type = 'all', int $param = 0, string $orderBy = 'id_desc'): array
     {
-        $designs = $this->instance->getList($projectID, $productID, $type, $param, $orderBy);
+        $designs = $this->objectModel->getList($projectID, $productID, $type, $param, $orderBy);
 
         if(dao::isError()) return dao::getError();
         return $designs;
@@ -227,7 +227,7 @@ class designTaoTest extends baseTest
      */
     public function getByIDTest(int $id): object|bool|array
     {
-        $design = $this->instance->getByID($id);
+        $design = $this->objectModel->getByID($id);
 
         if(dao::isError()) return dao::getError();
         return $design;
@@ -245,13 +245,11 @@ class designTaoTest extends baseTest
      */
     public function updateLinkedCommitsTest(int $designID, int $repoID, array $revisions = array()): array
     {
-        $this->instance->dao->delete()->from(TABLE_RELATION)->exec();
-        $method = new ReflectionMethod($this->instance, 'updateLinkedCommits');
-        $method->setAccessible(true);
-        $method->invoke($this->instance, $designID, $repoID, $revisions);
+        $this->objectModel->dao->delete()->from(TABLE_RELATION)->exec();
+        $this->objectModel->updateLinkedCommits($designID, $repoID, $revisions);
 
         if(dao::isError()) return dao::getError();
-        return $this->instance->dao->select('*')->from(TABLE_RELATION)->fetchAll();
+        return $this->objectModel->dao->select('*')->from(TABLE_RELATION)->fetchAll();
     }
 
     /**
@@ -264,7 +262,7 @@ class designTaoTest extends baseTest
      */
     public function getCommitByIDTest(int $revisionID = 0): object|bool|array
     {
-        $commit = $this->instance->getCommitByID($revisionID);
+        $commit = $this->objectModel->getCommitByID($revisionID);
 
         if(dao::isError()) return dao::getError();
         return $commit;
@@ -281,7 +279,7 @@ class designTaoTest extends baseTest
      */
     public function getPairsTest(int $productID = 0, string $type = 'all'): array
     {
-        $designs = $this->instance->getPairs($productID, $type);
+        $designs = $this->objectModel->getPairs($productID, $type);
 
         if(dao::isError()) return dao::getError();
         return $designs;
@@ -297,10 +295,10 @@ class designTaoTest extends baseTest
      */
     public function getAffectedScopeTest(int $designID = 0): array
     {
-        $design = $this->instance->getByID($designID);
+        $design = $this->objectModel->getByID($designID);
         if(!$design) $design = new stdclass();
 
-        $design = $this->instance->getAffectedScope($design);
+        $design = $this->objectModel->getAffectedScope($design);
         return isset($design->tasks) ? $design->tasks : array();
     }
 
@@ -314,10 +312,10 @@ class designTaoTest extends baseTest
      */
     public function confirmStoryChangeTest(int $designID): int|array
     {
-        $this->instance->confirmStoryChange($designID);
+        $this->objectModel->confirmStoryChange($designID);
         if(dao::isError()) return dao::getError();
 
-        $design = $this->instance->getByID($designID);
+        $design = $this->objectModel->getByID($designID);
         return $design ? $design->storyVersion : 0;
     }
 
@@ -332,7 +330,7 @@ class designTaoTest extends baseTest
      */
     public function getLinkedCommitsTest(int $repoID, array $revisions): int
     {
-        $result = $this->instance->getLinkedCommits($repoID, $revisions);
+        $result = $this->objectModel->getLinkedCommits($repoID, $revisions);
         if(dao::isError()) return dao::getError();
 
         return count($result);
@@ -349,7 +347,7 @@ class designTaoTest extends baseTest
      */
     public function isClickableTest(object $design, string $action): bool
     {
-        return $this->instance->isClickable($design, $action);
+        return $this->objectModel->isClickable($design, $action);
     }
 
     /**
@@ -366,7 +364,7 @@ class designTaoTest extends baseTest
         global $lang, $config, $app;
 
         // 模拟setMenu方法的实现
-        $project = $this->instance->loadModel('project')->getByID($projectID);
+        $project = $this->objectModel->loadModel('project')->getByID($projectID);
         if(empty($project)) return array('project_not_found' => true);
 
         if(!empty($project) && in_array($project->model, array('waterfall', 'ipd'))) $typeList = 'typeList';

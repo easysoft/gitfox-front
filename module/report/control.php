@@ -61,7 +61,6 @@ class report extends control
         if(!$this->config->mail->turnon)
         {
             echo "You should turn on the Email feature first.\n";
-            $this->runAlertRulesDaily();
             return false;
         }
 
@@ -97,21 +96,6 @@ class report extends control
             }
             echo "ok\n";
         }
-
-        if($this->config->edition != 'open') $this->runAlertRulesDaily();
-    }
-
-    /**
-     * Run alert-scene rules after daily remind (biz rule engine).
-     *
-     * @access protected
-     * @return void
-     */
-    protected function runAlertRulesDaily()
-    {
-        echo date('Y-m-d H:i:s') . " running alert rules...\n";
-        $this->loadModel('rulequeue')->runDailyAlerts();
-        echo date('Y-m-d H:i:s') . " alert rules done.\n";
     }
 
     /**

@@ -41,24 +41,11 @@ $lang->admin->menuList->system['subMenu']['trash']       = array('link' => "{$la
 $lang->admin->menuList->system['subMenu']['safe']        = array('link' => "{$lang->security}|admin|safe|", 'alias' => 'checkweak,resetpwdsetting', 'links' => array('admin|resetpwdsetting|', 'admin|checkweak|'));
 $lang->admin->menuList->system['subMenu']['cache']       = array('link' => "{$lang->cache->common}|cache|setting|");
 $lang->admin->menuList->system['subMenu']['cron']        = array('link' => "{$lang->admin->cron}|cron|index|", 'subModule' => 'cron');
-$lang->admin->menuList->system['subMenu']['errorlog']    = array('link' => "{$lang->errorlog->common}|errorlog|browse|", 'subModule' => 'errorlog');
 $lang->admin->menuList->system['subMenu']['timezone']    = array('link' => "{$lang->timezone}|custom|timezone|");
 $lang->admin->menuList->system['subMenu']['buildindex']  = array('link' => "{$lang->admin->buildIndex}|search|buildindex|");
-$lang->admin->menuList->system['subMenu']['database']    = array('link' => "{$lang->admin->database}|admin|" . ($config->db->driver == 'mysql' ? 'tableengine' : 'dbview') . "|", 'alias' => 'tableengine,charset,dbview,metriclib');
+$lang->admin->menuList->system['subMenu']['tableengine'] = array('link' => "{$lang->admin->tableEngine}|admin|tableengine|");
+if($config->edition != 'open' && $config->vision == 'rnd') $lang->admin->menuList->system['subMenu']['metriclib'] = array('link' => "{$lang->metriclib->common}|admin|metriclib|");
 if(in_array($config->db->driver, $config->mysqlDriverList)) $lang->admin->menuList->system['subMenu']['backup'] = array('link' => "{$lang->backup->common}|backup|index|");
-
-if($config->db->driver == 'mysql')
-{
-    $lang->admin->menuList->system['tabMenu']['database']['tableengine'] = array('link' => "{$lang->admin->tableEngine}|admin|tableengine|");
-    $lang->admin->menuList->system['tabMenu']['database']['charset']     = array('link' => "{$lang->admin->charset}|admin|charset|");
-    $lang->admin->menuList->system['tabMenu']['menuOrder']['database']['5']  = 'tableengine';
-    $lang->admin->menuList->system['tabMenu']['menuOrder']['database']['10'] = 'charset';
-}
-$lang->admin->menuList->system['tabMenu']['database']['dbview']      = array('link' => "{$lang->admin->dbView}|admin|dbview|");
-if($config->edition != 'open' && $config->vision == 'rnd') $lang->admin->menuList->system['tabMenu']['database']['metriclib'] = array('link' => "{$lang->metriclib->common}|admin|metriclib|");
-
-$lang->admin->menuList->system['tabMenu']['menuOrder']['database']['15'] = 'dbview';
-if($config->edition != 'open' && $config->vision == 'rnd') $lang->admin->menuList->system['tabMenu']['menuOrder']['database']['20'] = 'metriclib';
 
 $lang->admin->menuList->system['menuOrder']['5']  = 'mode';
 if(in_array($config->db->driver, $config->mysqlDriverList)) $lang->admin->menuList->system['menuOrder']['10'] = 'backup';
@@ -68,8 +55,7 @@ $lang->admin->menuList->system['menuOrder']['35'] = 'cache';
 $lang->admin->menuList->system['menuOrder']['40'] = 'cron';
 $lang->admin->menuList->system['menuOrder']['45'] = 'timezone';
 $lang->admin->menuList->system['menuOrder']['50'] = 'buildindex';
-$lang->admin->menuList->system['menuOrder']['70'] = 'errorlog';
-$lang->admin->menuList->system['menuOrder']['65'] = 'database';  // The order 51-64 is reserved for extension.
+$lang->admin->menuList->system['menuOrder']['65'] = 'tableengine';  // The order 51-64 is reserved for extension.
 
 $lang->admin->menuList->system['dividerMenu'] = ',safe,';
 
@@ -83,7 +69,7 @@ $lang->admin->menuList->company['menuOrder']['15'] = 'group';
 
 $lang->admin->menuList->feature['subMenu']['my']          = array('link' => "{$lang->my->common}|custom|set|module=todo&field=priList", 'exclude' => 'set,required');
 $lang->admin->menuList->feature['subMenu']['product']     = array('link' => "{$lang->productCommon}|custom|required|module=product", 'exclude' => 'set,required', 'alias' => 'browsestoryconcept,product');
-$lang->admin->menuList->feature['subMenu']['project']     = array('link' => "{$lang->projectCommon}|custom|required|module=project", 'alias' => 'flow,percent,hours,estimate,project', 'subModule' => 'subject,holiday,design,reviewcl,alert', 'exclude' => 'set,required');
+$lang->admin->menuList->feature['subMenu']['project']     = array('link' => "{$lang->projectCommon}|custom|required|module=project", 'alias' => 'flow,percent,hours,estimate,project', 'subModule' => 'subject,holiday,design,reviewcl', 'exclude' => 'set,required');
 $lang->admin->menuList->feature['subMenu']['execution']   = array('link' => "{$lang->execution->common}|custom|required|module=execution", 'exclude' => 'required,set', 'alias' => 'execution,limittaskdate', 'subModule' => 'stage');
 $lang->admin->menuList->feature['subMenu']['qa']          = array('link' => "{$lang->qa->common}|custom|required|module=bug", 'exclude' => 'set,required');
 $lang->admin->menuList->feature['subMenu']['kanban']      = array('link' => "{$lang->kanban->common}|custom|kanban|");
@@ -99,7 +85,7 @@ $lang->admin->menuList->feature['tabMenu']['product']['story']       = array('li
 $lang->admin->menuList->feature['tabMenu']['product']['productplan'] = array('link' => "{$lang->productplan->shortCommon}|custom|required|module=productplan", 'exclude' => 'custom-required');
 $lang->admin->menuList->feature['tabMenu']['product']['release']     = array('link' => "{$lang->release->common}|custom|required|module=release", 'exclude' => 'custom-required');
 
-$lang->admin->menuList->feature['tabMenu']['project']['project'] = array('link' => "{$lang->project->common}|custom|required|module=project", 'alias' => 'project', 'subModule' => 'alert', 'exclude' => 'custom-required');
+$lang->admin->menuList->feature['tabMenu']['project']['project'] = array('link' => "{$lang->project->common}|custom|required|module=project", 'alias' => 'project', 'exclude' => 'custom-required');
 $lang->admin->menuList->feature['tabMenu']['project']['build']   = array('link' => "{$lang->build->common}|custom|required|module=build", 'exclude' => 'custom-required');
 $lang->admin->menuList->feature['tabMenu']['project']['flow']    = array('link' => "{$lang->custom->flow}|custom|flow|");
 $lang->admin->menuList->feature['tabMenu']['project']['percent'] = array('link' => "{$lang->stage->percent}|custom|percent|");
@@ -183,9 +169,7 @@ if($config->vision == 'lite')
 {
     unset($lang->admin->menuList->system['subMenu']['mode']);
     unset($lang->admin->menuList->system['subMenu']['buildindex']);
-    unset($lang->admin->menuList->system['subMenu']['database']);
-    unset($lang->admin->menuList->system['tabMenu']['database']);
-    unset($lang->admin->menuList->system['tabMenu']['menuOrder']['database']);
+    unset($lang->admin->menuList->system['subMenu']['tableengine']);
     unset($lang->admin->menuList->system['menuOrder']['5']);
     unset($lang->admin->menuList->system['menuOrder']['45']);
     unset($lang->admin->menuList->system['menuOrder']['50']);

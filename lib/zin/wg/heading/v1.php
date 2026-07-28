@@ -41,8 +41,8 @@ class heading extends wg
                 if($tab == 'execution') $currentMethod = 'all';
                 if($tab == 'devops')
                 {
-                    $currentModule = 'space';
-                    $currentMethod = 'browse';
+                    $currentModule = 'repo';
+                    $currentMethod = 'maintain';
                 }
             }
         }

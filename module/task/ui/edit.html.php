@@ -15,7 +15,6 @@ namespace zin;
 $taskStatus = isset($task->rawStatus) ? $task->rawStatus : $task->status;
 
 /* ====== Preparing and processing page data ====== */
-jsVar('projectID', $task->project);
 jsVar('oldStoryID', $task->story);
 jsVar('oldAssignedTo', $task->assignedTo);
 jsVar('oldExecutionID', $task->execution);
@@ -129,15 +128,6 @@ detailHeader
             set::text($task->name),
             set::reverse(true)
         )
-    ),
-    to::suffix
-    (
-        aiAgentEntry
-        (
-            set::module('task'),
-            set::method('edit'),
-            set::type('form')
-        )
     )
 );
 
@@ -151,7 +141,7 @@ if(!empty($task->team))
         set::name('assignedTo'),
         set::value($task->assignedTo),
         set::items($assignedToOptions),
-        set::required(false),
+        set::required(true),
         $task->mode == 'linear' && !in_array($taskStatus, array('done', 'closed')) ? set::disabled(true) : null,
         $taskStatus == 'closed' ? set::disabled(true) : null,
     );
@@ -207,7 +197,6 @@ detailBody
         ),
         section
         (
-            setID('desc'),
             set::title($lang->task->desc),
             editor
             (
@@ -332,7 +321,7 @@ detailBody
             item
             (
                 set::name($lang->task->assignedTo),
-                set::required(empty($task->mode) && strpos(",{$this->config->task->edit->requiredFields},", ",assignedTo,") !== false),
+                set::required(strpos(",{$this->config->task->edit->requiredFields},", ",assignedTo,") !== false),
                 inputGroup
                 (
                     div
@@ -361,8 +350,7 @@ detailBody
                     set::name('type'),
                     set::value($task->type),
                     set::items($typeOptions),
-                    set::required(true),
-                    setData(array('on' => 'change', 'call' => 'changeType', 'params' => 'event'))
+                    set::required(true)
                 )
             ),
             empty($task->children) ? item

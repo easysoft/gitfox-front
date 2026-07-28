@@ -117,9 +117,7 @@ $fields->field('productsBox')
         'project'           => data('project'),
         'isStage'           => data('isStage'),
         'errorSameProducts' => $lang->execution->errorSameProducts,
-        'from'              => 'execution',
-        'required'          => !empty($project->hasProduct) && strpos($requiredFields, ',products,') !== false,
-        'requiredPlan'      => strpos($requiredFields, ',plans,') !== false
+        'from'              => 'execution'
     ));
 
 $fields->field('desc')

@@ -265,7 +265,7 @@ class myModel extends model
     public function getAssignedByMe(string $account, ?object $pager = null, string $orderBy = 'id_desc', string $objectType = ''): array
     {
         $module       = in_array($objectType, array('epic', 'requirement')) ? 'story' : $objectType;
-        $objectIdList = $this->dao->select('`objectID`')->from(TABLE_ACTION)
+        $objectIdList = $this->dao->select('objectID')->from(TABLE_ACTION)
             ->where('actor')->eq($account)
             ->andWhere('objectType')->eq($module)
             ->andWhere('action')->eq('assigned')
@@ -332,8 +332,8 @@ class myModel extends model
 
         // 转换字段名称
         $tableFields = array(
-            'projectName' => 't1.project',
-            'executionName' => 't1.execution',
+            'projectName' => 't3.name',
+            'executionName' => 't2.name',
             'executionType' => 't2.type',
             'executionMultiple' => 't2.multiple'
         );
@@ -495,7 +495,6 @@ class myModel extends model
         $searchConfig['params']['execution']['values'] = $executions + array('all' => $this->lang->execution->allExecutions);
 
         $searchConfig['params']['module']['values'] = $this->loadModel('tree')->getAllModulePairs();
-        $searchConfig['params']['story']['values'] = $this->loadModel('story')->getProductStoryPairs();
 
         $this->loadModel('search')->setSearchParams($searchConfig);
 
@@ -842,7 +841,6 @@ class myModel extends model
         $this->config->product->search['actionURL']                   = $actionURL;
         $this->config->product->search['params']['product']['values'] = $products;
         $this->config->product->search['params']['plan']['values']    = $this->loadModel('productplan')->getPairs($productIdList, $branchParam);
-        $this->config->product->search['params']['release']['values'] = $this->loadModel('release')->getPairs(array(), $productIdList);
         $this->config->product->search['fields']['title']             = $this->lang->story->title;
         $this->config->product->search['params']['grade']['values']   = $this->loadModel('story')->getGradePairs('story', 'enable');
         unset($this->config->product->search['fields']['module'], $this->config->product->search['fields']['branch'], $this->config->product->search['fields']['roadmap']);
@@ -886,13 +884,6 @@ class myModel extends model
         $myStoryQuery = $this->session->{$queryName};
         $myStoryQuery = preg_replace('/`(\w+)`/', 't1.`$1`', $myStoryQuery);
         if(strpos($myStoryQuery, 'result') !== false) $myStoryQuery = str_replace('t1.`result`', 't5.`result`', $myStoryQuery);
-        $myStoryQuery = preg_replace_callback("/t1\.`release`\s*(=|!=)\s*'(\d*)'/i", function($matches)
-        {
-            /* An empty release means the story is not in any release, no release id clause is needed. */
-            $idClause  = $matches[2] === '' ? '' : TABLE_RELEASE . ".id = '{$matches[2]}' AND ";
-            $notExists = $matches[2] === '' ? ($matches[1] == '=') : ($matches[1] == '!=');
-            return ($notExists ? 'NOT EXISTS' : 'EXISTS') . "(SELECT 1 FROM " . TABLE_RELEASE . " WHERE " . $idClause . TABLE_RELEASE . ".deleted = '0' AND FIND_IN_SET(t1.`id`, " . TABLE_RELEASE . ".stories))";
-        }, $myStoryQuery);
 
         return $this->myTao->fetchStoriesBySearch($myStoryQuery, $type, $orderBy, $pager, $type == 'contribute' ? $this->getAssignedByMe($this->app->user->account, null, $orderBy, 'story') : array());
     }
@@ -934,7 +925,6 @@ class myModel extends model
         unset($this->config->product->search['fields']['stage']);
         unset($this->config->product->search['fields']['module']);
         unset($this->config->product->search['fields']['branch']);
-        unset($this->config->product->search['fields']['release'], $this->config->product->search['params']['release']);
 
         $this->loadModel('search')->setSearchParams($this->config->product->search);
     }
@@ -976,7 +966,6 @@ class myModel extends model
         unset($this->config->product->search['fields']['stage']);
         unset($this->config->product->search['fields']['module']);
         unset($this->config->product->search['fields']['branch']);
-        unset($this->config->product->search['fields']['release'], $this->config->product->search['params']['release']);
 
         $this->loadModel('search')->setSearchParams($this->config->product->search);
     }
@@ -1236,7 +1225,7 @@ class myModel extends model
 
         if($checkExists) return !empty($reviewList);
 
-         $actions = $this->dao->select('`objectID`, `date`')->from(TABLE_ACTION)->where('objectType')->eq('demand')->andWhere('objectID')->in(array_keys($reviewList))->andWhere('action')->eq('submitreview')->orderBy('`date`')->fetchPairs('objectID', 'date');
+         $actions = $this->dao->select('objectID, `date`')->from(TABLE_ACTION)->where('objectType')->eq('demand')->andWhere('objectID')->in(array_keys($reviewList))->andWhere('action')->eq('submitreview')->orderBy('`date`')->fetchPairs('objectID', 'date');
          foreach($actions as $demandID => $date) $reviewList[$demandID]->time = $date;
 
          return array_values($reviewList);
@@ -1304,7 +1293,7 @@ class myModel extends model
 
         if($checkExists) return !empty($reviewList);
 
-        $actions = $this->dao->select('`objectID`,`date`')->from(TABLE_ACTION)->where('objectType')->eq('story')->andWhere('objectID')->in(array_keys($reviewList))->andWhere('action')->eq('submitreview')->orderBy('`date`')->fetchPairs();
+        $actions = $this->dao->select('objectID,`date`')->from(TABLE_ACTION)->where('objectType')->eq('story')->andWhere('objectID')->in(array_keys($reviewList))->andWhere('action')->eq('submitreview')->orderBy('`date`')->fetchPairs();
         foreach($actions as $storyID => $date) $reviewList[$storyID]->time = $date;
 
         return array_values($reviewList);
@@ -1380,8 +1369,8 @@ class myModel extends model
         if(!$server) return array();
 
         $ppms = $this->dao->select("t1.`id`, t1.`title`, IF(t1.`flow`='1', 'pullreq', 'ppm') AS type, t1.`createdDate` AS time, 0 AS product, 0 AS project, t3.definition, t1.`reviewStatus`")->from(TABLE_PPM)->alias('t1')
-            ->leftJoin(TABLE_PPMREVIEWERS)->alias('t2')->on('t1.id = t2.`requestID`')
-            ->leftJoin(TABLE_REVIEWFLOW)->alias('t3')->on('t3.repo = t1.`repoID`')
+            ->leftJoin(TABLE_PPMREVIEWERS)->alias('t2')->on('t1.id = t2.requestID')
+            ->leftJoin(TABLE_REVIEWFLOW)->alias('t3')->on('t3.repo = t1.repoID')
             ->where('t1.status')->ne('closed')
             ->andWhere('((t2.account')->eq($this->app->user->account)
             ->andWhere('t2.decision')->eq('pending')->markRight(1)
@@ -1483,6 +1472,7 @@ class myModel extends model
             ->beginIF(!helper::hasFeature('project_opportunity'))->andWhere('objectType')->ne('opportunity')->fi()
             ->beginIF($this->config->systemMode == 'light' || (!helper::hasFeature('program') && $this->config->edition != 'ipd'))->andWhere('objectType')->ne('charter')->fi()
             ->orderBy("t2.{$orderBy}")
+            ->beginIF($checkExists)->limit(1)->fi()
             ->fetchAll();
 
         $objectIdList = array();
@@ -1490,7 +1480,7 @@ class myModel extends model
 
         $this->loadModel('flow');
         $this->loadModel('workflowaction');
-        $flows       = $this->dao->select('module,`table`,name,`titleField`,app')->from(TABLE_WORKFLOW)->where('module')->in(array_keys($objectIdList))->andWhere('vision')->eq($this->config->vision)->fetchAll('module');
+        $flows       = $this->dao->select('module,`table`,name,titleField,app')->from(TABLE_WORKFLOW)->where('module')->in(array_keys($objectIdList))->andWhere('vision')->eq($this->config->vision)->fetchAll('module');
         $objectGroup = array();
         foreach($objectIdList as $objectType => $idList)
         {
@@ -1598,14 +1588,14 @@ class myModel extends model
             ->where('actor')->eq($this->app->user->account)
             ->andWhere('vision')->eq($this->config->vision)
             ->andWhere($condition)
-            ->groupBy('`objectType`,`objectID`')
+            ->groupBy('objectType,objectID')
             ->fetchPairs();
 
         $objectTypeList = array();
-        $actions        = $this->dao->select('`objectType`,`objectID`,actor,action,`date`,comment,extra')->from(TABLE_ACTION)->where('id')->in($actionIdList)->orderBy($orderBy)->fetchAll();
+        $actions        = $this->dao->select('objectType,objectID,actor,action,`date`,extra')->from(TABLE_ACTION)->where('id')->in($actionIdList)->orderBy($orderBy)->fetchAll();
         foreach($actions as $action) $objectTypeList[$action->objectType][] = $action->objectID;
 
-        $flows       = $this->config->edition == 'open' ? array() : $this->dao->select('module,`table`,name,`titleField`')->from(TABLE_WORKFLOW)->where('module')->in(array_keys($objectTypeList))->andWhere('buildin')->eq(0)->fetchAll('module');
+        $flows       = $this->config->edition == 'open' ? array() : $this->dao->select('module,`table`,name,titleField')->from(TABLE_WORKFLOW)->where('module')->in(array_keys($objectTypeList))->andWhere('buildin')->eq(0)->fetchAll('module');
         $objectGroup = array();
         foreach($objectTypeList as $objectType => $idList)
         {
@@ -1631,8 +1621,7 @@ class myModel extends model
             }
         }
 
-        $reviewActions = $this->getReviewActionGroup($objectTypeList);
-        $reviewedList  = $this->buildReviewedList($objectGroup, $actions, $flows, $reviewActions);
+        $reviewedList = $this->buildReviewedList($objectGroup, $actions, $flows);
         if(!is_null($pager))
         {
             $pager->setRecTotal(count($reviewedList));
@@ -1646,53 +1635,16 @@ class myModel extends model
     }
 
     /**
-     * 获取对象最近一次审批动作。
-     * Get the latest review action for objects.
-     *
-     * @param  array  $objectTypeList
-     * @access private
-     * @return array
-     */
-    private function getReviewActionGroup(array $objectTypeList): array
-    {
-        $actionIdList = array();
-        foreach($objectTypeList as $objectType => $idList)
-        {
-            $idList = array_filter(array_unique($idList));
-            if(empty($idList)) continue;
-
-            $reviewActionIdList = $this->dao->select('MAX(`id`) AS `id`')->from(TABLE_ACTION)
-                ->where('objectType')->eq($objectType)
-                ->andWhere('objectID')->in($idList)
-                ->andWhere('action')->in('reviewed,approvalreview')
-                ->andWhere('vision')->eq($this->config->vision)
-                ->groupBy('`objectType`,`objectID`')
-                ->fetchPairs();
-
-            if(!empty($reviewActionIdList)) $actionIdList = array_merge($actionIdList, $reviewActionIdList);
-        }
-
-        if(empty($actionIdList)) return array();
-
-        $reviewActions     = $this->dao->select('`objectType`,`objectID`,actor,action,`date`,comment,extra')->from(TABLE_ACTION)->where('id')->in($actionIdList)->fetchAll();
-        $reviewActionGroup = array();
-        foreach($reviewActions as $reviewAction) $reviewActionGroup[$reviewAction->objectType][$reviewAction->objectID] = $reviewAction;
-
-        return $reviewActionGroup;
-    }
-
-    /**
      * 构建评审列表。
      * Build reviewed list.
      *
      * @param  array   $objectGroup
      * @param  array   $actions
      * @param  array   $flows
-     * @param  array   $reviewActions
      * @access private
      * @return array
      */
-    private function buildReviewedList(array $objectGroup, array $actions, array $flows, array $reviewActions = array()): array
+    private function buildReviewedList(array $objectGroup, array $actions, array $flows): array
     {
         $this->app->loadConfig('action');
         $reviewList = array();
@@ -1711,25 +1663,9 @@ class myModel extends model
             $review->result = strtolower($action->extra);
             $review->status = $objectType == 'attend' ? $object->reviewStatus : (isset($object->status) && !isset($flows[$objectType]) ? $object->status : 'done');
             if(strpos($review->result, ',') !== false) list($review->result) = explode(',', $review->result);
-            if(strpos($review->result, '|') !== false) list($review->result) = explode('|', $review->result);
 
-            $review->product    = isset($object->product) ? $object->product : 0;
-            $review->project    = isset($object->project) ? $object->project : 0;
-            $review->reviewer   = '';
-            $review->opinion    = '';
-            $review->reviewTime = '';
-
-            $reviewAction = isset($reviewActions[$objectType][$action->objectID]) ? $reviewActions[$objectType][$action->objectID] : null;
-            if(isset($action->action) && in_array($action->action, array('reviewed', 'approvalreview'))) $reviewAction = $action;
-            if($reviewAction)
-            {
-                $review->reviewer   = isset($reviewAction->actor) ? $reviewAction->actor : '';
-                $review->opinion    = isset($reviewAction->comment) ? trim(strip_tags((string)$reviewAction->comment)) : '';
-                $review->reviewTime = isset($reviewAction->date) ? substr($reviewAction->date, 0, 19) : '';
-                if(isset($reviewAction->extra) && $reviewAction->extra !== '') $review->result = strtolower((string)$reviewAction->extra);
-                if(strpos($review->result, ',') !== false) list($review->result) = explode(',', $review->result);
-                if(strpos($review->result, '|') !== false) list($review->result) = explode('|', $review->result);
-            }
+            $review->product = isset($object->product) ? $object->product : 0;
+            $review->project = isset($object->project) ? $object->project : 0;
 
             if($objectType == 'story')    $review->storyType = $object->type;
             if($review->type == 'review') $review->type = 'projectreview';
@@ -1844,9 +1780,7 @@ class myModel extends model
         $url      = sprintf($apiRoot->url, '/user/keys');
         $result   = json_decode(common::http($url, null, array(), $apiRoot->header, 'json'));
         $response = $this->gitfox->getResponse($result);
-        $sshList  = isset($response->data) ? $response->data : $response;
-
-        return is_array($sshList) ? $sshList : array();
+        return isset($response->data) ? $response->data : $response;
     }
 
     /**

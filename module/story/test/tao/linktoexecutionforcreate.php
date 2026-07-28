@@ -4,7 +4,6 @@
 /**
 
 title=测试 storyModel->linkToExecutionForCreate();
-timeout=0
 cid=18652
 
 - 不传入执行，也不传入需求。 @0

@@ -26,7 +26,7 @@ class taskPauseEntry extends entry
         $fields = 'comment';
         $this->batchSetPost($fields);
 
-        $control->pause((int)$taskID);
+        $control->pause($taskID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

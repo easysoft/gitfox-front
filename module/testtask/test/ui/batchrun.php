@@ -2,7 +2,7 @@
 <?php
 
 /**
-title=批量执行测试单下用例
+title=单个执行测试单下用例
 timeout=0
 cid=1
  */

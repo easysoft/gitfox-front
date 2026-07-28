@@ -24,7 +24,6 @@ class myIm extends im
             $output->data   = 'locked';
             die($this->app->encrypt($output));
         }
-        $this->app->loadLang('file');
         $this->app->loadConfig('file');
         if(isset($this->config->file->collaboraPath)) $this->config->integration = (object)array('office' => (object)array('officeEnabled' => true));
         parent::sysGetServerInfo($account, $password, $apiVersion, $userID, $version, $device);

@@ -1,49 +1,40 @@
 #!/usr/bin/env php
 <?php
 
-include dirname(__FILE__, 5) . '/test/lib/init.php';
-
-error_reporting(E_ERROR);
-
-$zd_user = zenData('user');
-$zd_user->id->range('1-1');
-$zd_user->account->range('1-1');
-$zd_user->last->range('(M)-(w)')->type('timestamp')->format('YYYY-MM-DD hh:mm:ss');
-$zd_user->feedback->range('0');
-$zd_user->scoreLevel->range('0');
-$zd_user->resetExpired->range('0');
-$zd_user->jira->range('0');
-$zd_user->deleted->range('0');
-$zd_user->gen(1);
-
-su('admin');
-
-$tester->loadModel('story');
-helper::import($tester->app->getModulePath('', 'story') . 'control.php');
-helper::import($tester->app->getModulePath('', 'story') . 'zen.php');
-
-
 /**
 
-title=测试 storyModel::getFormFieldsForReview()
+title=测试 storyZen::getFormFieldsForReview();
 timeout=0
-cid=0
+cid=18684
 
-- 步骤1：正常输入 @error:TypeError
-- 步骤2：边界值输入 @error:TypeError
-- 步骤3：无效输入 @error:TypeError
-- 步骤4：大值输入 @error:TypeError
-- 步骤5：业务规则验证 @error:TypeError
+- 步骤1：测试需求1的评审表单字段第reviewedDate条的type属性 @date
+- 步骤2：测试需求2的评审表单字段
+ - 第result条的type属性 @string
+ - 第result条的control属性 @picker
+- 步骤3：测试需求3的评审表单字段
+ - 第assignedTo条的type属性 @string
+ - 第assignedTo条的control属性 @picker
+ - 第assignedTo条的name属性 @assignedTo
+- 步骤4：测试需求4的评审表单字段
+ - 第status条的type属性 @string
+ - 第status条的control属性 @hidden
+ - 第status条的name属性 @status
+- 步骤5：测试需求5的评审表单字段
+ - 第pri条的type属性 @int
+ - 第pri条的control属性 @priPicker
+ - 第pri条的name属性 @pri
 
 */
 
-try { ob_start(); $result = callZenMethod('story', 'getFormFieldsForReview', array(1)); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤1：正常输入
-try { ob_start(); $result = callZenMethod('story', 'getFormFieldsForReview', array(0)); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤2：边界值输入
-try { ob_start(); $result = callZenMethod('story', 'getFormFieldsForReview', array(-1)); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤3：无效输入
-try { ob_start(); $result = callZenMethod('story', 'getFormFieldsForReview', array(999999)); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤4：大值输入
-try { ob_start(); $result = callZenMethod('story', 'getFormFieldsForReview', array(2)); $echoed = ob_get_clean(); if($echoed !== '') $result = 'echo_yes'; if(dao::isError()) $result = 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE); } catch(Throwable $e) { if(ob_get_level()) ob_end_clean(); if($e instanceof EndResponseException) $result = 0; else $result = 'error:' . get_class($e); }
-r($result) && p() && e('error:TypeError'); // 步骤5：业务规则验证
+include dirname(__FILE__, 5) . '/test/lib/init.php';
+include dirname(__FILE__, 2) . '/lib/storyzen.unittest.class.php';
+
+su('admin');
+
+$storyTest = new storyZenTest();
+
+r($storyTest->getFormFieldsForReviewTest(1)) && p('reviewedDate:type')            && e('date');                     // 步骤1：测试需求1的评审表单字段
+r($storyTest->getFormFieldsForReviewTest(2)) && p('result:type,control')          && e('string,picker');            // 步骤2：测试需求2的评审表单字段
+r($storyTest->getFormFieldsForReviewTest(3)) && p('assignedTo:type,control,name') && e('string,picker,assignedTo'); // 步骤3：测试需求3的评审表单字段
+r($storyTest->getFormFieldsForReviewTest(4)) && p('status:type,control,name')     && e('string,hidden,status');     // 步骤4：测试需求4的评审表单字段
+r($storyTest->getFormFieldsForReviewTest(5)) && p('pri:type,control,name')        && e('int,priPicker,pri');        // 步骤5：测试需求5的评审表单字段

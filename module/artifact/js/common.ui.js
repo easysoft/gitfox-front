@@ -174,65 +174,11 @@ window.showCommand = function(command, title)
     zui.Modal.open({type:'custom', title: title, content: {html: content}});
 };
 
-window.copyCommand = function(commandDom)
+window.copyCommand = function()
 {
-    const $command = typeof commandDom === 'string' ? $(commandDom) : commandDom ? $(commandDom).closest('.flex').find('input') : $('.docker-url');
-    const command  = $command.val();
-    if(!command) return;
+    $('.docker-url')[0].select();
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
 
-    if(navigator.clipboard && window.isSecureContext)
-    {
-        navigator.clipboard.writeText(command).then(function()
-        {
-            zui.Messager.show({type: 'success', content: copyMessage, time: 2000});
-        }).catch(function()
-        {
-            fallbackCopyTextToClipboard(command);
-        });
-    }
-    else
-    {
-        fallbackCopyTextToClipboard(command);
-    }
-
-    function fallbackCopyTextToClipboard(text)
-    {
-        const $textArea = $('<textarea>', {
-            css: {
-                position: 'fixed',
-                top: '0',
-                left: '0',
-                width: '2em',
-                height: '2em',
-                padding: '0',
-                border: 'none',
-                outline: 'none',
-                boxShadow: 'none',
-                background: 'transparent'
-            }
-        });
-
-        $('body').append($textArea);
-        $textArea.val(text);
-        $textArea[0].focus();
-        $textArea[0].select();
-
-        try
-        {
-            const successful = document.execCommand('copy');
-            if(successful)
-            {
-                zui.Messager.show({type: 'success', content: copyMessage, time: 2000});
-            }
-            else
-            {
-                zui.Messager.show({type: 'danger', content: copyFail, time: 2000});
-            }
-        }
-        catch(error)
-        {
-            zui.Messager.show({type: 'danger', content: copyFail, time: 2000});
-        }
-        $textArea.remove();
-    }
+    zui.Messager.show({type: 'success', content: copyMessage, time: 2000});
 };

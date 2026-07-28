@@ -52,7 +52,7 @@ class jenkinsModelTest extends baseTest
         );
 
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($mockJobs, $userPWD, 1);
+        $result = $this->jenkins->getDepthJobs($mockJobs, $userPWD, 1);
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -68,7 +68,7 @@ class jenkinsModelTest extends baseTest
     {
         $emptyJobs = array();
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($emptyJobs, $userPWD, 1);
+        $result = $this->jenkins->getDepthJobs($emptyJobs, $userPWD, 1);
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -92,7 +92,7 @@ class jenkinsModelTest extends baseTest
         );
 
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($mockJobs, $userPWD, 5); // depth > 4
+        $result = $this->jenkins->getDepthJobs($mockJobs, $userPWD, 5); // depth > 4
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -122,7 +122,7 @@ class jenkinsModelTest extends baseTest
         );
 
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($invalidJobs, $userPWD, 1);
+        $result = $this->jenkins->getDepthJobs($invalidJobs, $userPWD, 1);
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -158,7 +158,7 @@ class jenkinsModelTest extends baseTest
         );
 
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($mockJobs, $userPWD, 1);
+        $result = $this->jenkins->getDepthJobs($mockJobs, $userPWD, 1);
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -188,7 +188,7 @@ class jenkinsModelTest extends baseTest
         );
 
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($mockJobs, $userPWD, 1);
+        $result = $this->jenkins->getDepthJobs($mockJobs, $userPWD, 1);
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -214,7 +214,7 @@ class jenkinsModelTest extends baseTest
         );
 
         $userPWD = 'test:test';
-        $result = $this->instance->getDepthJobs($mockJobs, $userPWD, 1);
+        $result = $this->jenkins->getDepthJobs($mockJobs, $userPWD, 1);
         if(dao::isError()) return dao::getError();
 
         return json_encode($result);
@@ -230,8 +230,8 @@ class jenkinsModelTest extends baseTest
      */
     public function getDepthJobsTest(int $depth = 1): string
     {
-        $userPWD       = "jenkinsadmin:11484993390c1e49039219736a537c0c8a";
-        $jenkinsServer = 'https://jenkinsdev.oop.cc/';
+        $userPWD       = "jenkins:11eb8b38c99143c7c6d872291e291abff4";
+        $jenkinsServer = 'https://jenkinsdev.qc.oop.cc/';
         $response      = common::http($jenkinsServer . '/api/json/items/list' . ($depth ? "?depth=1" : ''), '', array(CURLOPT_USERPWD => $userPWD));
         $response      = json_decode($response);
 
@@ -289,136 +289,6 @@ class jenkinsModelTest extends baseTest
     {
         global $tester;
         $jenkins = $tester->dao->select('*')->from(TABLE_PIPELINE)->where('id')->eq($jenkinsID)->fetch();
-        return $this->instance->getApiUserPWD($jenkins);
+        return $this->jenkins->getApiUserPWD($jenkins);
     }
-
-    /**
-     * Test apiCreatePipeline method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function apiCreatePipelineTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('apiCreatePipeline', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test apiGetExecInfo method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function apiGetExecInfoTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('apiGetExecInfo', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test apiGetJobNumberByQueueID method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function apiGetJobNumberByQueueIDTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('apiGetJobNumberByQueueID', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test checkParameterizedBuild method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function checkParameterizedBuildTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('checkParameterizedBuild', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getLogs method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getLogsTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getLogs', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
 }

@@ -445,8 +445,7 @@ class project extends control
             $message = $this->executeHooks($projectID);
             if($message) $this->lang->saveSuccess = $message;
 
-            $objectChanges = array('type' => 'add', 'objectType' => 'project', 'objectList' => array($projectID));
-            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $projectID, 'changes' => $objectChanges));
+            if($this->viewType == 'json') return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $projectID));
 
             if(in_array($model, array('waterfall', 'waterfallplus', 'ipd')))
             {
@@ -454,10 +453,10 @@ class project extends control
                 $session   = $this->createLink('programplan', 'browse', "projectID=$projectID&productID=$productID&type=lists", '', false, $projectID);
                 if(in_array($this->config->edition, array('max', 'ipd'))) $session = $this->createLink('project', 'execution', "browseType=undone&projectID=$projectID", '', false);
                 $this->session->set('projectPlanList', $session, 'project');
-                return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $this->createLink('programplan', 'create', "projectID=$projectID&productID=0&planID=0&executionType=stage&from=projectCreate", '', false, $projectID), 'changes' => $objectChanges));
+                return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $this->createLink('programplan', 'create', "projectID=$projectID&productID=0&planID=0&executionType=stage&from=projectCreate", '', false, $projectID)));
             }
 
-            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => inlink('create', "model=$model&programID=$programID&copyProjectID=$projectID&extra=showTips=1,project=$projectID"), 'changes' => $objectChanges));
+            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => inlink('create', "model=$model&programID=$programID&copyProjectID=$projectID&extra=showTips=1,project=$projectID")));
         }
 
         $this->projectZen->buildCreateForm((string)$model, (int)$programID, (int)$copyProjectID, (string)$extra);
@@ -516,10 +515,9 @@ class project extends control
             $message = $this->executeHooks($projectID);
             if($message) $this->lang->saveSuccess = $message;
 
-            $objectChanges = array('type' => 'update', 'objectType' => 'project', 'objectList' => array($projectID));
-            if(isInModal()) return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => true, 'closeModal' => true, 'changes' => $objectChanges));
+            if(isInModal()) return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => true, 'closeModal' => true));
 
-            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $this->createLink('project', 'view', "projectID=$projectID"), 'changes' => $objectChanges));
+            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'load' => $this->createLink('project', 'view', "projectID=$projectID")));
         }
 
         if(!empty($output['workflowGroup'])) $project->workflowGroup = $workflowGroup;
@@ -605,7 +603,7 @@ class project extends control
 
         $project = commonModel::isTutorialMode() ? $this->loadModel('tutorial')->getProject() : $this->project->fetchByID($projectID);
         if(!empty($project->deleted)) return $this->sendError($this->lang->project->deletedTip, $this->createLink('project', 'browse'));
-        if(!helper::isApiRequest()) $projectID = $this->project->checkAccess((int)$projectID, $this->project->getPairsByProgram());
+        if(!defined('RUN_MODE') || RUN_MODE != 'api') $projectID = $this->project->checkAccess((int)$projectID, $this->project->getPairsByProgram());
         if(is_bool($projectID)) return $this->send(array('result' => 'success', 'load' => array('alert' => $this->lang->project->accessDenied, 'locate' => $this->createLink('project', 'browse'))));
 
         $this->session->set('teamList', $this->app->getURI(true), 'project');
@@ -614,7 +612,7 @@ class project extends control
 
         if(empty($project) || strpos('scrum,waterfall,kanban,agileplus,waterfallplus,ipd', $project->model) === false)
         {
-            if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
+            if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
             return $this->send(array('result' => 'success', 'load' => array('alert' => $this->lang->notFound, 'locate' => $this->createLink('project', 'browse'))));
         }
 
@@ -825,14 +823,14 @@ class project extends control
         if(!$project->multiple)
         {
             $executionID = $this->execution->getNoMultipleID($projectID);
-            if(helper::isApiRequest())
+            if(defined('RUN_MODE') && RUN_MODE == 'api')
             {
                 $this->view->executionStats = array($this->execution->getByID($executionID));
                 return $this->display();
             }
             return $this->locate($this->createLink('execution', 'task', "executionID=$executionID"));
         }
-        if(!empty($project->model) && $project->model == 'kanban' && !(helper::isApiRequest())) return $this->locate(inlink('index', "projectID=$projectID"));
+        if(!empty($project->model) && $project->model == 'kanban' && !(defined('RUN_MODE') && RUN_MODE == 'api')) return $this->locate(inlink('index', "projectID=$projectID"));
 
         /* Load pager and get tasks. */
         $this->app->loadClass('pager', true);
@@ -947,7 +945,7 @@ class project extends control
      * @access public
      * @return void
      */
-    public function testcase(int $projectID = 0, int $productID = 0, string $branch = 'all', string $browseType = 'all', int $param = 0, string $caseType = '', string $orderBy = 'sort_asc,id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    public function testcase(int $projectID = 0, int $productID = 0, string $branch = 'all', string $browseType = 'all', int $param = 0, string $caseType = '', string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
     {
         /* 项目型项目不展示2.5级产品下拉菜单。 */
         $project = $this->project->getByID($projectID);
@@ -1020,7 +1018,6 @@ class project extends control
         $this->view->productID = $productID;
         $this->view->projectID = $projectID;
         $this->view->type      = $type;
-        $this->view->param     = $param;
         $this->view->pager     = $pager;
         $this->view->orderBy   = $orderBy;
         $this->view->users     = $this->loadModel('user')->getPairs('noclosed|noletter');
@@ -1348,7 +1345,7 @@ class project extends control
         $group      = $this->group->getById($groupID);
         $project    = $this->project->getByID((int)$group->project);
         $groupUsers = $this->group->getUserPairs($groupID);
-        $allUsers   = $this->loadModel('dept')->getDeptUserPairs($deptID, 'account', 'inside', '', false);
+        $allUsers   = $this->loadModel('dept')->getDeptUserPairs($deptID);
         $otherUsers = array_diff_assoc($allUsers, $groupUsers);
 
         if($project->acl != 'open')
@@ -1360,7 +1357,7 @@ class project extends control
             }
         }
 
-        $outsideUsers = $this->loadModel('user')->getPairs('outside|noclosed|noletter|noempty', '', 0, '', false);
+        $outsideUsers = $this->loadModel('user')->getPairs('outside|noclosed|noletter|noempty');
         if($project->acl != 'open')
         {
             foreach($outsideUsers as $account => $outsideUser)

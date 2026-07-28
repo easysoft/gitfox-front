@@ -25,7 +25,7 @@ class testresultsEntry extends entry
         $runID   = $this->param('runID', 0);
 
         $control = $this->loadController('testtask', 'results');
-        $control->results((int)$runID, (int)$caseID, (int)$version);
+        $control->results($runID, $caseID, $version);
 
         $data = $this->getData();
 
@@ -87,7 +87,7 @@ class testresultsEntry extends entry
             $this->setPost('real',  $reals);
         }
 
-        $control->runCase((int)$runID, (int)$caseID, (int)$version);
+        $control->runCase($runID, $caseID, $version);
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'fail') return $this->sendError(400, $data->message);

@@ -111,7 +111,7 @@ class block extends control
         $this->view->longBlock      = $block->width >= 2;
         $this->view->isExternalCall = $this->blockZen->isExternalCall();
         $this->view->params         = $params;
-        $this->view->metricTime     = $this->dao->select('`lastTime`')->from(TABLE_CRON)->where('command')->eq('moduleName=metric&methodName=updateDashboardMetricLib')->fetch('lastTime');
+        $this->view->metricTime     = $this->dao->select('lastTime')->from(TABLE_CRON)->where('command')->eq('moduleName=metric&methodName=updateDashboardMetricLib')->fetch('lastTime');
 
         /* 根据 viewType 值 ，判断是否需要返回 json 数据。 */
         $viewType = (isset($block->params->viewType) && $block->params->viewType == 'json') ? 'json' : 'html';
@@ -156,7 +156,7 @@ class block extends control
             $defaultSize = $this->config->block->defaultSize; // 默认为区块的统一默认尺寸。
             if(!empty($this->config->block->size[$formData->module][$formData->code]))                   $defaultSize      = $this->config->block->size[$formData->module][$formData->code];
             if(!empty($this->config->block->size[$formData->module][$formData->code][$formData->width])) $formData->height = $this->config->block->size[$formData->module][$formData->code][$formData->width];
-            if(empty($formData->width))  $formData->width  = array_key_first($defaultSize);
+            if(empty($formData->width))  $formData->width  = reset(array_keys($defaultSize));
             if(empty($formData->height)) $formData->height = reset($defaultSize);
 
             /* 设置区块距离左侧的宽度和距离顶部的高度。 */
@@ -175,7 +175,7 @@ class block extends control
         unset($modules['']);
 
         if(empty($modules)) $module = $dashboard;                                       // 如果该仪表盘下没有模块列表，则模块同仪表盘。
-        if(empty($module) && !empty($modules)) $module = array_key_first($modules); // 如果当前没有选择模块，则选中第一个。
+        if(empty($module) && !empty($modules)) $module = current(array_keys($modules)); // 如果当前没有选择模块，则选中第一个。
 
         $codes  = $this->blockZen->getAvailableCodes($module); // 根据仪表盘和模块获取可用的区块列表。
         $code   = $codes && empty($code) ? key($codes) : $code;

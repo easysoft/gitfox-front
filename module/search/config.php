@@ -110,15 +110,12 @@ $config->search->fields->todo->content    = 'desc';
 $config->search->fields->todo->addedDate  = 'date';
 $config->search->fields->todo->editedDate = 'lastEditedDate';
 
-if($config->edition != 'open')
-{
-    $config->search->fields->effort = new stdclass();
-    $config->search->fields->effort->id         = 'id';
-    $config->search->fields->effort->title      = 'work';
-    $config->search->fields->effort->content    = '';
-    $config->search->fields->effort->addedDate  = 'date';
-    $config->search->fields->effort->editedDate = 'date';
-}
+$config->search->fields->effort = new stdclass();
+$config->search->fields->effort->id         = 'id';
+$config->search->fields->effort->title      = 'work';
+$config->search->fields->effort->content    = '';
+$config->search->fields->effort->addedDate  = 'date';
+$config->search->fields->effort->editedDate = 'date';
 
 $config->search->fields->testsuite = new stdclass();
 $config->search->fields->testsuite->id         = 'id';

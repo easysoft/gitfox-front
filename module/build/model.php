@@ -382,8 +382,7 @@ class buildModel extends model
         $branches = strpos($params, 'separate') === false ? "0,$branch" : $branch;
         foreach($releases as $release)
         {
-            if(!isset($release->status)) continue;
-            if(strpos($params, 'noterminate') !== false && $release->status == 'terminate') continue;
+            if(strpos($params, 'noterminate') !== false && in_array($release->id, $excludedReleaseIdList)) continue;
 
             if($branch !== 'all')
             {
@@ -432,7 +431,7 @@ class buildModel extends model
      */
     public function getRelatedReleases(array|int $productIdList, string|int $buildIdList = '', array|bool $shadows = false, string $objectType = '', int $objectID = 0, string $params = ''): array
     {
-        $releases = $this->dao->select('DISTINCT t1.id,t1.shadow,t1.product,t1.branch,t1.build,t1.name,t1.date,t1.status,t3.name as `branchName`,t4.type as productType')->from(TABLE_RELEASE)->alias('t1')
+        $releases = $this->dao->select('DISTINCT t1.id,t1.shadow,t1.product,t1.branch,t1.build,t1.name,t1.date,t1.status,t3.name as branchName,t4.type as productType')->from(TABLE_RELEASE)->alias('t1')
             ->leftJoin(TABLE_RELEASERELATED)->alias('t5')->on("t1.id=t5.release AND t5.`objectType`='build'")
             ->leftJoin(TABLE_BUILD)->alias('t2')->on('t5.`objectID`=t2.id')
             ->leftJoin(TABLE_RELEASERELATED)->alias('t6')->on("t1.id=t6.release AND t6.`objectType`='branch'")
@@ -454,7 +453,7 @@ class buildModel extends model
         if($shadows)
         {
             /* Append releases of only shadow and not link build. */
-            $releases += $this->dao->select('DISTINCT t1.id,t1.shadow,t1.product,t1.branch,t1.build,t1.name,t1.date,t2.name as `branchName`,t3.type as productType')->from(TABLE_RELEASE)->alias('t1')
+            $releases += $this->dao->select('DISTINCT t1.id,t1.shadow,t1.product,t1.branch,t1.build,t1.name,t1.date,t2.name as branchName,t3.type as productType')->from(TABLE_RELEASE)->alias('t1')
                 ->leftJoin(TABLE_RELEASERELATED)->alias('t4')->on("t1.id=t4.release AND t4.`objectType`='branch'")
                 ->leftJoin(TABLE_BRANCH)->alias('t2')->on('t4.`objectID`=t2.id')
                 ->leftJoin(TABLE_PRODUCT)->alias('t3')->on('t1.product=t3.id')
@@ -521,25 +520,7 @@ class buildModel extends model
                 dao::$errors['branch'] = sprintf($this->lang->error->notempty, $this->lang->product->branch);
             }
         }
-        if(!empty($build->name))
-        {
-            $hasSameName = $this->dao->select('id')->from(TABLE_BUILD)->where('deleted')->eq(0)->andWhere('name')->eq($build->name)->andWhere('product')->eq($build->product)->andWhere('branch')->eq($build->branch)->fetch('id');
-            if($hasSameName) dao::$errors['name'] = sprintf($this->lang->error->unique, $this->lang->build->name, $build->name);
-        }
         if(dao::isError()) return false;
-
-        if($this->post->newSystem && $this->post->systemName)
-        {
-            $system = new stdclass();
-            $system->name        = trim($this->post->systemName);
-            $system->product     = $build->product;
-            $system->createdBy   = $this->app->user->account;
-            $system->createdDate = helper::now();
-
-            $systemID = $this->loadModel('system')->create($system);
-            if(dao::isError()) return false;
-            $build->system = $systemID;
-        }
 
         /* Process and insert build data. */
         $requiredFields = $this->config->build->create->requiredFields;
@@ -550,6 +531,7 @@ class buildModel extends model
         $this->dao->insert(TABLE_BUILD)->data($build)
             ->autoCheck()
             ->batchCheck($requiredFields, 'notempty')
+            ->check('name', 'unique', "product = {$build->product} AND branch = '{$build->branch}' AND deleted = '0'")
             ->checkFlow()
             ->exec();
         if(dao::isError()) return false;
@@ -983,29 +965,5 @@ class buildModel extends model
         }
 
         return array_values($buildItems);
-    }
-
-    /**
-     * 获取通过动作触发的邮件通知人员。
-     * Get toList and ccList.
-     *
-     * @param  object $build
-     * @access public
-     * @return bool|array
-     */
-    public function getToAndCcList(object $build): bool|array
-    {
-        $toList = !empty($build->builder) ? $build->builder : '';
-        $ccList = !empty($build->createdBy) ? $build->createdBy : '';
-        if($toList && $toList == $ccList) $ccList = '';
-
-        if(empty($toList))
-        {
-            if(empty($ccList)) return false;
-            $toList = $ccList;
-            $ccList = '';
-        }
-
-        return array($toList, $ccList);
     }
 }

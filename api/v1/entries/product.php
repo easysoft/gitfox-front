@@ -23,7 +23,7 @@ class productEntry extends entry
         $fields = $this->param('fields');
 
         $control = $this->loadController('product', 'view');
-        $control->view((int)$productID);
+        $control->view($productID);
 
         $data = $this->getData();
         if(!$data or !isset($data->status)) return $this->send400('error');
@@ -44,7 +44,7 @@ class productEntry extends entry
             {
                 case 'modules':
                     $control = $this->loadController('tree', 'browse');
-                    $control->browse((int)$productID, 'story');
+                    $control->browse($productID, 'story');
                     $data = $this->getData();
                     if(isset($data->status) and $data->status == 'success')
                     {
@@ -111,7 +111,7 @@ class productEntry extends entry
         if($useCode) $fields .= ',code';
         $this->batchSetPost($fields, $oldProduct);
 
-        $control->edit((int)$productID);
+        $control->edit($productID);
 
         $data = $this->getData();
         if(isset($data->result) and $data->result == 'fail') return $this->sendError(400, $data->message);
@@ -130,7 +130,7 @@ class productEntry extends entry
     public function delete($productID)
     {
         $control = $this->loadController('product', 'delete');
-        $control->delete((int)$productID, 'yes');
+        $control->delete($productID, 'yes');
 
         $this->getData();
         return $this->sendSuccess(200, 'success');

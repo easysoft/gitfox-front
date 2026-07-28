@@ -25,7 +25,7 @@ class bugAssignEntry extends entry
         $fields = 'assignedTo,mailto,comment';
         $this->batchSetPost($fields);
 
-        $control->assignTo((int)$bugID);
+        $control->assignTo($bugID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

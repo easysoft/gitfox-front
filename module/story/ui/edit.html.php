@@ -14,7 +14,6 @@ namespace zin;
 $uid            = uniqid();
 $canEditContent = str_contains(',draft,changing,', ",{$story->status},");
 $forceReview    = $this->story->checkForceReview($story->type);
-$canChange      = common::hasPriv($app->rawModule, 'change', $story);
 $assignedToList = $story->status == 'closed' ? array('closed' => 'Closed') : $users;
 $storyEstimate  = $story->estimate ? helper::formatHours($story->estimate) : 0;
 
@@ -63,7 +62,6 @@ jsVar('defaultReviewer', array_keys($fields['reviewer']['options']));
 jsVar('storyReviewers', $storyReviewers);
 jsVar('reviewerNotEmpty', $lang->story->notice->reviewerNotEmpty);
 jsVar('notDeleted', $lang->story->notice->notDeleted);
-jsVar('langConfirmChange', $lang->story->confirmChange);
 jsVar('twins', $story->twins);
 jsVar('relievedTwinsTip', $lang->story->relievedTwinsTip);
 jsVar('changeProductTips', $lang->story->changeProductTips);
@@ -72,7 +70,6 @@ jsVar('executionID', isset($objectID) ? $objectID : 0);
 jsVar('langTreeManage', $lang->tree->manage);
 jsVar('feedbackSource', $config->story->feedbackSource);
 jsVar('relievedTip', $lang->story->relievedTip);
-jsVar('storyData', $story);
 
 detailHeader
 (
@@ -89,26 +86,6 @@ detailHeader
     )
 );
 
-$actions = array();
-if($canEditContent)
-{
-    $actions = array
-    (
-        array('btnType' => 'submit', 'class' => 'primary',   'data-status' => 'active', 'text' => $lang->save),
-        array('btnType' => 'submit', 'class' => 'secondary', 'data-status' => 'draft',  'text' => $story->status == 'changing' ? $lang->story->doNotSubmit : $lang->story->saveDraft),
-        isInModal() ? null : array('text' => $lang->goback, 'back' => 'APP')
-    );
-}
-elseif($story->status == 'active')
-{
-    $actions = array
-    (
-        $canChange ? array('btnType' => 'button', 'class' => 'secondary', 'onclick' => 'window.locateChange(this)', 'text' => $lang->story->change) : null,
-        array('btnType' => 'submit', 'class' => 'primary', 'text' => $lang->save),
-        isInModal() ? null : array('text' => $lang->goback, 'back' => 'APP')
-    );
-}
-
 detailBody
 (
     setID('dataform'),
@@ -116,7 +93,12 @@ detailBody
     set::ajax(array('beforeSubmit' => jsRaw('clickSubmit'))),
     on::change('[name=parent]', 'loadGrade'),
     on::change('[name=grade]', 'checkGrade'),
-    $actions ? set::actions($actions) : null,
+    $canEditContent ? set::actions(array
+    (
+        array('btnType' => 'submit', 'class' => 'primary',   'data-status' => 'active', 'text' => $lang->save),
+        array('btnType' => 'submit', 'class' => 'secondary', 'data-status' => 'draft',  'text' => $story->status == 'changing' ? $lang->story->doNotSubmit : $lang->story->saveDraft),
+        isInModal() ? null : array('text' => $lang->goback, 'back' => 'APP')
+    )) : null,
     sectionList
     (
         section
@@ -249,8 +231,7 @@ detailBody
                         set::items($fields['product']['options']),
                         set::value($fields['product']['default']),
                         on::change('loadProduct'),
-                        set::required(true),
-                        set::disabled($story->parent > 0)
+                        set::required(true)
                     ),
                     span
                     (
@@ -263,11 +244,14 @@ detailBody
                             set::name('branch'),
                             set::items($fields['branch']['options']),
                             set::value($fields['branch']['default']),
-                            set::required(true),
-                            set::disabled($story->parent > 0)
                         ) : null
                     )
                 )
+            ) : null,
+            $story->parent > 0 && $product->type != 'normal' ? item
+            (
+                set::name(sprintf($lang->product->branch, $lang->product->branchName[$product->type])),
+                picker(setID('branch'), set::name('branch'), set::items($fields['branch']['options']), set::value($fields['branch']['default']))
             ) : null,
             item
             (
@@ -422,3 +406,5 @@ detailBody
         ) : null
     )
 );
+
+render();

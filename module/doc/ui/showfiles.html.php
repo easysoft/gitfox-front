@@ -12,7 +12,6 @@ namespace zin;
 
 jsVar('imageExtensionList', $config->file->imageExtensions);
 jsVar('sessionString', session_name() . '=' . session_id());
-jsVar('canPreviewFile', common::hasPriv('file', 'preview'));
 jsVar('+searchLink', createLink('doc', 'showFiles', "type={$type}&objectID={$objectID}&viewType={$viewType}&browseType={$browseType}&param={$param}&orderBy=id_desc&recTotal=0&recPerPage=20&pageID=1&searchTitle=%s"));
 
 $filesBody = null;
@@ -42,11 +41,11 @@ elseif($files)
     $cardsBox = null;
     foreach($files as $file)
     {
-        $url  = helper::createLink('doc', 'downloadFile', "fileID={$file->id}");
+        $url  = helper::createLink('file', 'download', "fileID={$file->id}");
         $url .= strpos($url, '?') === false ? '?' : '&';
         $url .= session_name() . '=' . session_id();
 
-        $downloadLink = $this->createLink('doc', 'downloadFile', "fileID={$file->id}&mouse=left");
+        $downloadLink = $this->createLink('file', 'download', "fileID={$file->id}&mouse=left");
         $cardsBox[] = div
          (
              setClass('col'),

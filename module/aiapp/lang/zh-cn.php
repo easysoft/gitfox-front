@@ -45,17 +45,8 @@ $lang->aiapp->viewAiToolkit      = '查看智能工具';
 
 $lang->aiapp->id                 = 'ID';
 $lang->aiapp->model              = '模型名称';
-$lang->aiapp->modelID            = '模型ID';
-$lang->aiapp->abilities          = '能力';
 $lang->aiapp->converse           = '开始会话';
 $lang->aiapp->pageSummary        = '共%s项';
-$lang->aiapp->searchModels       = '搜索模型';
-$lang->aiapp->abilityTypes       = [];
-
-$lang->aiapp->abilityTypes['chat']             = '聊天';
-$lang->aiapp->abilityTypes['function-calling'] = '工具调用';
-$lang->aiapp->abilityTypes['reasoning']        = '推理';
-$lang->aiapp->abilityTypes['embedding']        = '向量化';
 
 $lang->aiapp->tips = new stdClass();
 $lang->aiapp->tips->noData = '暂无数据';
@@ -79,7 +70,7 @@ $lang->aiapp->langData->zaiConfigNotValid   = '尚未进行ZAI配置，请联系
 $lang->aiapp->langData->unauthorizedError   = '授权失败，无效的API密钥，请联系管理员进行<a href="{zaiConfigUrl}">ZAI配置</a>。<br>若已完成相关配置，请尝试重新加载页面。';
 $lang->aiapp->langData->processDataPrefix   = "要进行处理的数据如下：\n{data}";
 $lang->aiapp->langData->processedDataResult = "处理后的数据如下：\n```json\n{data}\n```";
-$lang->aiapp->langData->agentResultSummary  = '使用简短易懂的一句话对方案中数据的变化进行解释，禁止使用换行。';
+$lang->aiapp->langData->agentResultSummary  = '对方案中数据的变化进行解释，尽量对变化的属性分别进行说明。';
 $lang->aiapp->langData->promptResultTitle   = '方案标题，如果没有合适标题可以省略';
 $lang->aiapp->langData->promptExtraLimit    = '通常工具 `{toolName}` 只需要调用一次，除非用户特殊要求提供多个方案。';
 $lang->aiapp->langData->promptResultReturn  = '已经在界面展示处理后的数据，无需对处理后的数据进行重复展示，也不需要进一步描述和解释，禁止向用户展示处理后的原始 JSON 数据，仅需要提醒我可以通过点击“应用到{formName}表单”按钮来使用这些数据即可。';
@@ -99,9 +90,10 @@ $lang->aiapp->langData->formFillableFields  = '可填充字段';
 $lang->aiapp->langData->formFieldDefinition = '字段说明';
 $lang->aiapp->langData->formRequiredField   = '必填';
 $lang->aiapp->langData->formReturnJSONArray = '请返回 JSON 数组，每个数组元素对应表中的一行数据，键名对应上述可填充字段名。必填字段必须提供值。';
-$lang->aiapp->langData->formZentaoAPITip    = "请先使用 zentao-api-readonly 工具获取所需的上下文数据，然后使用 submitFormData 工具返回填充后的表单数据。必填字段必须提供值。\n通常 submitFormData 只需要调用一次，除非用户特殊要求提供多个方案。";
+$lang->aiapp->langData->formZentaoAPITip    = "请先使用 zentao-api 工具获取所需的上下文数据，然后使用 submitFormData 工具返回填充后的表单数据。必填字段必须提供值。\n通常 submitFormData 只需要调用一次，除非用户特殊要求提供多个方案。";
 $lang->aiapp->langData->formResultGenerated = '表单数据已生成。';
 $lang->aiapp->langData->formCurrentTarget   = '当前';
+$lang->aiapp->langData->formApplyDataTip    = '请点击"应用到当前表单"按钮将数据填充到表单中。';
 $lang->aiapp->langData->stepDescription     = '步骤描述';
 $lang->aiapp->langData->expectDescription   = '预期结果';
 

@@ -63,8 +63,7 @@ class ppm extends control
     public function browse(int $repoID = 0, string $mode = 'status', string $param = 'opened', int $objectID = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
     {
         $serverHeath = $this->loadModel('gitfox')->checkHealth();
-        if(!$serverHeath) return $this->locate($this->createLink('gitfox', "installGitFox"));
-        if($serverHeath == 'upgrade') return $this->locate($this->createLink('gitfox', 'upgradeGitFox'));
+        if(!$serverHeath) return $this->locate($this->createLink('gitfox', "devopsIntroduction"));
 
         $this->loadModel('repo');
         if($this->app->tab == 'execution')
@@ -93,7 +92,7 @@ class ppm extends control
 
         if(in_array($this->app->tab, array('execution', 'project')) && $objectID) return print($this->fetch('ppm', 'browseByExecution', "repoID={$repoID}&mode={$mode}&param={$param}&objectID={$objectID}&orderBy={$orderBy}&recTotal={$recTotal}&recPerPage={$recPerPage}&pageID={$pageID}"));
 
-        $repoList = $this->repo->getListByPriv('all', '', false);
+        $repoList = $this->repo->getListByPriv();
         if(empty($repoList)) $this->locate($this->repo->createLink('create'));
 
         if(!$repoID) $repoID = key($repoList);
@@ -210,9 +209,11 @@ class ppm extends control
 
         $branches        = $scm->branch('all', 'date_desc');
         $branchNameList  = array_column($branches, 'name', 'name');
+        $defaultBranches = array_values(array_slice($branchNameList, 0, 2));
+        $targetBranch    = $targetBranch ?: zget($defaultBranches, 0, '');
+        $sourceBranch    = $sourceBranch ?: zget($defaultBranches, 1, '');
         if($targetBranch && !$sourceBranch) $sourceBranch = $targetBranch;
-
-        $flow = $this->loadModel('reporeviewflow')->getByBranchName($repoID, $targetBranch);
+        $flow            = $this->loadModel('reporeviewflow')->getByBranchName($repoID, $targetBranch);
         if(!empty($flow))
         {
             $flow->definition = json_decode($flow->definition);
@@ -281,6 +282,7 @@ class ppm extends control
         $this->view->executionID       = $objectID;
         $this->view->objectID          = $objectID;
         $this->view->branches          = $branchNameList;
+        $this->view->defaultBranch     = $targetBranch;
         $this->view->activeBranch      = $sourceBranch;
         $this->view->reviewers         = implode(',', zget($flow, 'reviewers', array()));
         $this->view->flow              = $flow;
@@ -360,7 +362,6 @@ class ppm extends control
     public function view(int $id, string $type = 'basic', string $param = 'all', int $recTotal = 0, int $recPerPage = 20, int $pageID = 0)
     {
         $ppm  = $this->ppm->fetchByID($id);
-        if(!empty($ppm->repoID)) $this->loadModel('repo')->saveState((int)$ppm->repoID);
         $repo = $this->loadModel('repo')->getByID($ppm->repoID);
         $flow = $this->loadModel('reporeviewflow')->getByID(zget($ppm, 'reviewFlowID', 0));
         $scm  = $this->app->loadClass('scm');
@@ -371,15 +372,28 @@ class ppm extends control
         $bugPager    = new pager($type == 'bug'    ? $recTotal : 0, $recPerPage, $type == 'bug'    ? $pageID : 1);
         $objectPager = new pager($type == 'object' ? $recTotal : 0, $recPerPage, $type == 'object' ? $pageID : 1);
 
-        $fromRevision = !empty($ppm->mergeBaseSHA) ? $ppm->mergeBaseSHA : $ppm->targetBranch;
-        $toRevision   = !empty($ppm->sourceSHA) ? $ppm->sourceSHA : $ppm->sourceBranch;
+        $encoding = 'utf-8';
+        if($type == 'files')
+        {
+            $encoding = empty($param) ? 'utf-8' : $param;
+            $encoding = strtolower(str_replace('_', '-', $encoding)); /* Revert $config->requestFix in $encoding. */
+        }
+        $diffs   = $scm->diff('', $ppm->mergeTargetSHA, $ppm->sourceSHA, 'yes', 'isBranchOrTag', true);
+        $arrange = $this->cookie->arrange ? $this->cookie->arrange : 'inline';
+        if($this->server->request_method == 'POST')
+        {
+            if($this->post->arrange)
+            {
+                $arrange = $this->post->arrange;
+                helper::setcookie('arrange', $arrange);
+            }
+            if($this->post->encoding) $encoding = $this->post->encoding;
+        }
+        $reviewID     = !empty($flow) && !empty($flow->definition->reviewFlow) ? $flow->definition->reviewFlow->approvals->approvalID : 0;
+        $reviewers    = !empty($reviewID) ? array() : $this->ppm->getReviewers($id);
+        $reviewResult = $this->ppm->getReviewResult($reviewers, empty($flow) ? array() : $flow);
 
-        $reviewID         = !empty($flow) && !empty($flow->definition->reviewFlow) ? $flow->definition->reviewFlow->approvals->approvalID : 0;
-        $reviewers        = !empty($reviewID) ? array() : $this->ppm->getReviewers($id);
-        $reviewResult     = $this->ppm->getReviewResult($reviewers, empty($flow) ? array() : $flow);
-        $defaultMergeType = $this->cookie->mergeType ? $this->cookie->mergeType : 'merge';
-
-        $this->view->title            = empty($repo->name) ? $this->lang->ppm->common : $repo->name . ' - ' . $this->lang->ppm->common;
+        $this->view->title            = $this->lang->ppm->view;
         $this->view->ppm              = $ppm;
         $this->view->reviewers        = $reviewers;
         $this->view->reviewResult     = $reviewResult;
@@ -393,13 +407,13 @@ class ppm extends control
         $this->view->bugPager         = $bugPager;
         $this->view->objectPager      = $objectPager;
         $this->view->type             = $type;
-        $this->view->fromRevision     = helper::safe64Encode($fromRevision);
-        $this->view->toRevision       = helper::safe64Encode($toRevision);
+        $this->view->encoding         = $encoding;
+        $this->view->diffs            = $arrange == 'appose' ? $this->repo->getApposeDiff($diffs) : $diffs;
         $this->view->users            = $this->loadModel('user')->getPairs('noletter');
+        $this->view->checkResult      = $this->ppmZen->getCheckResult($ppm, $reviewResult, $this->view->bugs);
         $this->view->oldRevision      = $ppm->targetBranch;
         $this->view->newRevision      = $ppm->sourceBranch;
-        $this->view->defaultMergeType = $defaultMergeType;
-        $this->view->checkResult      = $this->ppmZen->getCheckResult($ppm, $reviewResult, $this->view->bugs, $defaultMergeType);
+        $this->view->defaultMergeType = $this->cookie->mergeType ? $this->cookie->mergeType : 'rebase';
         $this->view->param            = $param;
         $this->view->rule             = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
         $this->view->pipelines        = $this->ppm->getPipelinesByPPM($ppm);

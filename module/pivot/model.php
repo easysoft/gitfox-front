@@ -817,23 +817,13 @@ class pivotModel extends model
                 {
                     case 'select':
                         if(is_string($default) && strpos($default, ',') !== false) $default = explode(',', $default);
-                        if(is_array($default))
-                        {
-                            $default = array_filter($default, function($val){return trim((string)$val) != '';});
-                            $quotedValues = array();
-                            foreach($default as $val) $quotedValues[] = $this->dbh->quote($val);
-                            if(empty($quotedValues)) break;
-                            $value = '(' . implode(', ', $quotedValues) . ')';
-                        }
-                        else
-                        {
-                            if($default === '') break;
-                            $value = '(' . $this->dbh->quote($default) . ')';
-                        }
+                        if(is_array($default)) $default = implode("', '", array_filter($default, function($val){return trim($val) != '';}));
+                        if(empty($default)) break;
+                        $value = "('" . $default . "')";
                         $filterFormat[$field] = array('operator' => 'IN', 'value' => $value);
                         break;
                     case 'input':
-                        $filterFormat[$field] = array('operator' => 'LIKE', 'value' => $this->dbh->quote('%' . $default . '%'));
+                        $filterFormat[$field] = array('operator' => 'LIKE', 'value' => "'%$default%'");
                         break;
                     case 'date':
                     case 'datetime':
@@ -1871,11 +1861,7 @@ class pivotModel extends model
             $type       = $filter['type'];
             $typeOption = $filter['typeOption'];
             if(strpos($type, 'select') !== false && !isset($options[$typeOption])) $options[$typeOption] = $this->getSysOptions($typeOption);
-
-            $default = $filter['default'];
-            if(is_string($default)) $default = explode(',', $default);
-            if(!is_array($default)) continue;
-            $filters[$index]['default'] = array_intersect($default, array_keys($options[$typeOption]));
+            $filters[$index]['default'] = array_intersect($filter['default'], array_keys($options[$typeOption]));
         }
 
         return $filters;
@@ -2635,7 +2621,7 @@ class pivotModel extends model
                 $rowspan = isset($configs[$i][$j]) ? $configs[$i][$j] : 1;
                 $hidden  = (isset($configs[$i][$j]) && $configs[$i][$j]) ? false : (bool)$isGroup;
 
-                $showOrigin = zget($showOrigins, $j, false);
+                $showOrigin = $showOrigins[$j];
                 if($hasShowOrigin && !$isGroup && !$showOrigin)
                 {
                     $rowspan = isset($configs[$i]) ? end($configs[$i]) : 1;
@@ -2814,8 +2800,7 @@ class pivotModel extends model
         $result = array();
         if($queryResult['result'] == 'success')
         {
-            $table = zget($this->config->objectTables, $object, '');
-            $result['data'] = $table ? helper::decodeHtmlSpecialChars((string)$table, $queryResult['rows']) : $queryResult['rows'];
+            $result['data'] = $queryResult['rows'];
             $result['cols'] = $this->getDrillCols($object);
         }
 
@@ -2893,8 +2878,7 @@ class pivotModel extends model
 
         if($status != 'success') return array();
 
-        $table = zget($this->config->objectTables, $drill->object, '');
-        return $table ? helper::decodeHtmlSpecialChars((string)$table, $data) : $data;
+        return $data;
     }
 
     /**

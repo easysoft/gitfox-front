@@ -34,23 +34,20 @@ class transferTao extends transferModel
         /* Parse params. */
         if(is_string($params)) $params = explode('&', $params);
 
-        if(is_array($params))
+        foreach($params as $param => $value)
         {
-            foreach($params as $param => $value)
-            {
-                /* 如果参数是$开头的变量，则从SESSION中获取该变量。 */
-                /* If the param is $var, get it from SESSION. */
-                if(!is_string($value)) continue;
-                if(strpos($value, '$') === false) continue;
-                $params[$param] = isset($getParams[ltrim($value, '$')]) ? $getParams[ltrim($value, '$')] : '';
-                if(isset($this->config->transfer->convertInt[$callModule][$method][ltrim($value, '$')])) $params[$param] = (int)$params[$param];
-                if(isset($this->config->transfer->convertInt[$callModule][$method][$param]))             $params[$param] = (int)$params[$param];
-            }
+            /* 如果参数是$开头的变量，则从SESSION中获取该变量。 */
+            /* If the param is $var, get it from SESSION. */
+            if(!is_string($value)) continue;
+            if(strpos($value, '$') === false) continue;
+            $params[$param] = isset($getParams[ltrim($value, '$')]) ? $getParams[ltrim($value, '$')] : '';
+            if(isset($this->config->transfer->convertInt[$callModule][$method][ltrim($value, '$')])) $params[$param] = (int)$params[$param];
+            if(isset($this->config->transfer->convertInt[$callModule][$method][$param]))             $params[$param] = (int)$params[$param];
         }
 
         /* 调用模块的方法。 */
         /* If this method has multiple parameters use call_user_func_array. */
-        if(is_array($params) && $params)
+        if(is_array($params) and $params)
         {
             $values = call_user_func_array(array($this->loadModel($callModule), $method), $params);
         }
@@ -89,7 +86,7 @@ class transferTao extends transferModel
     protected function getFileGroups(string $module, array $idList): array
     {
         if(in_array($module, array('epic', 'requirement'))) $module = "{$module},story";
-        return $this->dao->select('id, `objectID`, pathname, title')->from(TABLE_FILE)
+        return $this->dao->select('id, objectID, pathname, title')->from(TABLE_FILE)
             ->where('objectType')->in($module)
             ->beginIf($idList)->andWhere('objectID')->in($idList)->fi()
             ->andWhere('extra')->ne('editor')

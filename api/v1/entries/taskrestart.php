@@ -30,7 +30,7 @@ class taskRestartEntry extends entry
         $this->batchSetPost($fields);
 
         $this->requireFields('consumed,left');
-        $control->restart((int)$taskID);
+        $control->restart($taskID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

@@ -58,7 +58,7 @@ class docEntry extends entry
         $this->batchSetPost($fields, $oldStory);
         $this->setPost('parent', 0);
 
-        $control->edit((int)$storyID);
+        $control->edit($storyID);
 
         $this->getData();
         $story = $this->story->getByID($storyID);
@@ -75,7 +75,7 @@ class docEntry extends entry
     public function delete($storyID)
     {
         $control = $this->loadController('story', 'delete');
-        $control->delete((int)$storyID, 'yes');
+        $control->delete($storyID, 'yes');
 
         $this->getData();
         return $this->sendSuccess(200, 'success');

@@ -92,8 +92,7 @@ jsVar('urlNote', $lang->webhook->note->typeList);
 
 formPanel
 (
-    on::change('[name=type]')->call('changeType'),
-    on::inited()->call('changeType'),
+    on::change('[name=type]', 'changeType'),
     $formItems
 );
 

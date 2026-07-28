@@ -72,84 +72,65 @@ class gitfox extends control
      * @param  int $isInstall
      * @return void
      */
-    public function installGitFox(string $inPage = 'devops', int $skipInstall = 0, string $fromVersion = '')
+    public function installGitFox(int $isInstall = 0)
     {
         $nextLink = $this->app->cookie->lang == 'zh-cn' ? helper::createLink('admin', 'register') : helper::createLink('index');
 
-        if($inPage == 'install')
+        if($isInstall)
         {
             $nextLink .= $this->config->requestType == 'GET' ? '&_single=1' : '?_single=1';
         }
-        elseif($inPage == 'upgrade')
-        {
-            $nextLink = $this->createLink('upgrade', 'afterExec', "fromVersion={$fromVersion}&processed=no&skipMoveFile=yes&skipUpdateDocs=yes&skipUpdateDocTemplates=yes&skipUpdateProjectReports=yes&skipInstallGitFox=yes");
-        }
         else
         {
-            $devopsLink = $this->config->devopsLink ? $this->config->devopsLink : 'repo-maintain';
-            list($devopsModule, $devopsMethod) = explode('-', $devopsLink);
+            list($devopsModule, $devopsMethod) = explode('-', $this->config->devopsLink);
             $nextLink = helper::createLink($devopsModule, $devopsMethod);
         }
 
-        if($skipInstall)
+        if(strpos(PHP_OS, 'WIN'))
         {
-            return $this->locate($nextLink);
+            $os = 'win';
         }
-
-        $script = $this->gitfoxZen->buildGitFoxScript('install');
-
-        $this->view->title       = $this->lang->gitfox->installGitFox;
-        $this->view->script      = $script;
-        $this->view->nextLink    = $nextLink;
-        $this->view->inPage      = $inPage;
-        $this->view->fromVersion = $fromVersion;
-        $this->display();
-    }
-
-    /**
-     * 升级GitFox.
-     * Upgrade GitFox.
-     *
-     * @param  string $inPage
-     * @param  int    $skipUpgrade
-     * @param  string $fromVersion
-     * @access public
-     * @return void
-     */
-    public function upgradeGitFox(string $inPage = 'devops', int $skipUpgrade = 0, string $fromVersion = '')
-    {
-        if($inPage == 'upgradeStart')
+        elseif (PHP_OS === 'Linux')
         {
-            $nextLink = $this->createLink('upgrade', 'backup');
+            $os = 'linux';
         }
-        elseif($inPage == 'upgrade')
+        elseif (PHP_OS === 'Darwin')
         {
-            $nextLink = $this->createLink('upgrade', 'afterExec', "fromVersion={$fromVersion}&processed=no&skipMoveFile=yes&skipUpdateDocs=yes&skipUpdateDocTemplates=yes&skipUpdateProjectReports=yes&skipInstallGitFox=yes&skipUpgradeGitFox=yes");
+            $os = 'mac';
         }
         else
         {
-            $devopsLink = $this->config->devopsLink ? $this->config->devopsLink : 'repo-maintain';
-            list($devopsModule, $devopsMethod) = explode('-', $devopsLink);
-            $nextLink = helper::createLink($devopsModule, $devopsMethod);
+            $os = 'linux';
         }
 
-        if($skipUpgrade)
+        $uname = php_uname('m');
+        $arch  = strtolower($uname);
+        if(strpos($arch, 'arm') === 0 || strpos($arch, 'aarch') != false)
         {
-            $this->session->set('skipUpgradeGitFox', true);
-            return $this->locate($nextLink);
+            $arch = 'arm';
+        }
+        elseif(strpos($arch, 'x86') === 0 || strpos($arch, 'i686') != false || strpos($arch, 'amd') != false)
+        {
+            $arch = 'amd';
+        }
+        else
+        {
+            $arch = 'amd';
         }
 
-        $script = $this->gitfoxZen->buildGitFoxScript('upgrade');
+        $gitfoxDir = $this->app->getAppRoot() . 'gitfox';
 
-        $health         = $this->gitfox->getHealth();
-        $currentVersion = $health ? zget($health, 'version', '') : '';
+        $type        = $os == 'mac' ? 'linux' : $os;
+        $downloadURL = $this->config->gitfox->downloadGitfoxURL[$type][$arch];
+        $command     = sprintf($this->config->gitfox->installGitfox[$type], $gitfoxDir, $downloadURL);
+        $script      = $type == 'linux' ? $this->app->getTmpRoot() . 'installgitfox.sh' : $this->app->getTmpRoot() . 'installgitfox.bat';
+        file_put_contents($script, $command);
+        if(file_exists($script)) chmod($script, 0755);
 
-        $this->view->title           = $this->lang->gitfox->upgradeGitFox;
-        $this->view->script          = $script;
-        $this->view->inPage          = $inPage;
-        $this->view->fromVersion     = $fromVersion;
-        $this->view->currentVersion  = $currentVersion === '' ? '' : 'v' . ltrim((string)$currentVersion, 'vV');
-        $this->view->requiredVersion = 'v' . ltrim((string)$this->config->devops->gitfoxVersion, 'vV');
+        $this->view->title     = $this->lang->gitfox->installGitFox;
+        $this->view->script    = $script;
+        $this->view->nextLink  = $nextLink;
+        $this->view->isInstall = $isInstall;
         $this->display();
     }
 
@@ -162,10 +143,9 @@ class gitfox extends control
      */
     public function ajaxCheckGitFoxHealth()
     {
-        $health = $this->gitfox->getHealth();
-        if(!$health || dao::isError()) return $this->send(array('result' => 'fail', 'message' => $this->lang->gitfox->serverFail));
+        $result = $this->gitfox->checkHealth();
+        if(!$result || dao::isError()) return $this->send(array('result' => 'fail', 'message' => $this->lang->gitfox->serverFail));
 
-        $status = $this->gitfox->checkHealth($health);
-        return $this->send(array('result' => 'success', 'status' => $status, 'version' => zget($health, 'version', '')));
+        return $this->send(array('result' => 'success'));
     }
 }

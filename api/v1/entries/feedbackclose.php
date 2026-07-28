@@ -28,7 +28,7 @@ class feedbackCloseEntry extends entry
 
         if(empty($_POST)) $this->setPost('status', 'closed');
 
-        $control->close((int)$feedbackID);
+        $control->close($feedbackID);
 
         $data = $this->getData();
         if(!$data) return $this->send400('error');

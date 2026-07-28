@@ -131,8 +131,6 @@ class actionModel extends model
 
         $this->saveIndex($objectType, $objectID, $actionType);
 
-        if($this->config->edition != 'open') $this->loadModel('zai')->pushToVectorQueue($objectType, $objectID, $actionType);
-
         $changeFunc = 'after' . ucfirst($objectType);
         if(method_exists($this, $changeFunc)) call_user_func_array(array($this, $changeFunc), array($action, $actionID));
 
@@ -238,7 +236,6 @@ class actionModel extends model
             if($actionName == 'buildopened') $this->actionTao->processActionExtra(TABLE_BUILD, $action, 'name', 'build', 'view');
             if($actionName == 'fromlib' && $action->objectType == 'case') $this->actionTao->processActionExtra(TABLE_TESTSUITE, $action, 'name', 'caselib', 'browse', false, helper::hasFeature('caselib'));
             if($actionName == 'changedbycharter' && $action->objectType == 'story') $this->actionTao->processActionExtra(TABLE_CHARTER, $action, 'name', 'charter', 'view');
-            if($actionName == 'changedstorystage' && $action->objectType == 'story') $this->actionTao->processChangedStoryStageActionExtra($action);
             if(($actionName == 'finished' && $objectType == 'todo') || ($actionName == 'closed' && in_array($action->objectType, array('story', 'demand'))) || ($actionName == 'resolved' && $action->objectType == 'bug')) $this->actionTao->processAppendLinkByExtra($action);
             if($actionName == 'distributed' && $objectType == 'story') $this->actionTao->processActionExtra(TABLE_DEMAND, $action, 'title', 'demand', 'view', false, $this->config->vision != 'or' ? false : true);
 
@@ -294,7 +291,7 @@ class actionModel extends model
     {
         if(empty($history)) return $history;
         $users          = $this->loadModel('user')->getPairs('noletter');
-        $action         = $this->dao->select('`objectType`,`objectID`')->from(TABLE_ACTION)->where('id')->eq($history->action)->fetch();
+        $action         = $this->dao->select('objectType,objectID')->from(TABLE_ACTION)->where('id')->eq($history->action)->fetch();
         $objectType     = $action->objectType == 'story' ? $this->dao->select('type')->from(TABLE_STORY)->where('id')->eq($action->objectID)->fetch('type') : $action->objectType;
         $objectTypeList = array();
         $history->old   = (string)$history->old;
@@ -315,7 +312,6 @@ class actionModel extends model
         {
             $fieldListVar = $this->config->action->multipleObjectFields[$objectType][$history->field];
             $fieldList    = isset($this->lang->{$objectType}->{$fieldListVar}) ? $this->lang->{$objectType}->{$fieldListVar} : array();
-            if($fieldListVar == 'users') $fieldList = $users;
             if(!empty($history->old))
             {
                 $history->oldValue = '';
@@ -466,7 +462,7 @@ class actionModel extends model
             ->beginIF($objectType == 'execution')->andWhere('objectID')->notIn($noMultipleExecutions)->fi()
             ->beginIF($objectType == 'all')
             ->andWhere('objectType', true)->ne('execution')
-            ->orWhere('(`objectType`')->eq('execution')->andWhere('objectID')->notIn($noMultipleExecutions)
+            ->orWhere('(objectType')->eq('execution')->andWhere('objectID')->notIn($noMultipleExecutions)
             ->markRight(2)
             ->fi()
             ->andWhere('objectType')->notIn($this->config->action->hiddenTrashObjects)
@@ -487,7 +483,7 @@ class actionModel extends model
             $typeTrashes[$object->objectType][] = $object->objectID;
         }
 
-        $auditplanList = $this->dao->select('id,`objectID`,`objectType`')->from(TABLE_AUDITPLAN)->where('id')->in($auditplanIdList)->fetchAll('id');
+        $auditplanList = $this->dao->select('id,objectID,objectType')->from(TABLE_AUDITPLAN)->where('id')->in($auditplanIdList)->fetchAll('id');
         foreach($auditplanList as $auditplan) $typeTrashes[$auditplan->objectType][] = $auditplan->objectID;
 
         foreach($typeTrashes as $objectType => $objectIdList)
@@ -596,7 +592,7 @@ class actionModel extends model
             ->andWhere('t1.extra')->eq($extra)
             ->andWhere('t1.vision')->eq($this->config->vision)
             ->andWhere('objectType')->notIn($this->config->action->hiddenTrashObjects)
-            ->beginIF($objectType != 'all')->andWhere('t1.`objectType`')->eq($objectType)->fi()
+            ->beginIF($objectType != 'all')->andWhere('t1.objectType')->eq($objectType)->fi()
             ->orderBy($orderBy)
             ->page($pager)
             ->fetchAll('objectID');
@@ -616,11 +612,11 @@ class actionModel extends model
     {
         $extra                = $type == 'hidden' ? self::BE_HIDDEN : self::CAN_UNDELETED;
         $noMultipleExecutions = $this->dao->select('id')->from(TABLE_EXECUTION)->where('multiple')->eq('0')->andWhere('type')->in('sprint,kanban')->fetchPairs();
-        return $this->dao->select('`objectType`')->from(TABLE_ACTION)
+        return $this->dao->select('objectType')->from(TABLE_ACTION)
             ->where('action')->eq('deleted')
             ->andWhere('extra')->eq($extra)
             ->andWhere('objectType', true)->ne('execution')
-            ->orWhere('(`objectType`')->eq('execution')->andWhere('objectID')->notIn($noMultipleExecutions)
+            ->orWhere('(objectType')->eq('execution')->andWhere('objectID')->notIn($noMultipleExecutions)
             ->markRight(2)
             ->andWhere('vision')->eq($this->config->vision)
             ->andWhere('objectType')->notIn($this->config->action->hiddenTrashObjects)
@@ -680,46 +676,6 @@ class actionModel extends model
 
         $objectType = $action->objectType;
         $actionType = strtolower($action->action);
-
-        /* Merge for convert to object name. */
-        if(isset($action->from) and $action->from == 'feedback')
-        {
-            $desc = '';
-            $objectID   = $action->objectID;
-            $object     = $this->loadModel($objectType)->fetchById($objectID);
-            $nameField  = zget($this->config->action->objectNameFields, $objectType, '');
-            $commonText = $objectType == 'story' ? $this->lang->{$object->type}->common : $this->lang->$objectType->common;
-            if($object and $nameField)
-            {
-                $objectDesc = $commonText . ' [<strong>' . html::a(helper::createLink($objectType, 'view', "id=$objectID"), $object->$nameField) . '</strong>] ';
-                if($action->objectType == 'story' and $action->action == 'reviewed' and strpos($action->extra, ',') !== false)
-                {
-                    $desc = $this->lang->$objectType->action->rejectreviewed;
-                }
-                elseif(isset($this->lang->$objectType) && isset($this->lang->$objectType->action->$actionType))
-                {
-                    $desc = $this->lang->$objectType->action->$actionType;
-                }
-                elseif(isset($this->lang->action->desc->$actionType))
-                {
-                    $desc = $this->lang->action->desc->$actionType;
-                }
-                else
-                {
-                    $desc = $action->extra ? $this->lang->action->desc->extra : $this->lang->action->desc->common;
-                }
-
-                if(!isset($this->lang->$objectType->action)) $this->lang->$objectType->action = new stdclass();
-                if(is_array($desc))
-                {
-                    $desc['main'] = str_replace('$date, ', '$date, ' . $objectDesc, $desc['main']);
-                }
-                else
-                {
-                    $desc = str_replace('$date, ', '$date, ' . $objectDesc, $desc);
-                }
-            }
-        }
 
         /**
          *
@@ -1039,12 +995,6 @@ class actionModel extends model
                 $action->extra = zget($users, $action->extra);
                 if(str_contains($action->extra, ':')) $action->extra = substr($action->extra, strpos($action->extra, ':') + 1);
             }
-            elseif(strpos('createppm,editppm,removeppm,createmr,editmr,removemr', $action->action) !== false && strpos($action->extra, '::') !== false)
-            {
-                $actionExtra = explode('::', $action->extra);
-                if(isset($actionExtra[1]) && isset($users[$actionExtra[1]]) && $actionExtra[1] === $action->actor) $actionExtra[1] = $users[$actionExtra[1]];
-                $action->extra = implode('::', $actionExtra);
-            }
 
             if(!isset($action->rawActor)) $action->rawActor = $action->actor;
             $action->actor = zget($users, $action->actor);
@@ -1357,7 +1307,7 @@ class actionModel extends model
         }
         if($projectIdList) $projectIdList = array_unique($projectIdList);
 
-        if($projectIdList) $projects = $this->dao->select('id,name,`isTpl`')->from(TABLE_PROJECT)->where('project')->in($projectIdList)->andWhere('deleted')->eq('0')->fetchAll('id');
+        if($projectIdList) $projects = $this->dao->select('id,name,isTpl')->from(TABLE_PROJECT)->where('project')->in($projectIdList)->andWhere('deleted')->eq('0')->fetchAll('id');
 
         $docIdList    = array();
         $apiIdList    = array();
@@ -1636,14 +1586,7 @@ class actionModel extends model
                 if($objectDeleted) return $action;
             }
 
-            $riskPI = 0;
-            if(in_array($this->config->edition, array('max', 'ipd')) && $action->objectType == 'risk')
-            {
-                $riskPI = $this->dao->select('PI')->from(TABLE_RISK)->where('id')->eq($action->objectID)->fetch('PI');
-                if(!empty($riskPI)) $vars .= '&from=pi';
-            }
-
-            if(!$riskPI && in_array($this->config->edition, array('max', 'ipd')) && strpos($this->config->action->assetType, ",{$action->objectType},") !== false && empty($action->project) && empty($action->product) && empty($action->execution))
+            if(in_array($this->config->edition, array('max', 'ipd')) && strpos($this->config->action->assetType, ",{$action->objectType},") !== false && empty($action->project) && empty($action->product) && empty($action->execution))
             {
                 $this->actionTao->processMaxDocObjectLink($action, $moduleName, $methodName, $vars);
             }
@@ -1712,7 +1655,6 @@ class actionModel extends model
         if(!empty($action->objectLink) && $action->objectType == 'meeting')    $action->objectLink .= '#app=' . $this->app->tab; // Set app for meeting by open tab.
         if($this->config->vision == 'lite' && $action->objectType == 'module') $action->objectLink .= '#app=project';
         if($action->objectType == 'nc' && !empty($action->execution)) $action->objectLink .= '#app=execution';
-        if(!empty($action->objectLink) && !empty($riskPI)) $action->objectLink .= '#app=safe';
 
         return $action;
     }
@@ -1821,7 +1763,7 @@ class actionModel extends model
         $content = '';
         foreach($histories as $history)
         {
-            $history->fieldLabel = str_pad($history->fieldLabel, $maxLength, ' ');
+            $history->fieldLabel = str_pad($history->fieldLabel, $maxLength, $this->lang->action->label->space);
             if(strpos(',addDiff,removeDiff,', ",{$history->field},") !== false)
             {
                 $fileLabel = isset($this->lang->file->common) ? $this->lang->file->common . ' ' : '';
@@ -1950,9 +1892,8 @@ class actionModel extends model
             $this->loadModel('story')->setStage($action->objectID);
             $this->story->updateParentStatus($action->objectID);
         }
-        if($action->objectType == 'task' && !empty($object->story)) $this->loadModel('story')->setStage($object->story, array('type' => 'undeleteTask', 'objectID' => $action->objectID));
         if($action->objectType == 'demand' && !empty($object->parent)) $this->loadModel('demand')->updateParentDemandStage($object->parent);
-        if($action->objectType == 'release' && !empty($object->system)) $this->loadModel('system')->setSystemRelease((int)$object->system, $action->objectID);
+        if($action->objectType == 'release') $this->loadModel('system')->setSystemRelease((int)$object->system, $action->objectID);
         if(in_array($action->objectType, array('release', 'build')) && !empty($object->system))
         {
             $systemActionID = $this->dao->select('id')->from(TABLE_ACTION)->where('objectType')->eq('system')->andWhere('objectID')->eq($object->system)->andWhere('action')->eq('deleted')->orderBy('id_desc')->fetch('id');
@@ -2496,7 +2437,7 @@ class actionModel extends model
         $relatedProject = array();
         if($table == TABLE_TODO)
         {
-            $todos = $this->dao->select("id, {$field} AS name, account, private, type, `objectID`")->from($table)->where('id')->in($objectIdList)->orderBy('id_asc')->fetchAll();
+            $todos = $this->dao->select("id, {$field} AS name, account, private, type, objectID")->from($table)->where('id')->in($objectIdList)->orderBy('id_asc')->fetchAll();
             foreach($todos as $todo)
             {
                 /* Get related object name. */
@@ -2579,11 +2520,6 @@ class actionModel extends model
             if($object->deleted && empty($object->project)) return $this->lang->action->undeletedTips;
             $projectCount = $this->dao->select('COUNT(1) AS count')->from(TABLE_PROJECT)->where('id')->eq($object->project)->andWhere('deleted')->eq('0')->fetch('count');
             if((int)$projectCount == 0) return $this->lang->action->executionNoProject;
-        }
-        elseif($action->objectType == 'repo' && !empty($object->mirror))
-        {
-            $provider = $this->dao->select('id')->from(TABLE_PROVIDER)->where('id')->eq(zget($object, 'providerID', 0))->andWhere('deleted')->eq('0')->fetch();
-            if(empty($provider)) return $this->lang->action->repoNoServer;
         }
         elseif($action->objectType == 'module')
         {

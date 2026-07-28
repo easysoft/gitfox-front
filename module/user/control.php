@@ -480,9 +480,7 @@ class user extends control
                 $_POST['password2']        = md5($_POST['password']);
                 $_POST['passwordLength']   = strlen($_POST['password']);
                 $_POST['passwordStrength'] = 2;
-                $_POST['passwordPlain']    = $_POST['password'];
                 $_POST['verifyPassword']   = 'PASSWORD';
-                $this->post->passwordPlain = $_POST['password'];
             }
 
             $user = form::data($this->config->user->form->create)
@@ -568,8 +566,6 @@ class user extends control
                 $_POST['password2']        = isset($_POST['password']) ? md5($_POST['password']) : '';
                 $_POST['passwordLength']   = isset($_POST['password']) ? strlen($_POST['password']) : 0;
                 $_POST['passwordStrength'] = 2;
-                $_POST['passwordPlain']    = isset($_POST['password']) ? $_POST['password'] : '';
-                $this->post->passwordPlain = $_POST['passwordPlain'];
             }
 
             $user = form::data($this->config->user->form->edit)
@@ -1114,7 +1110,7 @@ class user extends control
      * @access public
      * @return void
      */
-    public function ajaxGetItems(string $params = '', string $search = '', int $maxCount = 0, string $appendUser = '')
+    public function ajaxGetItems(string $params = '', string $search = '', int $maxCount = 0)
     {
         $items  = array();
         $search = empty($search) ? '' : base64_decode($search);
@@ -1126,7 +1122,7 @@ class user extends control
             if(!empty($_POST['params']))   $params   = $_POST['params'];
         }
 
-        $users  = $this->user->getPairs($params, $appendUser);
+        $users  = $this->user->getPairs($params);
         foreach($users as $account => $realname)
         {
             if(!empty($search) && stripos($account, $search) === false and stripos($realname, $search) === false) continue;

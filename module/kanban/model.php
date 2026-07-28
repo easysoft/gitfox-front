@@ -523,13 +523,10 @@ class kanbanModel extends model
         if(dao::isError()) return false;
 
         $cardID = $this->dao->lastInsertID();
-        $actionID = $this->loadModel('action')->create('kanbanCard', $cardID, 'created');
+        $this->loadModel('action')->create('kanbanCard', $cardID, 'created');
         $this->file->saveUpload('kanbancard', $cardID);
         $this->file->updateObjectID($this->post->uid, $cardID, 'kanbancard');
         $this->addKanbanCell((int)$card->kanban, (int)$this->post->lane, $columnID, 'common', (string)$cardID);
-
-        $card->id = $cardID;
-        $this->loadModel('message')->sendMentionNotice('kanban', 'createCard', $actionID, $card);
 
         return $cardID;
     }
@@ -1291,7 +1288,7 @@ class kanbanModel extends model
             $creators = array();
             if($fromType == 'productplan' || $fromType == 'release')
             {
-                $creators = $this->dao->select('`objectID`, actor')->from(TABLE_ACTION)
+                $creators = $this->dao->select('objectID, actor')->from(TABLE_ACTION)
                     ->where('objectID')->in(array_keys($objectCards))
                     ->andWhere('objectType')->eq($fromType)
                     ->andWhere('action')->eq('opened')
@@ -1387,9 +1384,9 @@ class kanbanModel extends model
     {
         if(common::isTutorialMode()) return $this->loadModel('tutorial')->getCardGroup();
 
-        $cards = $this->dao->select('t1.*, t2.type AS columnType, t2.`group`')
+        $cards = $this->dao->select('t1.*, t2.type as columnType, t2.group')
             ->from(TABLE_KANBANCELL)->alias('t1')
-            ->leftJoin(TABLE_KANBANCOLUMN)->alias('t2')->on('t1.`column`=t2.id')
+            ->leftJoin(TABLE_KANBANCOLUMN)->alias('t2')->on('t1.column=t2.id')
             ->where('t1.kanban')->eq($executionID)
             ->beginIF($browseType != 'all')->andWhere('t1.type')->eq($browseType)->fi()
             ->orderby($orderBy)
@@ -1464,7 +1461,7 @@ class kanbanModel extends model
         foreach($lanes as $lane) $this->refreshCards((array)$lane);
 
         $columns = $this->dao->select('t1.cards, t1.lane, t2.id, t2.type, t2.name, t2.color, t2.limit, t2.parent')->from(TABLE_KANBANCELL)->alias('t1')
-            ->leftJoin(TABLE_KANBANCOLUMN)->alias('t2')->on('t1.`column` = t2.id')
+            ->leftJoin(TABLE_KANBANCOLUMN)->alias('t2')->on('t1.column = t2.id')
             ->where('t2.deleted')->eq(0)
             ->andWhere('t1.lane')->in(array_keys($lanes))
             ->orderBy('id_asc')
@@ -2985,15 +2982,9 @@ class kanbanModel extends model
         $this->dao->update(TABLE_KANBANCARD)->set('progress')->eq($this->post->progress ? $this->post->progress : 0)->set('status')->eq('doing')->where('id')->eq($cardID)->exec();
         $card = $this->getCardByID($cardID);
 
-        $changes  = common::createChanges($oldCard, $card);
-        $actionID = $this->loadModel('action')->create('kanbanCard', $cardID, 'activated', $this->post->comment);
+        $changes = common::createChanges($oldCard, $card);
+        $actionID = $this->loadModel('action')->create('kanbanCard', $cardID, 'activated');
         $this->action->logHistory($actionID, $changes);
-
-        if($this->post->comment)
-        {
-            $card->comment = $this->post->comment;
-            $this->loadModel('message')->sendMentionNotice('kanban', 'activateCard', $actionID, $card);
-        }
 
         return true;
     }
@@ -3052,10 +3043,6 @@ class kanbanModel extends model
         {
             $actionID = $this->loadModel('action')->create('kanbanCard', $cardID, 'edited');
             $this->action->logHistory($actionID, $changes);
-
-            $card->id     = $cardID;
-            $card->kanban = $oldCard->kanban;
-            $this->loadModel('message')->sendMentionNotice('kanban', 'editCard', $actionID, $card, $oldCard);
         }
 
         return true;
@@ -3612,8 +3599,8 @@ class kanbanModel extends model
      */
     public function getColumnIDByLaneID(int $laneID, string $columnType)
     {
-        return $this->dao->select('t1.`column`')->from(TABLE_KANBANCELL)->alias('t1')
-            ->leftJoin(TABLE_KANBANCOLUMN)->alias('t2')->on('t1.`column` = t2.id')
+        return $this->dao->select('t1.column')->from(TABLE_KANBANCELL)->alias('t1')
+            ->leftJoin(TABLE_KANBANCOLUMN)->alias('t2')->on('t1.column = t2.id')
             ->where('t1.lane')->eq($laneID)
             ->andWhere('t2.type')->eq($columnType)
             ->fetch('column');
@@ -3690,96 +3677,21 @@ class kanbanModel extends model
         {
             foreach($cardList as $card)
             {
-                $url         = helper::createLink('kanban', 'view', "kanbanID={$card->kanban}") . "#app=kanban";
-                $noticeType  = $today > $card->deadline ? 'due' : 'nearing';
-                $objectTitle = html::a($url, "#{$card->id} {$card->name}");
+                $url   = helper::createLink('kanban', 'view', "kanbanID={$card->kanban}") . "#app=kanban";
+                $data  = $today > $card->deadline ? $this->lang->kanban->due : $this->lang->kanban->nearing;
+                $data .= html::a($url, "#{$card->id} {$card->name}");
 
                 $notify = new stdclass();
                 $notify->objectType  = 'message';
                 $notify->action      = 0;
                 $notify->toList      = ",{$user},";
-                $notify->subject     = zget($this->lang->kanban, $noticeType);
-                $notify->data        = str_replace(array('{objectTitle}', '{deadline}'), array($objectTitle, $card->deadline), zget($this->lang->kanban->noticeText, $noticeType));
+                $notify->data        = $data;
                 $notify->status      = 'wait';
                 $notify->createdBy   = 'admin';
                 $notify->createdDate = helper::now();
                 $notify->sendTime    = null;
 
                 $this->dao->insert(TABLE_NOTIFY)->data($notify)->exec();
-            }
-        }
-    }
-
-    /**
-     * 发送看板卡片到期提醒的webhook通知。
-     * Send kanban card due reminders by webhook.
-     *
-     * @param  array $cards
-     * @access public
-     * @return void
-     */
-    public function sendCardNoticeByWebhook(array $cards)
-    {
-        if(empty($cards)) return;
-
-        $this->loadModel('webhook');
-        static $webhooks = array();
-        if(!$webhooks) $webhooks = $this->webhook->getList();
-        if(!$webhooks) return;
-
-        $today = helper::today();
-        $users = $this->dao->select('account,mobile,email')->from(TABLE_USER)->fetchAll('account');
-
-        foreach($cards as $user => $cardList)
-        {
-            foreach($cardList as $card)
-            {
-                $noticeType = $today > $card->deadline ? 'due' : 'nearing';
-                $title      = zget($this->lang->kanban, $noticeType);
-                $cardUser   = zget($users, $user, null);
-
-                foreach($webhooks as $id => $webhook)
-                {
-                    $host     = empty($webhook->domain) ? common::getSysURL() : $webhook->domain;
-                    $viewLink = $host . helper::createLink('kanban', 'view', "kanbanID={$card->kanban}") . '#app=kanban';
-                    $text     = sprintf(zget($this->lang->kanban->noticeWebhookText, $noticeType), $card->id, $card->name, $viewLink, $card->deadline);
-                    $mobile   = $cardUser ? $cardUser->mobile : '';
-                    $email    = $cardUser ? $cardUser->email : '';
-
-                    if($webhook->type == 'dinggroup' || $webhook->type == 'dinguser')
-                    {
-                        $data = $this->webhook->getDingdingData($title, $text, $webhook->type == 'dinguser' ? '' : $mobile);
-                    }
-                    elseif($webhook->type == 'bearychat')
-                    {
-                        $data = $this->webhook->getBearychatData($text, $mobile, $email, 'kanbancard', (int)$card->id);
-                    }
-                    elseif($webhook->type == 'wechatgroup' || $webhook->type == 'wechatuser')
-                    {
-                        $data = $this->webhook->getWeixinData($text, $mobile);
-                    }
-                    elseif($webhook->type == 'feishuuser' || $webhook->type == 'feishugroup')
-                    {
-                        $data = $this->webhook->getFeishuData($title, $text);
-                    }
-                    else
-                    {
-                        $data = new stdclass();
-                        $data->text = $text;
-                    }
-
-                    $postData = json_encode($data);
-                    if(!$postData) continue;
-
-                    if($webhook->sendType == 'async')
-                    {
-                        $this->webhook->saveData($id, 0, $postData);
-                        continue;
-                    }
-
-                    $result = $this->webhook->fetchHook($webhook, $postData, 0, $user);
-                    if(!empty($result)) $this->webhook->saveLog($webhook, 0, $postData, (string)$result);
-                }
             }
         }
     }
@@ -3867,9 +3779,8 @@ class kanbanModel extends model
     {
         /* Set toList and ccList. */
         $toList = $card->createdBy;
-        $ccList = '';
+        $ccList = trim($card->assignedTo, ',');
 
-        if($card->assignedTo) $toList .= ',' . trim($card->assignedTo, ',');
         if(empty($toList))
         {
             if(empty($ccList)) return false;

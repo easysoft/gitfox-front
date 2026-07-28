@@ -42,10 +42,6 @@ class editor extends wg
         zen-editor-menu-item > .menu-item.is-active:not(:hover) {background-color: transparent!important;}
         zen-editor-menu-item > .menu-item:has(.color):hover, zen-editor-menu-item > .menu-item:has(.color).is-active {background-color: ransparent!important; box-shadow: inset 0 0 0 1px var(--color-primary-300)!important;}
         .menubar {border-bottom: 1px solid #d8dbde!important; padding: 0.125rem;}
-        .editor__content {display: flex; flex-direction: column;}
-        .editor__content > div,
-        .editor__content > div > .article {display: flex; flex: 1; flex-direction: column;}
-        .tiptap.ProseMirror {flex: 1;}
         .tippy-content > div {border: 1px solid #d8dbde!important;}
         .tippy-content zen-editor-menu-item {line-height: normal;}
         .tippy-content zen-editor-menu-item .label {all: unset;}
@@ -62,7 +58,7 @@ class editor extends wg
     {
         $version = self::$version;
         $content = file_get_contents(__DIR__ . DS . 'js' . DS . 'v1.js');
-        $content .= "$.getLib('zen-editor/zeneditor.js?v=$version', {type: 'module'}, () => {document.body.dataset.loadedEditor = true;});";
+        $content .= "$.getLib('zen-editor/zen-editor.esm.js?v=$version', {type: 'module'}, () => {document.body.dataset.loadedEditor = true;});";
         return $content;
     }
 
@@ -168,8 +164,8 @@ class editor extends wg
         /* Set initial content. */
         $initialContent = $this->prop('value');
         $children       = $this->children();
-        if(empty($children)) $editor->setProp('initial-content', htmlspecialchars($initialContent ? $initialContent : '', ENT_COMPAT | ENT_SUBSTITUTE | ENT_HTML5, null, true));
-        else                 $editor->add(h('article', set('slot', 'content'), $initialContent ? html($initialContent) : null, $children));
+        if(empty($children)) $editor->setProp('initial-content', $initialContent);
+        else                 $editor->add(h('article', set('slot', 'content'), $initialContent? html($initialContent) : null, $children));
 
         $templateType = $this->prop('templateType');
 

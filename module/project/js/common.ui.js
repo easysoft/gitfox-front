@@ -318,11 +318,7 @@ function toggleStageBy()
     });
 
     if(chosenProducts > 1)  $('.stageByBox').removeClass('hidden');
-    if(chosenProducts <= 1)
-    {
-        $('.stageByBox').addClass('hidden');
-        $('input[name=stageBy][value=project]').prop('checked', true);
-    }
+    if(chosenProducts <= 1) $('.stageByBox').addClass('hidden');
 }
 
 window.getDateMenu = function()

@@ -718,7 +718,7 @@ class docModelTest extends baseTest
      * @access public
      * @return array
      */
-    public function getDocsWithPagerTest(array $libs, string $spaceType, int $excludeID = 0, bool $queryTemplate = false, string $filterType = '', ?object $pager = null, string $search = '', string $searchType = 'all'): array
+    public function getDocsWithPagerTest(array $libs, string $spaceType, int $excludeID = 0, bool $queryTemplate = false, string $filterType = '', object $pager = null, string $search = '', string $searchType = 'all'): array
     {
         $docs = $this->instance->getDocsWithPager($libs, $spaceType, $excludeID, $queryTemplate, $filterType, $pager, $search, $searchType);
 
@@ -5673,37 +5673,6 @@ class docModelTest extends baseTest
     {
         $result = $this->invokeArgs('processDocList', [$docs, $rootDocs, $spaceType]);
         if(dao::isError()) return dao::getError();
-        return $result;
-    }
-
-    /**
-     * Test getVersionMarkers method.
-     *
-     * @param  int $docID
-     * @access public
-     * @return array
-     */
-    public function getVersionMarkersTest(int $docID): array
-    {
-        $result = $this->instance->getVersionMarkers($docID);
-        if(dao::isError()) return dao::getError();
-
-        return $result;
-    }
-
-    /**
-     * Test getVersionRelations method.
-     *
-     * @param  int $docID
-     * @param  int $version
-     * @access public
-     * @return array
-     */
-    public function getVersionRelationsTest(int $docID, int $version): array
-    {
-        $result = $this->instance->getVersionRelations($docID, $version);
-        if(dao::isError()) return dao::getError();
-
         return $result;
     }
 

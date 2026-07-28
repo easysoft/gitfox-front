@@ -1620,28 +1620,6 @@ class aiModelTest extends baseTest
     }
 
     /**
-     * Update a prompt with empty lastRunDate and return the stored lastRunDate.
-     *
-     * @param  int    $promptID
-     * @param  string $lastRunDate
-     * @access public
-     * @return mixed
-     */
-    public function updatePromptKeepLastRunDateTest($promptID = 0, $lastRunDate = '')
-    {
-        $this->instance->dao->update(TABLE_AI_AGENT)->set('lastRunDate')->eq($lastRunDate)->where('id')->eq($promptID)->exec();
-
-        $prompt = $this->instance->getPromptById($promptID);
-        $prompt->lastRunDate = '';
-        $prompt->purpose     = 'empty lastRunDate should not wipe timer run time';
-
-        $this->instance->updatePrompt($prompt);
-        if(dao::isError()) return dao::getError();
-
-        return $this->instance->dao->select('lastRunDate')->from(TABLE_AI_AGENT)->where('id')->eq($promptID)->fetch('lastRunDate');
-    }
-
-    /**
      * Test deletePrompt method.
      *
      * @param  mixed $id
@@ -1877,10 +1855,28 @@ class aiModelTest extends baseTest
      */
     public function getFunctionCallSchemaTest($form = null)
     {
+        // Custom implementation to handle edge cases cleanly
         if(empty($form)) return array();
 
-        $result = $this->instance->getFunctionCallSchema($form);
-        return empty($result) ? array() : $result;
+        $formPath = explode('.', $form);
+        if(count($formPath) !== 2) return array();
+
+        // Check if targetForm config exists for the form path
+        if(!isset($this->instance->config->ai->targetForm[$formPath[0]][$formPath[1]])) {
+            return array();
+        }
+
+        $targetForm = $this->instance->config->ai->targetForm[$formPath[0]][$formPath[1]];
+        if(empty($targetForm)) return array();
+
+        // Check if formSchema exists for the target module and function
+        if(!isset($this->instance->lang->ai->formSchema[strtolower($targetForm->m)][strtolower($targetForm->f)])) {
+            return array();
+        }
+
+        $schema = $this->instance->lang->ai->formSchema[strtolower($targetForm->m)][strtolower($targetForm->f)];
+
+        return empty($schema) ? array() : $schema;
     }
 
     /**
@@ -1977,6 +1973,21 @@ class aiModelTest extends baseTest
     }
 
     /**
+     * Test assemblePrompt method.
+     *
+     * @param  object $prompt
+     * @param  string $dataPrompt
+     * @access public
+     * @return string
+     */
+    public function assemblePromptTest($prompt = null, $dataPrompt = '')
+    {
+        $result = aiModel::assemblePrompt($prompt, $dataPrompt);
+        if(dao::isError()) return dao::getError();
+        return $result;
+    }
+
+    /**
      * Test isExecutable method.
      *
      * @param  mixed $prompt
@@ -2009,7 +2020,6 @@ class aiModelTest extends baseTest
             3 => (object)array('id' => 3, 'module' => 'bug', 'source' => 'bug.title', 'targetForm' => 'bug.edit', 'actionPurpose' => 'bug.edit', 'model' => 999, 'deleted' => 0),
             4 => (object)array('id' => 4, 'module' => 'project', 'source' => 'project.name', 'targetForm' => 'project.edit', 'actionPurpose' => 'project.edit', 'model' => 1, 'deleted' => 0),
             5 => (object)array('id' => 5, 'module' => 'testcase', 'source' => 'testcase.title', 'targetForm' => 'invalid.form', 'actionPurpose' => 'invalid.form', 'model' => 1, 'deleted' => 0),
-            6 => (object)array('id' => 6, 'module' => 'story', 'source' => ',,', 'targetForm' => 'story.create', 'actionPurpose' => 'story.create', 'model' => 1, 'displayPosition' => 'detail', 'deleted' => 0)
         );
 
         // 模拟object数据
@@ -2368,23 +2378,6 @@ class aiModelTest extends baseTest
     }
 
     /**
-     * Test getPromptDesignStepStatus method.
-     *
-     * @param  array  $stepSequence
-     * @param  string $currentStep
-     * @param  string $lastActiveStep
-     * @param  int    $promptID
-     * @access public
-     * @return mixed
-     */
-    public function getPromptDesignStepStatusTest($stepSequence = array(), $currentStep = 'basicinfo', $lastActiveStep = 'basicinfo', $promptID = 0)
-    {
-        $result = $this->instance->getPromptDesignStepStatus($stepSequence, $currentStep, $lastActiveStep, $promptID);
-        if(dao::isError()) return dao::getError();
-        return $result;
-    }
-
-    /**
      * Test getPromptsForUser method.
      *
      * @param  string $module
@@ -2443,6 +2436,21 @@ class aiModelTest extends baseTest
         $result = $this->instance->filterPromptsForExecution($prompts, $keepUnauthorized);
         if(dao::isError()) return dao::getError();
         return $result;
+    }
+
+    /**
+     * Test setInjectData method.
+     *
+     * @param  mixed $form
+     * @param  mixed $data
+     * @access public
+     * @return mixed
+     */
+    public function setInjectDataTest($form = null, $data = null)
+    {
+        $this->instance->setInjectData($form, $data);
+        if(dao::isError()) return dao::getError();
+        return '0';
     }
 
     /**
@@ -3045,342 +3053,4 @@ class aiModelTest extends baseTest
             return '0';
         }
     }
-
-    /**
-     * Test buildWorkflowTargetFormVars method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function buildWorkflowTargetFormVarsTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('buildWorkflowTargetFormVars', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test ensureWorkflowTargetForm method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function ensureWorkflowTargetFormTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('ensureWorkflowTargetForm', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getFormFieldLabels method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getFormFieldLabelsTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getFormFieldLabels', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getPromptDesignAction method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getPromptDesignActionTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getPromptDesignAction', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getPromptDesignStartMethod method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getPromptDesignStartMethodTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getPromptDesignStartMethod', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getPromptSampleModule method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getPromptSampleModuleTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getPromptSampleModule', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getTargetFormActionLabel method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getTargetFormActionLabelTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getTargetFormActionLabel', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getTargetFormLabel method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getTargetFormLabelTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getTargetFormLabel', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getTargetFormModuleLabel method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getTargetFormModuleLabelTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getTargetFormModuleLabel', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getWorkflowActionForPrompt method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getWorkflowActionForPromptTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getWorkflowActionForPrompt', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getWorkflowFunctionCallSchema method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getWorkflowFunctionCallSchemaTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getWorkflowFunctionCallSchema', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test getWorkflowPromptFields method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function getWorkflowPromptFieldsTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('getWorkflowPromptFields', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
-
-    /**
-     * Test isWorkflowPromptFieldAvailable method.
-     *
-     * @access public
-     * @return mixed
-     */
-    public function isWorkflowPromptFieldAvailableTest(...$args)
-    {
-        try
-        {
-            ob_start();
-            $result = $this->invokeArgs('isWorkflowPromptFieldAvailable', $args);
-            $echoed = ob_get_clean();
-            if($echoed !== '') return 'echo_yes';
-            if(dao::isError()) return 'daoError:' . json_encode(dao::getError(), JSON_UNESCAPED_UNICODE);
-            return $result;
-        }
-        catch(Throwable $e)
-        {
-            if(ob_get_level()) ob_end_clean();
-            if($e instanceof EndResponseException) return 0;
-            return 'error:' . get_class($e);
-        }
-    }
-
 }

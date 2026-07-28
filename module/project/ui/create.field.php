@@ -9,8 +9,6 @@ $model       = data('model');
 $hasCode     = !empty($config->setCode);
 $copyProject = !empty(data('copyProjectID'));
 $programID   = $copyProject ? data('copyProject.parent') : data('parentProgram.id');
-$isLongTime  = $copyProject && data('copyProject.end') == LONG_TIME;
-$showEndTip  = $copyProject && !$isLongTime;
 
 $fields->field('parent')
     ->control('picker', array('className' => $copyProject ? 'has-warning' : '', 'required' => true))
@@ -41,16 +39,14 @@ if($hasCode)
 }
 
 $fields->field('begin')
-    ->tip($showEndTip ? $lang->project->copyProject->endTips : ' ')
-    ->tipClass($showEndTip ? 'text-warning' : ($copyProject ? 'text-warning hidden' : 'text-warning'));
-if(!$copyProject || data('copyProject.multiple') != '0') $fields->field('begin')->checkbox(array('text' => $lang->project->longTime, 'name' => 'longTime', 'checked' => $isLongTime));
+    ->tip($copyProject ? $lang->project->copyProject->endTips : ' ')
+    ->tipClass('text-warning');
+if(!$copyProject || data('copyProject.multiple') != '0') $fields->field('begin')->checkbox(array('text' => $lang->project->longTime, 'name' => 'longTime', 'checked' => false));
 
 $fields->field('days')
     ->control('input', array('className' => $copyProject ? 'has-warning' : ''))
     ->className($copyProject ? 'has-warning' : '')
     ->tip($copyProject ? $lang->project->copyProject->daysTips : null)
-    ->hidden($isLongTime)
-    ->disabled($isLongTime)
     ->value($copyProject ? data('copyProject.days') : '')
     ->tipClass($copyProject ? 'text-warning' : null);
 

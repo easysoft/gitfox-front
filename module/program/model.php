@@ -228,7 +228,7 @@ class programModel extends model
             ->beginIF($this->app->rawMethod == 'browse' && $type === 'top')->andWhere('parent')->eq(0)->fi()
             ->beginIF($this->app->rawMethod == 'browse' && ($type === 'child' or !$this->app->user->admin))->andWhere('id')->in($objectIdList)->fi()
             ->beginIF(!$this->app->user->admin && $this->app->rawMethod != 'browse')->andWhere('id')->in($userViewIdList)->fi()
-            ->beginIF(helper::isApiRequest() && !$this->cookie->showClosed)->andWhere('status')->ne('closed')->fi()
+            ->beginIF(defined('RUN_MODE') && RUN_MODE == 'api' && !$this->cookie->showClosed)->andWhere('status')->ne('closed')->fi()
             ->orderBy($orderBy)
             ->page($pager)
             ->fetchAll('id');
@@ -322,7 +322,7 @@ class programModel extends model
         $releaseGroup = $this->loadModel('release')->getGroupByProduct($productIdList);
 
         /* Get doing executions. */
-        $doingExecutions = $this->dao->select('id, project, name, begin, end')->from(TABLE_EXECUTION)
+        $doingExecutions = $this->dao->select('id, project, name, end')->from(TABLE_EXECUTION)
             ->where('type')->in('sprint,stage,kanban')
             ->andWhere('status')->eq('doing')
             ->andWhere('deleted')->eq(0)
@@ -350,7 +350,7 @@ class programModel extends model
         $involvedProgramIdList = array();
 
         /* All objects in program table. */
-        $objects = $this->dao->select('id,type,project,parent,path,`openedBy`,`PM`')->from(TABLE_PROGRAM)->where('deleted')->eq(0)->fetchAll('id');
+        $objects = $this->dao->select('id,type,project,parent,path,openedBy,PM')->from(TABLE_PROGRAM)->where('deleted')->eq(0)->fetchAll('id');
         foreach($objects as $id => $object)
         {
             if($object->openedBy != $account && $object->PM != $account) continue;
@@ -384,9 +384,9 @@ class programModel extends model
         }
 
         /* All involves in products table. */
-        $products = $this->dao->select('id, program, `createdBy`, `PO`, `QD`, `RD`')->from(TABLE_PRODUCT)
+        $products = $this->dao->select('id, program, createdBy, PO, QD, RD')->from(TABLE_PRODUCT)
             ->where('deleted')->eq(0)
-            ->andWhere("(`createdBy` = '$account' OR `PO` = '$account' OR `QD` = '$account' OR `RD` = '$account')")
+            ->andWhere("(createdBy = '$account' or PO = '$account' or QD = '$account' or RD = '$account')")
             ->fetchAll('id');
         foreach($products as $id => $product) $involvedProgramIdList[$product->program] = $product->program;
 
@@ -457,15 +457,6 @@ class programModel extends model
                 ->fetchAll('project');
         }
 
-        /* Get workingDays. */
-        $today       = helper::today();
-        $earliestEnd = $today;
-        foreach($projects as $project)
-        {
-            if(!empty($project->end) && !helper::isZeroDate($project->end) && $project->end < $earliestEnd) $earliestEnd = $project->end;
-        }
-        $workingDays = $this->loadModel('holiday')->getActualWorkingDays($earliestEnd, $today);
-
         /* Process projects. */
         $stats = array();
         foreach($projects as $projectID => $project)
@@ -475,13 +466,8 @@ class programModel extends model
             /* Judge whether the project is delayed. */
             if($project->status != 'done' && $project->status != 'closed' && $project->status != 'suspended')
             {
-                $betweenDays = $this->holiday->getDaysBetween($project->end, $today);
-                if($betweenDays)
-                {
-                    $delayDays = array_intersect($betweenDays, $workingDays);
-                    $delay     = count($delayDays) - 1;
-                    if($delay > 0) $project->delay = $delay;
-                }
+                $delay = empty($project->end) ? 0 : helper::diffDate(helper::today(), $project->end);
+                if($delay > 0) $project->delay = $delay;
             }
 
             /* Merge project team. */
@@ -527,10 +513,8 @@ class programModel extends model
             $query = str_replace('`id`','t1.id', $this->session->projectQuery);
         }
 
-        $joinInvolved = $this->cookie->involved || $browseType == 'involved';
-        $select       = ($joinInvolved ? 'DISTINCT ' : '') . 't1.*, CAST(NULLIF(t1.budget, 0) AS DECIMAL) AS budget';
-        $stmt         = $this->dao->select($select)->from(TABLE_PROJECT)->alias('t1');
-        if($joinInvolved) $stmt = $this->loadModel('project')->leftJoinInvolvedTable($stmt);
+        $stmt = $this->dao->select("DISTINCT t1.*, CAST(NULLIF(t1.budget, 0) AS DECIMAL) AS budget")->from(TABLE_PROJECT)->alias('t1');
+        if($this->cookie->involved || $browseType == 'involved') $stmt = $this->loadModel('project')->leftJoinInvolvedTable($stmt);
         $stmt->where('t1.deleted')->eq('0')
             ->andWhere('t1.vision')->eq($this->config->vision)
             ->beginIF($browseType == 'bysearch' && $query)->andWhere($query)->fi()
@@ -549,7 +533,7 @@ class programModel extends model
             ->beginIF(!$queryAll && !$this->app->user->admin)->andWhere('t1.id')->in($this->app->user->view->projects)->fi();
 
         if($this->cookie->involved) $stmt = $this->project->appendInvolvedCondition($stmt);
-        $projectList = $stmt->orderBy($orderBy)->page($pager, $joinInvolved ? 't1.id' : '')->fetchAll('id');
+        $projectList = $stmt->orderBy($orderBy)->page($pager, 't1.id')->fetchAll('id');
 
         /* Determine how to display the name of the program. */
         if($programTitle and in_array($this->config->systemMode, array('ALM', 'PLM'))) $projectList = $this->batchProcessProgramName($projectList, $programTitle);
@@ -595,7 +579,7 @@ class programModel extends model
      */
     public function getStakeholders(int $programID = 0, string $orderBy = 'id_desc', ?object $pager = null): array
     {
-        return $this->dao->select('t2.account,t2.realname,t2.role,t2.qq,t2.mobile AS phone,t2.weixin,t2.email,t1.id,t1.type,t1.from,t1.key')->from(TABLE_STAKEHOLDER)->alias('t1')
+        return $this->dao->select('t2.account,t2.realname,t2.role,t2.qq,t2.mobile,t2.phone,t2.weixin,t2.email,t1.id,t1.type,t1.from,t1.key')->from(TABLE_STAKEHOLDER)->alias('t1')
             ->leftJoin(TABLE_USER)->alias('t2')->on('t1.user=t2.account')
             ->where('t1.`objectID`')->eq($programID)
             ->andWhere('t1.`objectType`')->eq('program')
@@ -1081,7 +1065,7 @@ class programModel extends model
         }
 
         /* Get all parent PM.*/
-        $parentPM = $this->dao->select('id, `PM`')->from(TABLE_PROGRAM)->where('id')->in(array_keys($parents))->andWhere('deleted')->eq('0')->fetchAll();
+        $parentPM = $this->dao->select('id, PM')->from(TABLE_PROGRAM)->where('id')->in(array_keys($parents))->andWhere('deleted')->eq('0')->fetchAll();
 
         $parentPMGroup = array();
         foreach($parentPM as $PM)
@@ -1327,7 +1311,7 @@ class programModel extends model
      */
     public function getBaseDataList(array $programIdList): array
     {
-        return $this->dao->select('id,name,`PM`,path,parent,type')
+        return $this->dao->select('id,name,PM,path,parent,type')
             ->from(TABLE_PROGRAM)
             ->where('id')->in($programIdList)
             ->andWhere('deleted')->eq('0')

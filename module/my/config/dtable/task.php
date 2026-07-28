@@ -91,23 +91,7 @@ $config->my->task->dtable->fieldList['status']['type']      = 'status';
 $config->my->task->dtable->fieldList['status']['statusMap'] = $lang->task->statusList + array('changed' => $lang->task->storyChange);
 $config->my->task->dtable->fieldList['status']['group']     = 'pri';
 $config->my->task->dtable->fieldList['status']['sortType']  = true;
-$config->my->task->dtable->fieldList['status']['show']      = true;
-
-$config->my->task->dtable->fieldList['project']['name']     = 'project';
-$config->my->task->dtable->fieldList['project']['title']    = $lang->task->project;
-$config->my->task->dtable->fieldList['project']['type']     = 'text';
-$config->my->task->dtable->fieldList['project']['link']     = array('module' => 'project', 'method' => 'view', 'params' => 'projectID={project}');
-$config->my->task->dtable->fieldList['project']['group']    = 'project';
-$config->my->task->dtable->fieldList['project']['sortType'] = true;
-$config->my->task->dtable->fieldList['project']['show']     = true;
-
-$config->my->task->dtable->fieldList['execution']['name']     = 'execution';
-$config->my->task->dtable->fieldList['execution']['title']    = $lang->task->execution;
-$config->my->task->dtable->fieldList['execution']['type']     = 'text';
-$config->my->task->dtable->fieldList['execution']['link']     = array('module' => 'execution', 'method' => 'task', 'params' => 'executionID={execution}');
-$config->my->task->dtable->fieldList['execution']['group']    = 'project';
-$config->my->task->dtable->fieldList['execution']['sortType'] = true;
-$config->my->task->dtable->fieldList['execution']['show']     = true;
+$config->my->task->dtable->fieldList['status']['show']     = true;
 
 $config->my->task->dtable->fieldList['type']['name']     = 'type';
 $config->my->task->dtable->fieldList['type']['title']    = $lang->task->typeAB;
@@ -115,6 +99,22 @@ $config->my->task->dtable->fieldList['type']['type']     = 'category';
 $config->my->task->dtable->fieldList['type']['map']      = $lang->task->typeList;
 $config->my->task->dtable->fieldList['type']['group']    = 'pri';
 $config->my->task->dtable->fieldList['type']['sortType'] = true;
+
+$config->my->task->dtable->fieldList['projectName']['name']     = 'projectName';
+$config->my->task->dtable->fieldList['projectName']['title']    = $lang->task->project;
+$config->my->task->dtable->fieldList['projectName']['type']     = 'text';
+$config->my->task->dtable->fieldList['projectName']['link']     = array('module' => 'project', 'method' => 'view', 'params' => 'projectID={project}');
+$config->my->task->dtable->fieldList['projectName']['group']    = 'project';
+$config->my->task->dtable->fieldList['projectName']['sortType'] = true;
+$config->my->task->dtable->fieldList['projectName']['show']     = true;
+
+$config->my->task->dtable->fieldList['executionName']['name']     = 'executionName';
+$config->my->task->dtable->fieldList['executionName']['title']    = $lang->task->execution;
+$config->my->task->dtable->fieldList['executionName']['type']     = 'text';
+$config->my->task->dtable->fieldList['executionName']['link']     = array('module' => 'execution', 'method' => 'task', 'params' => 'executionID={execution}');
+$config->my->task->dtable->fieldList['executionName']['group']    = 'project';
+$config->my->task->dtable->fieldList['executionName']['sortType'] = true;
+$config->my->task->dtable->fieldList['executionName']['show']     = true;
 
 $config->my->task->dtable->fieldList['openedBy']['name']     = 'openedBy';
 $config->my->task->dtable->fieldList['openedBy']['title']    = $lang->task->openedByAB;
@@ -203,6 +203,7 @@ if($config->edition != 'open')
     $config->my->task->dtable->fieldList['relatedObject']['group']       = 'deadline';
     $config->my->task->dtable->fieldList['relatedObject']['sortType']    = false;
     $config->my->task->dtable->fieldList['relatedObject']['width']       = '70';
+    $config->my->task->dtable->fieldList['relatedObject']['link']        = common::hasPriv('custom', 'showRelationGraph') ? "RAWJS<function(info){ if(info.row.data.relatedObject == 0) return 0; else return '" . helper::createLink('custom', 'showRelationGraph', 'objectID={id}&objectType=task') . "'; }>RAWJS" : null;
     $config->my->task->dtable->fieldList['relatedObject']['data-toggle'] = 'modal';
     $config->my->task->dtable->fieldList['relatedObject']['data-size']   = 'lg';
     $config->my->task->dtable->fieldList['relatedObject']['flex']        = false;

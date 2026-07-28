@@ -254,7 +254,7 @@ class testtask extends control
             if($this->app->tab == 'project')   $link = $this->createLink('project', 'testtask', "projectID={$testtask->project}");
             if($this->app->tab == 'execution') $link = $this->createLink('execution', 'testtask', "executionID={$testtask->execution}");
             if($this->app->tab == 'qa')        $link = $this->createLink('testtask', 'browse', "productID={$this->post->product}");
-            return $this->send(array('result' => 'success', 'message' => $message, 'load' => $link, 'id' => $testtaskID, 'changes' => array('type' => 'add', 'objectType' => 'testtask', 'objectList' => array($testtaskID))));
+            return $this->send(array('result' => 'success', 'message' => $message, 'load' => $link, 'id' => $testtaskID));
         }
 
         $this->testtaskZen->setMenu($productID, 0, $projectID, $executionID);
@@ -825,7 +825,7 @@ class testtask extends control
 
         $message = $this->executeHooks($testtaskID) ?: $this->lang->saveSuccess;
 
-        if(helper::isApiRequest()) return $this->send(array('status' => 'success'));
+        if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'success'));
 
         $browseList = inlink('browse', "productID=$task->product");
         if($this->app->tab == 'execution') $browseList = $this->createLink('execution', 'testtask', "executionID=$task->execution");
@@ -1011,7 +1011,7 @@ class testtask extends control
         $cases = $this->testtaskZen->prepareCasesForBatchRun($productID, $orderBy, $from, $testtaskID, $confirm, $caseIdList, $runIdList);
         if(empty($cases)) return $this->send(array('result' => 'fail', 'load' => array('alert' => $this->lang->testtask->skipChangedCases, 'locate' => $url)));
 
-        $steps = $this->loadModel('testcase')->getStepGroupByIdList(array_keys($cases));
+        $steps = $this->loadModel('testcase')->getStepGroupByIdList($caseIdList);
 
         $emptyCases = '';
         foreach($cases as $caseID => $case)
@@ -1021,11 +1021,6 @@ class testtask extends control
                 unset($cases[$caseID]);
 
                 $emptyCases .= empty($emptyCases) ? "{$case->id}" : ",{$case->id}";
-            }
-            elseif(!empty($steps[$case->id]))
-            {
-                $firstStep = reset($steps[$case->id]);
-                if($firstStep->version != $case->version) $steps[$case->id] = $this->testcase->getSteps($case->id, $case->version);
             }
         }
 
@@ -1038,7 +1033,7 @@ class testtask extends control
         foreach($cases as $case) $modules += $this->tree->getModulesName((array)$case->module);
 
         $this->view->title      = $this->lang->testtask->batchRun;
-        $this->view->steps      = $steps;
+        $this->view->steps      = $this->loadModel('testcase')->getStepGroupByIdList($caseIdList);
         $this->view->modules    = $modules;
         $this->view->cases      = $cases;
         $this->view->caseIdList = $caseIdList;

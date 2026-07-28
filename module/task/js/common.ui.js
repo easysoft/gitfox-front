@@ -247,8 +247,3 @@ function ignoreTip(event)
 {
     $(event.target).closest('.form-tip').remove();
 }
-
-window.changeType = function(event)
-{
-    return false;
-}

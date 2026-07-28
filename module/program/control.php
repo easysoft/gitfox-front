@@ -98,7 +98,7 @@ class program extends control
         $programPairs = $this->program->getPairs();
         if($programID && !isset($programPairs[$programID]))
         {
-            if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'message' => '404 Not found'));
+            if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'fail', 'message' => '404 Not found'));
             return $this->send(array('result' => 'success', 'load' => array('alert' => $this->lang->notFound, 'locate' => $this->createLink('program', 'browse'))));
         }
 
@@ -157,7 +157,7 @@ class program extends control
 
             $this->loadModel('action')->create('program', $programID, 'opened');
             $locateLink = $this->session->programList ? $this->session->programList : $this->createLink('program', 'browse');
-            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $programID, 'load' => $locateLink, 'changes' => array('type' => 'add', 'objectType' => 'program', 'objectList' => array($programID))));
+            return $this->send(array('result' => 'success', 'message' => $this->lang->saveSuccess, 'id' => $programID, 'load' => $locateLink));
         }
 
         $originExtra = $extra;
@@ -413,7 +413,7 @@ class program extends control
         $childrenPairs = $this->program->getChildrenPairsByID($programID);
         if(count($childrenPairs))
         {
-            if($this->viewType == 'json' or (helper::isApiRequest())) return $this->send(array('result' => 'fail', 'message' => 'Can not delete the program has children.'));
+            if($this->viewType == 'json' or (defined('RUN_MODE') && RUN_MODE == 'api')) return $this->send(array('result' => 'fail', 'message' => 'Can not delete the program has children.'));
             return $this->send(array('result' => 'fail', 'callback' => "zui.Modal.alert({icon: 'icon-exclamation-sign', iconClass: 'warning-pale rounded-full icon-2x',  message: '{$this->lang->program->hasChildren}'})"));
         }
 

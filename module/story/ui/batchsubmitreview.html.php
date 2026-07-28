@@ -34,8 +34,7 @@ foreach($stories as $story)
     $row = new stdClass();
     $row->id            = $story->id;
     $row->title         = $story->title;
-    $row->reviewer      = !empty($storyReviewers) ? $storyReviewers : $story->prevReviewers;
-    $row->reviewerItems = !empty($productReviewers[$story->product]) ? $productReviewers[$story->product] : null;
+    $row->reviewer      = $storyReviewers;
     $row->forceReview   = $rowForceReview ? 1 : 0;
     $row->needNotReview = $needNotReview ? 1 : 0;
     $data[] = $row;
@@ -86,7 +85,7 @@ formBatchPanel
         set::required($hasForceReview),
         set::multiple(true),
         set::items($reviewers),
-        set::width('240px')
+        set::width('270px')
     ),
     formBatchItem
     (

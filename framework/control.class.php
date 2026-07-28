@@ -17,7 +17,7 @@
  *
  * @package framework
  */
-include_once __DIR__ . '/base/control.class.php';
+include __DIR__ . '/base/control.class.php';
 
 #[AllowDynamicProperties]
 class control extends baseControl
@@ -40,7 +40,7 @@ class control extends baseControl
         if($this->config->edition == 'open') return false;
 
         /* Code for task #9224. Set requiredFields for workflow. */
-        if($this->dbh && ($this->app->isServing() || (helper::isApiRequest())))
+        if($this->dbh && ($this->app->isServing() || (defined('RUN_MODE') and RUN_MODE == 'api')))
         {
             $this->extendExportFields();
             $this->extendEditorFields();
@@ -550,6 +550,8 @@ class control extends baseControl
                 if($objectValue) $field->default = $objectValue;
             }
         }
+
+        if($fieldList) $fields->defaultOrders = array(implode(',', array_keys($fieldList)));
         return $this->loadModel('flow')->buildFormFields($fields, $fieldList, array(), $object);
     }
 
@@ -638,7 +640,7 @@ class control extends baseControl
 
             foreach($fieldList as $key => $field)
             {
-                if($field->buildin || !$field->show || !isset($layouts[$field->field]) || (!empty($field->position) && $position != $field->position)) unset($fieldList[$key]);
+                if(!$field->show || !isset($layouts[$field->field]) || (!empty($field->position) && $position != $field->position)) unset($fieldList[$key]);
 
                 if((is_numeric($field->default) || $field->default) && empty($field->defaultValue)) $field->defaultValue = $field->default;
                 if($object && empty($object->{$field->field}) && $field->defaultValue !== '') $object->{$field->field} = $field->defaultValue;

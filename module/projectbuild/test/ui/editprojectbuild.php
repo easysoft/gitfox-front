@@ -83,7 +83,6 @@ $build->stories->range('[]');
 $build->bugs->range('[]');
 $build->scmPath->range('[]');
 $build->filePath->range('[]');
-$build->builder->range('[admin]');
 $build->desc->range('描述111');
 $build->deleted->range('0');
 $build->gen(1);

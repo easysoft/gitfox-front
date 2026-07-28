@@ -607,7 +607,7 @@ function getAppCode(urlOrModuleName, defaultCode)
         if(methodLowerCase === 'browsetask') return 'execution';
         if(methodLowerCase === 'browsegroup') return 'bi';
     }
-    if(['ai', 'zai', 'aiteammate', 'aitask', 'aiprocedure', 'aiworkbench'].includes(moduleName)) return 'aiapp';
+    if(['ai', 'zai', 'aiteammate', 'aitask'].includes(moduleName)) return 'aiapp';
 
     code = navGroup[moduleName] || moduleName || urlOrModuleName;
     return apps.map[code] ? code : defaultCode;
@@ -1523,33 +1523,6 @@ window.browserNotify = function()
                         icon: 'envelope-o',
                         className: 'bg-secondary-50 text-secondary-600 messager-notice w-96'
                     });
-                    waitDom('.messagers', function()
-                    {
-                        if($('#messagerBox').length == 0)
-                        {
-                            $('.messagers').wrap("<div id='messagerBox' class='panel shadow-xl'></div>");
-                            $('#messagerBox').prepend("<div class='panel-heading border-b-2'><span class='panel-title'><i class='icon icon-bell'></i> " + langNotification + "</span></div>");
-                            $('#messagerBox .panel-heading').append("<div class='panel-action'><i class='icon icon-close cursor-pointer' onclick='closeAllMessagers();'></i></div>");
-
-                            const boxMaxHeight = (window.innerHeight - 53);
-                            $('.messagers').css('max-height', (boxMaxHeight - 40) + 'px');
-
-                            const $messagerBox = document.getElementById('messagerBox');
-
-                            // 检查消息变动，如果没有消息则移除消息框。
-                            const resizeObserver = new ResizeObserver((entries) => {
-                                  if($('#messagerBox .messagers .messager-holder').length == 0) $('#messagerBox').remove();
-                            });
-
-                            resizeObserver.observe($messagerBox);
-                        }
-
-                        const scrollContainer = document.querySelector('.messagers');
-                        scrollContainer.scrollTo({
-                            top: scrollContainer.scrollHeight,
-                            behavior: 'smooth'
-                        });
-                    });
                 }
             }
 
@@ -1587,11 +1560,6 @@ window.browserNotify = function()
         });
     }, pollTime * 1000);
 };
-
-window.closeAllMessagers = function()
-{
-    $('#messagerBox').remove();
-}
 
 window.clickMessage = function(obj)
 {

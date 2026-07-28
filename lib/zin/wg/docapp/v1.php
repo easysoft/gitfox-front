@@ -192,10 +192,10 @@ class docApp extends wg
         );
         $docFetcher          = createLink('doc', 'ajaxGetDoc', 'docID={docID}&version={version}');
         $filesFetcher        = createLink('doc', 'ajaxGetFiles', 'type={objectType}&objectID={objectID}');
+        $libSummariesFetcher = createLink('doc', 'ajaxGetLibSummaries', 'spaceType={spaceType}&spaceList={spaceList}');
         $uploadUrl           = createLink('file', 'ajaxUpload', 'uid={uid}&objectType={objectType}&objectID={objectID}&extra={extra}&field={field}&api={api}&gid={gid}');
         $downloadUrl         = createLink('file', 'ajaxQuery', 'fileID={gid}&objectType={objectType}&objectID={objectID}&title={title}&extra={extra}');
         $fileInfoUrl         = createLink('file', 'ajaxQuery', 'fileID={gid}&objectType={objectType}&objectID={objectID}&title={title}&extra={extra}', 'json');
-        $libSummariesFetcher = array('url' => createLink('doc', 'ajaxGetLibSummaries', 'spaceType={spaceType}'), 'method' => 'POST', 'beforeSend' => jsRaw('options => ({body: zui.createFormData({spaceList: options.body.replaceAll(\'"\', \'\')})})'));
 
         /**
          * 定义文档界面上的文件下载链接。
@@ -205,7 +205,7 @@ class docApp extends wg
         $fileUrl    = $this->prop('fileUrl');
         if(empty($fileUrl))
         {
-            $fileUrl    = createLink('doc', 'downloadFile', 'fileID={id}');
+            $fileUrl    = createLink('file', 'download', 'fileID={id}');
             $fileUrl   .= strpos($fileUrl, '?') === false ? '?' : '&';
             $fileUrl   .= $sessionStr;
         }
@@ -235,8 +235,6 @@ class docApp extends wg
         $langData->createRelease     = $lang->api->createRelease;
         $langData->libTypeList       = $lang->api->libTypeList;
         $langData->latestVersion     = $lang->api->latestVersion;
-        $langData->deliverableLabel  = $lang->project->deliverableAbbr;
-        $langData->baselineLabel     = $lang->project->baseline;
         $langData->template          = $lang->doc->template;
         $langData->labelAllVersions  = $lang->doc->allVersion;
         $langData->labelDiff         = $lang->doc->diff;
@@ -325,9 +323,8 @@ class docApp extends wg
         $app->control->loadModel('file');
 
         $fileListProps   = array();
-        $privs           = $this->prop('privs', array());
-        $canPreviewFile  = isset($privs['previewFile']) ? $privs['previewFile'] : common::hasPriv('file', 'preview');
-        $canDownloadFile = isset($privs['downloadFile']) ? $privs['downloadFile'] : common::hasPriv('file', 'download');
+        $canPreviewFile  = common::hasPriv('file', 'preview');
+        $canDownloadFile = common::hasPriv('file', 'download');
         if(!$canDownloadFile) $fileUrl = '';
 
         jsVar('libreOfficeTurnon', !empty($config->file->libreOfficeTurnon));
@@ -343,7 +340,7 @@ class docApp extends wg
         $fileListProps['itemProps']        = array('target' => '_blank');
         $fileListProps['fileActions']      = jsCallback('file')->do('return getFileActions(file)');
 
-        $canPreviewOffice  = $canPreviewFile && !empty($config->file->libreOfficeTurnon);
+        $canPreviewOffice  = common::hasPriv('file', 'preview') && !empty($config->file->libreOfficeTurnon);
         $historyPanelProps = $this->prop('historyPanel');
         if(empty($historyPanelProps)) $historyPanelProps = array();
         if(is_array($historyPanelProps)) $historyPanelProps['fileListProps'] = $fileListProps;
@@ -365,8 +362,9 @@ class docApp extends wg
             )], $this->convertZentaoListMenu($zentaoListMenu))
             : array();
 
+        $privs = $this->prop('privs', []);
         if(!isset($privs['downloadFile'])) $privs['downloadFile'] = $canDownloadFile;
-        if(!isset($privs['previewFile']))  $privs['previewFile']  = $canPreviewOffice;
+        if(empty($privs['previewFile']))   $privs['previewFile']  = $canPreviewOffice;
 
         return zui::docApp
         (

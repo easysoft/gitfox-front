@@ -39,13 +39,10 @@ class docList extends wg
 
         if(is_string($data->docVersions)) $data->docVersions = \json_decode($data->docVersions, true);
 
-        $docIdList = array_unique(array_filter(explode(',', $data->docs)));
-        rsort($docIdList);
-
         $docBox = array();
-        if($docIdList)
+        if($data->docs)
         {
-            foreach($docIdList as $docID)
+            foreach(explode(',', $data->docs) as $docID)
             {
                 $link = $mode == 'view' && common::hasPriv('doc', 'view') ? a(set::href(helper::createLink('doc', 'view', "docID={$docID}&version={$data->docVersions[$docID]}")), $oldDocs[$docID]->title) : $oldDocs[$docID]->title;
                 $docBox[] = div

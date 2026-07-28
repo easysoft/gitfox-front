@@ -38,32 +38,14 @@ class task extends control
      * @param  int    $todoID
      * @param  string $cardPosition
      * @param  int    $bugID
-     * @param  string $type
      * @access public
      * @return void
      */
-    public function create(int $executionID = 0, int $storyID = 0, int $moduleID = 0, int $taskID = 0, int $todoID = 0, string $cardPosition = '', int $bugID = 0, string $type = '')
+    public function create(int $executionID = 0, int $storyID = 0, int $moduleID = 0, int $taskID = 0, int $todoID = 0, string $cardPosition = '', int $bugID = 0)
     {
         /* Analytic parameter. */
         $cardPosition = str_replace(array(',', ' '), array('&', ''), $cardPosition);
         parse_str($cardPosition, $output);
-
-        /*
-         * 项目创建任务时，无执行项目自动使用内部默认执行；有执行项目必须传 executionID。
-         * When creating a project task, automatically use the internal default execution for a no-execution project, and require executionID for a project with executions.
-         */
-        if(empty($executionID) && !empty($this->post->project))
-        {
-            $project = $this->project->getByID($this->post->project);
-            if(empty($project->multiple))
-            {
-                $executionID = $this->execution->getNoMultipleID($project->id);
-            }
-            else
-            {
-                return $this->sendError('Need execution id.');
-            }
-        }
 
         $this->session->set('executionStoryList', $this->app->getURI(true), 'execution');
 
@@ -129,13 +111,11 @@ class task extends control
 
             /* Get the information returned after a task is created. */
             $response = $this->taskZen->responseAfterCreate($taskData, $execution, $this->post->after ? $this->post->after : '');
-            $response['changes'] = array('type' => 'add', 'objectType' => 'task', 'objectList' => array_values($taskIdList));
             return $this->send($response);
         }
 
         /* Shows the variables needed to create the task page. */
         $this->taskZen->assignCreateVars($execution, $storyID, $moduleID, $taskID, $todoID, $bugID, $output, $cardPosition);
-        $this->view->type = $type;
         $this->display();
     }
 
@@ -182,7 +162,7 @@ class task extends control
         /* Check whether the execution has permission to create tasks. */
         if($this->taskZen->isLimitedInExecution($executionID)) return $this->send(array('load' => array('locate' => $this->createLink('execution', 'task', "executionID={$executionID}"), 'alert' => sprintf($this->lang->task->createDenied, $execution->multiple ? $this->lang->executionCommon : $this->lang->projectCommon))));
 
-        if(!empty($_POST['name']))
+        if(!empty($_POST))
         {
             $parent = $taskID > 0 ? $this->task->fetchById($taskID) : null;
             /* Process the request data for the batch create tasks. */
@@ -197,7 +177,6 @@ class task extends control
             if(!isset($output['laneID']) || !isset($output['columnID'])) $this->loadModel('kanban')->updateLane($executionID, 'task');
 
             $response = $this->taskZen->responseAfterbatchCreate($taskIdList, $execution);
-            $response['changes'] = array('type' => 'add', 'objectType' => 'task', 'objectList' => array_values($taskIdList));
             return $this->send($response);
         }
 
@@ -219,16 +198,13 @@ class task extends control
 
         if(!empty($_POST))
         {
-            $formConfig = $this->config->task->form->edit;
-            if(in_array($this->post->mode, array('multi', 'linear'))) $formConfig['assignedTo']['skipRequired'] = true;
-
             /* Prepare and check data. */
-            $task = form::data($formConfig)->add('id', $taskID)->get();
+            $task = form::data($this->config->task->form->edit)->add('id', $taskID)->get();
             $task = $this->taskZen->buildTaskForEdit($task);
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
             /* For team task. */
-            $teamData = in_array($task->mode, array('linear', 'multi')) && $this->post->team ? form::data($this->config->task->form->team->edit)->get() : new stdclass();
+            $teamData = $this->post->team ? form::data($this->config->task->form->team->edit)->get() : new stdclass();
 
             /* Update task. */
             $changes = $this->task->update($task, $teamData);
@@ -240,7 +216,6 @@ class task extends control
             if($task->status == 'doing') $this->loadModel('common')->syncPPEStatus($taskID);
 
             $response = $this->taskZen->responseAfterEdit($taskID, $from, $changes, $message);
-            $response['changes'] = array('type' => 'update', 'objectType' => 'task', 'objectList' => array($taskID));
             return $this->send($response);
         }
 
@@ -275,7 +250,6 @@ class task extends control
             if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
 
             $response = $this->taskZen->responseAfterBatchEdit($allChanges);
-            $response['changes'] = array('type' => 'update', 'objectType' => 'task', 'objectList' => array_keys($taskData));
             return $this->send($response);
         }
 
@@ -399,7 +373,7 @@ class task extends control
         $task = $this->task->getById($taskID, true, $vision = 'all'); // TODO: $vision is for compatibling with viewing drill data.
         if(!$task)
         {
-            if(helper::isApiRequest()) return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
+            if(defined('RUN_MODE') && RUN_MODE == 'api') return $this->send(array('status' => 'fail', 'code' => 404, 'message' => '404 Not found'));
             return $this->sendError($this->lang->notFound, $this->config->vision == 'lite' ? $this->createLink('project', 'index') : $this->createLink('execution', 'all'));
         }
         if(!$this->loadModel('common')->checkPrivByObject('execution', $task->execution)) return $this->sendError($this->lang->execution->accessDenied, $this->createLink('execution', 'all'));
@@ -411,7 +385,7 @@ class task extends control
         $this->session->set('executionList', $this->app->getURI(true), 'execution'); // This allow get var of session as `$_SESSION['app-execution']['executionList']`.
 
         $execution    = $this->view->execution ?? $this->execution->getById($task->execution);
-        $isModalOrApi = helper::isAjaxRequest('modal') || (helper::isApiRequest());
+        $isModalOrApi = helper::isAjaxRequest('modal') || (defined('RUN_MODE') && RUN_MODE == 'api');
         if(!$isModalOrApi && $execution->type == 'kanban')
         {
             helper::setcookie('taskToOpen', (string)$taskID);
@@ -1084,7 +1058,7 @@ class task extends control
                 if(strpos(",{$childTask->path},", ",$taskID,") === false) continue;
                 $this->task->delete(TABLE_TASK, $childID);
                 if($childTask->fromBug != 0) $this->dao->update(TABLE_BUG)->set('toTask')->eq(0)->where('id')->eq($childTask->fromBug)->exec();
-                if($childTask->story) $this->loadModel('story')->setStage($childTask->story, array('type' => 'deleteTask', 'objectID' => $childID));
+                if($childTask->story) $this->loadModel('story')->setStage($childTask->story);
             }
         }
 
@@ -1096,7 +1070,7 @@ class task extends control
             $this->loadModel('action')->create('task', $task->parent, 'deleteChildrenTask', '', $taskID);
         }
         if($task->fromBug != 0) $this->dao->update(TABLE_BUG)->set('toTask')->eq(0)->where('id')->eq($task->fromBug)->exec();
-        if($task->story) $this->loadModel('story')->setStage($task->story, array('type' => 'deleteTask', 'objectID' => $taskID));
+        if($task->story) $this->loadModel('story')->setStage($task->story);
 
         $this->loadModel('program')->refreshProjectStats($task->project);
 

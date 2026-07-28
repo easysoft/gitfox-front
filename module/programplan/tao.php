@@ -48,7 +48,7 @@ class programplanTao extends programplanModel
 
         if($projectModel == 'ipd')
         {
-            $stagePointGroup = $this->dao->select('execution,category,`categoryTitle`')->from(TABLE_OBJECT)
+            $stagePointGroup = $this->dao->select('execution,category,categoryTitle')->from(TABLE_OBJECT)
                 ->where('execution')->in(array_keys($stageList))
                 ->andWhere('type')->eq('decision')
                 ->andWhere('enabled')->eq('1')
@@ -262,16 +262,10 @@ class programplanTao extends programplanModel
             /* Determines if the object is delay. */
             $data->delay     = $this->lang->programplan->delayList[0];
             $data->delayDays = 0;
-            $planEndDate     = $plan->status == 'closed' ? $data->realEnd : $today;
-            if($planEndDate > $data->endDate && $plan->status != 'suspended')
+            if($today > $data->endDate and $plan->status != 'closed')
             {
-                $workingDays = $this->loadModel('holiday')->getActualWorkingDays($data->endDate, $planEndDate);
-                $delayDays   = count($workingDays) - 1;
-                if($delayDays > 0)
-                {
-                    $data->delay     = $this->lang->programplan->delayList[1];
-                    $data->delayDays = $delayDays;
-                }
+                $data->delay     = $this->lang->programplan->delayList[1];
+                $data->delayDays = helper::diffDate($today, $data->endDate);
             }
 
             $datas['data'][$plan->id] = $data;
@@ -303,7 +297,7 @@ class programplanTao extends programplanModel
 
         $firstTask     = reset($tasks);
         $projectID     = $firstTask ? $firstTask->project : 0;
-        $taskDateLimit = $this->dao->select('`taskDateLimit`')->from(TABLE_PROJECT)->where('id')->eq($projectID)->fetch('taskDateLimit');
+        $taskDateLimit = $this->dao->select('taskDateLimit')->from(TABLE_PROJECT)->where('id')->eq($projectID)->fetch('taskDateLimit');
         foreach($tasks as $task)
         {
             $plan             = zget($plans, $task->execution, null);

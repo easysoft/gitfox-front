@@ -31,23 +31,8 @@ class storyZen extends story
             if(!empty($products)) $productID = key($products);
         }
 
-        /* 项目型项目没有显式产品，创建需求时自动使用项目的影子产品。For a non-product project, automatically use its shadow product when creating a story. */
-        if(empty($productID) && !empty($objectID))
-        {
-            $object = $this->project->fetchByID($objectID);
-            if($object && empty($object->hasProduct))
-            {
-                $productID = $this->loadModel('product')->getShadowProductByProject($objectID)->id;
-            }
-        }
-
-        $extra = str_replace(array(',', ' '), array('&', ''), $extra);
-        parse_str($extra, $output);
-
-        $output['fromType'] = $output['fromType'] ?? '';
-
         /* Get objectID by tab. */
-        if(empty($objectID) && $output['fromType'] != 'feedback')
+        if(empty($objectID))
         {
             if($this->app->tab == 'project')   $objectID = (int)$this->session->project;
             if($this->app->tab == 'execution') $objectID = (int)$this->session->execution;
@@ -56,6 +41,9 @@ class storyZen extends story
         /* Set menu by tab. */
         if($this->app->tab == 'product')
         {
+            $extra = str_replace(array(',', ' '), array('&', ''), $extra);
+            parse_str($extra, $output);
+
             if(!empty($output['from']) && $output['from'] == 'global')
             {
                 $product = $this->product->getById($productID);
@@ -673,7 +661,7 @@ class storyZen extends story
         $fields['stage']['options']          = $this->lang->{$story->type}->stageList;
 
         /* 设置默认值。 */
-        if(empty($fields['reviewer']['default'])) $fields['reviewer']['default'] = !empty($reviewerList) ? implode(',', array_keys($reviewerList)) : $story->prevReviewers;
+        if(empty($fields['reviewer']['default'])) $fields['reviewer']['default'] = implode(',', array_keys($reviewerList));
 
         if($story->type == 'story') unset($fields['stage']['options']['inroadmap'], $fields['stage']['options']['incharter']);
 
@@ -855,8 +843,6 @@ class storyZen extends story
 
         $fields['closedReason']['required']   = true;
         $fields['duplicateStory']['required'] = true;
-
-        $fields['comment'] = array('type' => 'string', 'control' => 'editor', 'required' => false, 'default' => '', 'name' => 'comment', 'title' => $this->lang->comment, 'width' => 'full');
 
         if(strpos($this->config->{$story->type}->review->requiredFields, 'reviewedDate') !== false) $fields['reviewedDate']['required'] = true;
         if(strpos($this->config->{$story->type}->review->requiredFields, 'comment') !== false)      $fields['comment']['required']      = true;
@@ -1240,16 +1226,10 @@ class storyZen extends story
         }
 
         if(!empty($_POST['estimate']) && $_POST['estimate'] < 0) dao::$errors['estimate'] = sprintf($this->lang->story->errorRecordMinus, $this->lang->story->estimateAB);
-        if(helper::isApiRequest() && isset($_POST['grade']) && $_POST['grade'] !== '')
-        {
-            $gradePairs = $this->story->getGradePairs($storyType);
-            if(!isset($gradePairs[(int)$_POST['grade']])) dao::$errors['grade'] = $this->lang->story->errorInvalidGrade;
-        }
 
         if(dao::isError()) return false;
 
         $storyData = form::data($fields)
-            ->setDefault('prevReviewers', implode(',', array_filter($_POST['reviewer'])))
             ->setIF($this->post->assignedTo, 'assignedDate', helper::now())
             ->setIF($this->post->plan > 0 && $storyType == 'story', 'stage', 'planned')
             ->setIF(!in_array($this->post->source, $this->config->story->feedbackSource), 'feedbackBy', '')
@@ -1342,7 +1322,6 @@ class storyZen extends story
             ->setIF(!isset($_POST['spec']), 'spec', $oldStory->spec)
             ->setIF(!isset($_POST['verify']), 'verify', $oldStory->verify)
             ->setIF(!isset($_POST['estimate']), 'estimate', $oldStory->estimate)
-            ->setIF((!empty($_POST['reviewer']) && is_array($_POST['reviewer'])), 'prevReviewers', implode(',', array_filter(zget($_POST, 'reviewer', array()))))
             ->get();
 
         if($this->post->linkStories)      $storyData->linkStories      = implode(',', array_unique($this->post->linkStories));
@@ -1372,7 +1351,6 @@ class storyZen extends story
         if(isset($_POST['reviewer'])) $_POST['reviewer'] = array_filter($_POST['reviewer']);
         if(!$this->post->needNotReview and empty($_POST['reviewer'])) dao::$errors['reviewer'] = $this->lang->story->errorEmptyReviewedBy;
         if(dao::isError()) return false;
-        if(isset($_POST['status']) && $_POST['status'] == 'active') $_POST['reviewer'] = []; // 如果需求是激活的，则清空评审人
 
         $now    = helper::now();
         $fields = $this->config->story->form->change;
@@ -1381,7 +1359,6 @@ class storyZen extends story
             ->setDefault('deleteFiles', array())
             ->setDefault('lastEditedDate', $now)
             ->setDefault('version', $oldStory->version)
-            ->setDefault('prevReviewers', implode(',', array_filter($_POST['reviewer'])))
             ->get();
 
         $specChanged        = false;
@@ -1573,15 +1550,14 @@ class storyZen extends story
 
             if(!empty($story->estimate) && $story->estimate < 0) dao::$errors["estimate[$i]"] = sprintf($this->lang->story->errorRecordMinus, $this->lang->story->estimate);
 
-            $story->type          = $storyType;
-            $story->status        = (empty($story->reviewer) && !$forceReview) ? 'active' : 'reviewing';
-            $story->status        = $saveDraft ? 'draft' : $story->status;
-            $story->product       = $productID;
-            $story->openedBy      = $account;
-            $story->vision        = $this->config->vision;
-            $story->openedDate    = $now;
-            $story->version       = 1;
-            $story->prevReviewers = implode(',', $story->reviewer);
+            $story->type       = $storyType;
+            $story->status     = (empty($story->reviewer) && !$forceReview) ? 'active' : 'reviewing';
+            $story->status     = $saveDraft ? 'draft' : $story->status;
+            $story->product    = $productID;
+            $story->openedBy   = $account;
+            $story->vision     = $this->config->vision;
+            $story->openedDate = $now;
+            $story->version    = 1;
 
             if(in_array($this->app->tab, array('project', 'execution')))
             {
@@ -1590,9 +1566,6 @@ class storyZen extends story
 
             !empty($story->assignedTo) && $story->assignedDate = $now;
             if($this->post->uploadImage && $this->post->uploadImage[$i]) $story->uploadImage = $this->post->uploadImage[$i];
-
-            $story->spec   = helper::textarea2Html((string)$story->spec);
-            $story->verify = helper::textarea2Html((string)$story->verify);
         }
 
         return $stories;
@@ -2051,7 +2024,7 @@ class storyZen extends story
 
         $this->view->bugs          = $this->dao->select('id,title,status,pri,severity')->from(TABLE_BUG)->where('story')->eq($story->id)->andWhere('deleted')->eq(0)->fetchAll();
         $this->view->fromBug       = $story->fromBug ? $this->dao->select('id,title')->from(TABLE_BUG)->where('id')->eq($story->fromBug)->fetch() : '';
-        $this->view->cases         = $this->dao->select('id,title,status,pri,lastRunResult')->from(TABLE_CASE)->where('story')->eq($story->id)->andWhere('deleted')->eq(0)->fetchAll();
+        $this->view->cases         = $this->dao->select('id,title,status,pri')->from(TABLE_CASE)->where('story')->eq($story->id)->andWhere('deleted')->eq(0)->fetchAll();
         $this->view->linkedMRs     = $this->loadModel('ppm')->getLinkedMRPairs($story->id, 'story');
         $this->view->linkedCommits = $this->loadModel('repo')->getCommitsByObject($story->id, 'story');
         $this->view->modulePath    = $this->tree->getParents($story->module);

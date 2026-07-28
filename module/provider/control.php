@@ -63,7 +63,7 @@ class provider extends control
             {
                 $formData->token = base64_encode($formData->account . ':' . $formData->token);
             }
-            if($type != 'Spug') unset($formData->account);
+            unset($formData->account);
 
             if(!empty($formData->url) && !$this->providerZen->checkServiceUrl($formData)) return $this->sendError(dao::getError());
 
@@ -115,7 +115,7 @@ class provider extends control
             {
                 $formData->token = base64_encode($formData->account . ':' . $formData->token);
             }
-            if($provider->type != 'Spug') unset($formData->account);
+            unset($formData->account);
 
             if(!empty($formData->url) && !$this->providerZen->checkServiceUrl($formData)) return $this->sendError(dao::getError());
 

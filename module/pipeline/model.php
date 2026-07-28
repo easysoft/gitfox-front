@@ -23,9 +23,9 @@ class pipelineModel extends model
      */
     public function getByID(int $id): object|false
     {
-        $pipeline = $this->dao->select('t1.*, t2.`variables`, t2.`data`, t3.`id` AS `triggerID`, t3.`event`, t3.`cron`, t3.`comment`')->from(TABLE_PIPELINE)->alias('t1')
-            ->leftJoin(TABLE_PIPELINECONTENT)->alias('t2')->on('t1.id=t2.`pipelineID`')
-            ->leftJoin(TABLE_PIPELINETRIGGER)->alias('t3')->on('t1.id=t3.`pipelineID`')
+        $pipeline = $this->dao->select('t1.*, t2.`variables`, t2.`data`, t3.`id` AS triggerID, t3.`event`, t3.`cron`, t3.`comment`')->from(TABLE_PIPELINE)->alias('t1')
+            ->leftJoin(TABLE_PIPELINECONTENT)->alias('t2')->on('t1.id=t2.pipelineID')
+            ->leftJoin(TABLE_PIPELINETRIGGER)->alias('t3')->on('t1.id=t3.pipelineID')
             ->where('t1.id')->eq($id)
             ->fetch();
         if(empty($pipeline)) return false;
@@ -54,18 +54,17 @@ class pipelineModel extends model
      */
     public function getList(int $spaceID = 0, int $repoID = 0, $type = '', string $pipelineQuery = '', string $orderBy = 'id_desc', ?object $pager = null): array
     {
-        $pipelines = $this->dao->select('t1.*, t2.`spaceID` AS space, t2.name AS `repoName`, t3.variables as variables, t4.name AS providerName')->from(TABLE_PIPELINE)->alias('t1')
-            ->leftJoin(TABLE_REPO)->alias('t2')->on('t1.`repoID`=t2.id')
-            ->leftJoin(TABLE_PIPELINECONTENT)->alias('t3')->on('t1.id=t3.`pipelineID`')
-            ->leftJoin(TABLE_PROVIDER)->alias('t4')->on('t1.`providerID`=t4.id')
+        $pipelines = $this->dao->select('t1.*, t2.spaceID AS space, t2.name AS repoName, t3.variables as variables, t4.name AS providerName')->from(TABLE_PIPELINE)->alias('t1')
+            ->leftJoin(TABLE_REPO)->alias('t2')->on('t1.repoID=t2.id')
+            ->leftJoin(TABLE_PIPELINECONTENT)->alias('t3')->on('t1.id=t3.pipelineID')
+            ->leftJoin(TABLE_PROVIDER)->alias('t4')->on('t1.providerID=t4.id')
             ->where('t1.deleted')->eq('0')
             ->andWhere('t1.name')->ne('_codescan')
-            ->andWhere('t1.name')->ne('_codereview')
-            ->beginIF($repoID)->andWhere('t1.`repoID`')->eq($repoID)->fi()
+            ->beginIF($repoID)->andWhere('t1.repoID')->eq($repoID)->fi()
             ->beginIF(!empty($pipelineQuery))->andWhere($pipelineQuery)->fi()
-            ->beginIF($spaceID)->andWhere('t1.`spaceID`')->eq($spaceID)->fi()
-            ->beginIF($type == 'repo')->andWhere('t1.`repoID`')->ne(0)->fi()
-            ->beginIF($type == 'space')->andWhere('t1.`repoID`')->eq(0)->fi()
+            ->beginIF($spaceID)->andWhere('t1.spaceID')->eq($spaceID)->fi()
+            ->beginIF($type == 'repo')->andWhere('t1.repoID')->ne(0)->fi()
+            ->beginIF($type == 'space')->andWhere('t1.repoID')->eq(0)->fi()
             ->orderBy($orderBy)
             ->page($pager)
             ->fetchAll('id');
@@ -109,14 +108,14 @@ class pipelineModel extends model
     public function getExecutionList(int $spaceID = 0, int $repoID = 0, string $type = '', int $pipelineID = 0, string $pipelineQuery = '', string $orderBy = 'id_desc', ?object $pager = null): array
     {
         return $this->dao->select('t1.*, t2.`scope`, t2.`spaceID` AS space, t2.`repoID` AS repo, t2.`name` AS pipelineName')->from(TABLE_PIPELINEEXEC)->alias('t1')
-            ->leftJoin(TABLE_PIPELINE)->alias('t2')->on('t1.`pipelineID`=t2.id')
+            ->leftJoin(TABLE_PIPELINE)->alias('t2')->on('t1.pipelineID=t2.id')
             ->where('1=1')
-            ->beginIF($repoID)->andWhere('t2.`repoID`')->eq($repoID)->fi()
+            ->beginIF($repoID)->andWhere('t2.repoID')->eq($repoID)->fi()
             ->beginIF(!empty($pipelineQuery))->andWhere($pipelineQuery)->fi()
-            ->beginIF($spaceID)->andWhere('t2.`spaceID`')->eq($spaceID)->fi()
-            ->beginIF($type == 'repo' && !$pipelineID)->andWhere('t2.`repoID`')->ne(0)->fi()
-            ->beginIF($type == 'space' && !$pipelineID)->andWhere('t2.`repoID`')->eq(0)->fi()
-            ->beginIF($pipelineID)->andWhere('t1.`pipelineID`')->eq($pipelineID)->fi()
+            ->beginIF($spaceID)->andWhere('t2.spaceID')->eq($spaceID)->fi()
+            ->beginIF($type == 'repo' && !$pipelineID)->andWhere('t2.repoID')->ne(0)->fi()
+            ->beginIF($type == 'space' && !$pipelineID)->andWhere('t2.repoID')->eq(0)->fi()
+            ->beginIF($pipelineID)->andWhere('t1.pipelineID')->eq($pipelineID)->fi()
             ->orderBy($orderBy)
             ->page($pager)
             ->fetchAll('id');
@@ -155,6 +154,23 @@ class pipelineModel extends model
     }
 
      /**
+     * 获取流水线列表根据版本库ID。
+     * Get pipeline list by RepoID.
+     *
+     * @param  int    $repoID
+     * @access public
+     * @return array
+     */
+    public function getListByRepoID(int $repoID): array
+    {
+        return $this->dao->select('id, name, lastStatus')->from(TABLE_PIPELINE)
+            ->where('deleted')->eq('0')
+            ->andWhere('repoID')->eq($repoID)
+            ->orderBy('id_desc')
+            ->fetchAll('id');
+    }
+
+     /**
      * 获取流水线键值对根据版本库ID。
      * Get pipeline pairs by RepoID.
      *
@@ -169,6 +185,22 @@ class pipelineModel extends model
             ->andWhere('repoID')->eq($repoID)
             ->orderBy('id_desc')
             ->fetchPairs();
+    }
+
+   /**
+     * Get list by triggerType field.
+     *
+     * @param  string  $triggerType
+     * @param  array   $repoIdList
+     * @access public
+     * @return array
+     */
+    public function getListByTriggerType(string $triggerType, array $repoIdList = array()): array
+    {
+        return $this->dao->select('*')->from(TABLE_PIPELINE)
+            ->where('deleted')->eq('0')
+            ->beginIF($repoIdList)->andWhere('repo')->in($repoIdList)->fi()
+            ->fetchAll('id');
     }
 
     /**
@@ -443,8 +475,8 @@ class pipelineModel extends model
         $baseUrl  = $provider->url . $pipeline->externalPipeline;
         $userPWD  = $provider->account . ':' . $provider->token;
 
-        $params = array();
-        $params['ref'] = $pipeline->defaultBranch ?: 'main';
+        $params = new stdclass();
+        $params->ref = $pipeline->defaultBranch ?: 'main';
         if(!empty($pipeline->customParam))
         {
             $customParams = json_decode($pipeline->customParam, true);
@@ -461,45 +493,44 @@ class pipelineModel extends model
         $url = $baseUrl . ($isParameterized ? 'buildWithParameters' : 'build');
 
         $result = $this->jenkins->apiCreatePipeline($url, (object)$params, $userPWD);
+        $execution = new stdclass();
         if(empty($result))
         {
             dao::$errors['apiMessage'] = $this->lang->pipeline->execFail;
-            $this->dao->insert(TABLE_PIPELINEEXEC)->data($execution)->exec();
-            return false;
+            $execution->status = 'create_fail';
+        }
+        else
+        {
+            $number = 0;
+            $maxRetry  = 10;
+            for($i = 0; $i < $maxRetry; $i ++)
+            {
+                sleep(1);
+                $number = $this->jenkins->apiGetJobNumberByQueueID($provider->url, $result, $userPWD);
+                if(!empty($number)) break;
+            }
+            if(empty($number))
+            {
+                dao::$errors['apiMessage'] = $this->lang->pipeline->execFail;
+                $execution->status = 'create_fail';
+            }
+            else
+            {
+                $execution->number = $number;
+                $execution->status = 'created';
+            }
         }
 
-        $execution = new stdclass();
         $execution->pipelineID   = $pipeline->id;
         $execution->trigger      = $triggerType;
         $execution->commit       = '';
-        $execution->ref          = $params['ref'];
+        $execution->ref          = $params->ref;
         $execution->params       = json_encode($params);
         $execution->startedDate  = helper::now();
         $execution->createdBy    = $this->app->user->account;
         $execution->createdDate  = helper::now();
-        $execution->status       = 'created';
-        $execution->number       = 0;
 
         $this->dao->insert(TABLE_PIPELINEEXEC)->data($execution)->exec();
-        $executionID = $this->dao->lastInsertId();
-
-        $number   = 0;
-        $maxRetry = 10;
-        for($i = 0; $i < $maxRetry; $i ++)
-        {
-            sleep(1);
-            $number = $this->jenkins->apiGetJobNumberByQueueID($provider->url, $result, $userPWD);
-            if(!empty($number)) break;
-        }
-
-        if(empty($number))
-        {
-            dao::$errors['apiMessage'] = $this->lang->pipeline->execFail;
-            $this->dao->update(TABLE_PIPELINEEXEC)->set('status')->eq('create_fail')->where('id')->eq($executionID)->exec();
-            return false;
-        }
-
-        $this->dao->update(TABLE_PIPELINEEXEC)->set('number')->eq($number)->where('id')->eq($executionID)->exec();
         return !dao::isError();
     }
 
@@ -569,7 +600,11 @@ class pipelineModel extends model
         }
         else
         {
-            if(empty($formData->pipeline)) dao::$errors['pipeline'][] = sprintf($this->lang->error->notempty, $this->lang->pipeline->pipeline);
+            if(empty($formData->pipeline))
+            {
+                dao::$errors['pipeline'][] = sprintf($this->lang->error->notempty, $this->lang->pipeline->pipeline);
+                return false;
+            }
             $pipeline->externalPipeline = $formData->pipeline;
         }
 
@@ -602,8 +637,6 @@ class pipelineModel extends model
         $action = strtolower($action);
         if(in_array($action, array('execution', 'exec'))) return !empty($pipeline->status) && $pipeline->status != 'draft';
 
-        if($action === 'edit') return $pipeline->engine != 'gitfox';
-        if($action === 'arrange') return $pipeline->engine == 'gitfox';
         return true;
     }
 
@@ -906,42 +939,22 @@ class pipelineModel extends model
             if(empty($data->commits)) return false;
 
             $matched = false;
-            if(empty($pipeline->comment))
+            foreach($data->commits as $commit)
             {
-                $matched = true;
-            }
-            else
-            {
-                $keywords = array_filter(array_map('trim', explode(',', $pipeline->comment)));
-                foreach($data->commits as $commit)
+                if(strpos($commit->message, $pipeline->comment) !== false)
                 {
-                    foreach($keywords as $keyword)
-                    {
-                        if(strpos($commit->message, $keyword) !== false)
-                        {
-                            $matched = true;
-                            break 2;
-                        }
-                    }
+                    $matched = true;
+                    break;
                 }
             }
 
+            if(empty($pipeline->comment)) $matched = true;
             if(!$matched) return false;
-        }
-
-        $ref = '';
-        if($eventType == 'merge_requests')
-        {
-            $ref = $data->object_attributes->target_branch ?? '';
-        }
-        else
-        {
-            $ref = $data->ref ?? '';
         }
 
         $provider = $this->loadModel('provider')->getByID($pipeline->providerID);
         $params = new stdclass();
-        $params->ref = $ref ?: $pipeline->defaultBranch;
+        $params->ref = $data->ref ?? $pipeline->defaultBranch;
         $params->variables = array();
         if(!empty($pipeline->customParam))
         {
@@ -968,14 +981,14 @@ class pipelineModel extends model
         }
         else
         {
-            $execution->number  = $result->id;
+            $execution->queue  = $result->id;
             $execution->status = zget($result, 'status', 'create_fail');
         }
 
         $execution->pipelineID   = $pipeline->id;
         $execution->trigger      = $eventType;
         $execution->commit       = $data->after ?? $data->checkout_sha ?? '';
-        $execution->ref          = $params->ref;
+        $execution->ref          = $data->ref ?? '';
         $execution->params       = json_encode($params);
         $execution->startedDate  = helper::now();
         $execution->createdBy    = 'admin';
@@ -1118,7 +1131,7 @@ class pipelineModel extends model
     public function getExternalPipeline(array $statusList = array()): array
     {
         return $this->dao->select('t1.*, t2.`providerID`, t2.`externalPipeline`, t2.`engine`')->from(TABLE_PIPELINEEXEC)->alias('t1')
-            ->leftJoin(TABLE_PIPELINE)->alias('t2')->on('t1.`pipelineID`=t2.id')
+            ->leftJoin(TABLE_PIPELINE)->alias('t2')->on('t1.pipelineID=t2.id')
             ->where('t2.deleted')->eq(0)
             ->andWhere('t2.engine')->in('gitlab,jenkins')
             ->andWhere('t1.number')->ne(0)
@@ -1159,10 +1172,9 @@ class pipelineModel extends model
                 $syncData->finishedDate = empty($execInfo->timestamp) ? null : date('Y-m-d H:i:s', intval($execInfo->timestamp / 1000));
                 $syncData->duration     = zget($execInfo, 'estimatedDuration', 0);
             }
-            elseif($engine == 'gitlab')
+            elseIF($engine == 'gitlab')
             {
                 $syncData->status       = strtolower(zget($execInfo, 'status', ''));
-                $syncData->status       = $syncData->status == 'failed' ? 'failure' : $syncData->status;
                 $syncData->finishedDate = empty($execInfo->finished_at) ? null : date('Y-m-d H:i:s', strtotime($execInfo->finished_at));
                 $syncData->duration     = zget($execInfo, 'duration', 0);
             }

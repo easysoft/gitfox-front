@@ -12,6 +12,80 @@ declare(strict_types=1);
 class repoZen extends repo
 {
     /**
+     * 准备创建版本库的数据。
+     * Prepare create repo data.
+     *
+     * @param  form      $formData
+     * @param  bool      $isPipelineServer
+     * @access protected
+     * @return object|false
+     */
+    protected function prepareCreate(form $formData, bool $isPipelineServer): object|false
+    {
+        if($this->config->inContainer || $this->config->inQuickon)
+        {
+            $formData->data->client = $this->post->client = $this->post->SCM == 'Subversion' ? 'svn' : 'git';
+        }
+        else
+        {
+            if(!$this->checkClient()) return false;
+        }
+        if(!$this->checkConnection()) return false;
+
+        $repo = $formData
+            ->setIf($isPipelineServer, 'password', $this->post->serviceToken)
+            ->setIf($this->post->SCM == 'Gitlab', 'path', '')
+            ->setIf($this->post->SCM == 'Gitlab', 'client', '')
+            ->setIf($this->post->SCM == 'Gitlab', 'extra', $this->post->serviceProject)
+            ->setIf($isPipelineServer, 'prefix', '')
+            ->setIf($this->post->SCM == 'Git', 'account', '')
+            ->setIf($this->post->SCM == 'Git', 'password', '')
+            ->setIf(in_array($this->post->SCM, array('Gitea', 'Gogs')), 'path', $_POST['path'])
+            ->setIf($this->post->encrypt == 'base64', 'password', base64_encode($this->post->password))
+            ->skipSpecial('path,client,account,password,desc')
+            ->setDefault('product', '')->join('product', ',')
+            ->setDefault('projects', '')->join('projects', ',')
+            ->get();
+        if(strpos($repo->client, ' ')) $repo->client = "\"{$repo->client}\"";
+
+        $acl = $this->checkACL();
+        if(!$acl) return false;
+        $repo->acl = json_encode($acl);
+
+        if($repo->SCM == 'Subversion')
+        {
+            $scmRepo = clone $repo;
+            if($this->post->encrypt == 'base64') $scmRepo->password = $this->post->password;
+
+            $scm = $this->app->loadClass('scm');
+            $scm->setEngine($scmRepo);
+            $info     = $scm->info('');
+            $infoRoot = urldecode($info->root);
+
+            $path   = str_replace(array(':3690/',':80/'), '/', $repo->path);
+            $prefix = str_replace('\\', '/', $path);
+
+            $repo->prefix = empty($infoRoot) ? '' : trim(str_ireplace($infoRoot, '', $prefix), '/');
+            if($repo->prefix) $repo->prefix = '/' . $repo->prefix;
+        }
+
+        if($isPipelineServer)
+        {
+            $serviceProject = $this->dao->select('*')->from(TABLE_REPO)
+                ->where('`SCM`')->eq($repo->SCM)
+                ->andWhere('`serviceHost`')->eq($repo->serviceHost)
+                ->andWhere('`serviceProject`')->eq($repo->serviceProject)
+                ->fetch();
+            if($serviceProject)
+            {
+                dao::$errors['serviceProject'][] = $this->lang->repo->error->projectUnique;
+                return false;
+            }
+        }
+        return $repo;
+    }
+
+    /**
      * 检查权限数据。
      * Check acl.
      *
@@ -33,6 +107,200 @@ class repoZen extends repo
             }
         }
         return $acl;
+    }
+
+    /**
+     * 检查svn、git客户端。
+     * Check svn/git client.
+     *
+     * @access public
+     * @return bool
+     */
+    protected function checkClient(): bool
+    {
+        if(in_array($this->post->SCM, $this->config->repo->notSyncSCM)) return true;
+        if(!$this->config->features->checkClient) return true;
+
+        if(!$this->post->client)
+        {
+            dao::$errors['client'] = sprintf($this->lang->error->notempty, $this->lang->repo->client);
+            return false;
+        }
+
+        $clientVersionFile = $this->session->clientVersionFile;
+        if(empty($clientVersionFile))
+        {
+            $clientVersionFile = $this->app->getLogRoot() . uniqid('version_') . '.log';
+
+            $this->session->set('clientVersionFile', $clientVersionFile);
+        }
+
+        if(file_exists($clientVersionFile)) return true;
+
+        $cmd = $this->post->client . " --version > $clientVersionFile";
+        dao::$errors['client'] = sprintf($this->lang->repo->error->safe, $clientVersionFile, $cmd);
+
+        return false;
+    }
+
+
+    /**
+     * 检查连接。
+     * Check connection
+     *
+     * @access public
+     * @return bool
+     */
+    protected function checkConnection(): bool
+    {
+        if(empty($_POST)) return false;
+
+        $scm      = $this->post->SCM;
+        $client   = $this->post->client;
+        $account  = $this->post->account;
+        $password = $this->post->password;
+        $encoding = strtoupper($this->post->encoding ?: 'UTF-8');
+        $path     = $this->post->path;
+        if($encoding != 'UTF8' and $encoding != 'UTF-8') $path = helper::convertEncoding($path, 'utf-8', $encoding);
+
+        if($scm == 'Subversion')
+        {
+            /* Get svn version. */
+            $versionCommand = "$client --version --quiet 2>&1";
+            exec($versionCommand, $versionOutput, $versionResult);
+            if($versionResult)
+            {
+                $message = sprintf($this->lang->repo->error->output, $versionCommand, $versionResult, implode("\n", $versionOutput));
+                dao::$errors['client'] = $this->lang->repo->error->cmd . "\n" . $message;
+                return false;
+            }
+            $svnVersion = end($versionOutput);
+
+            $path = '"' . str_replace(array('%3A', '%2F', '+'), array(':', '/', ' '), urlencode($path)) . '"';
+            if(stripos($path, 'https://') === 1 or stripos($path, 'svn://') === 1)
+            {
+                if(version_compare($svnVersion, '1.6', '<'))
+                {
+                    dao::$errors['client'] = $this->lang->repo->error->version;
+                    return false;
+                }
+
+                $command = "$client info --username $account --password $password --non-interactive --trust-server-cert-failures=cn-mismatch --trust-server-cert --no-auth-cache $path 2>&1";
+                if(version_compare($svnVersion, '1.9', '<')) $command = "$client info --username $account --password $password --non-interactive --trust-server-cert --no-auth-cache $path 2>&1";
+            }
+            elseif(stripos($path, 'file://') === 1)
+            {
+                $command = "$client info --non-interactive --no-auth-cache $path 2>&1";
+            }
+            else
+            {
+                $command = "$client info --username $account --password $password --non-interactive --no-auth-cache $path 2>&1";
+            }
+
+            exec($command, $output, $result);
+            if($result)
+            {
+                $message = sprintf($this->lang->repo->error->output, $command, $result, implode("\n", $output));
+                if(stripos($message, 'Expected FS format between') !== false and strpos($message, 'found format') !== false)
+                {
+                    dao::$errors['client'] = $this->lang->repo->error->clientVersion;
+                    return false;
+                }
+                if(preg_match('/[^\:\/A-Za-z0-9_\-\'\"\.]/', $path))
+                {
+                    dao::$errors['encoding'] = $this->lang->repo->error->encoding . "\n" . $message;
+                    return false;
+                }
+
+                dao::$errors['submit'] = $this->lang->repo->error->connect . "\n" . $message;
+                return false;
+            }
+        }
+        elseif(in_array($scm, array('Gitea', 'Gogs')))
+        {
+            if($this->post->name != '' and $this->post->serviceProject != '')
+            {
+                $module  = strtolower($scm);
+                $project = $this->loadModel($module)->apiGetSingleProject((int)$this->post->serviceHost, $this->post->serviceProject);
+                if(isset($project->tokenCloneUrl))
+                {
+                    $path = $this->app->getAppRoot() . 'www/data/repo/' . $this->post->name . '_' . $module;
+                    if(!realpath($path))
+                    {
+                        $cmd = 'git clone --progress -v "' . $project->tokenCloneUrl . '" "' . $path . '"  > "' . $this->app->getTmpRoot() . "log/clone.progress.$module.{$this->post->name}.log\" 2>&1 &";
+                        if(PHP_OS == 'WINNT') $cmd = "start /b $cmd";
+                        exec($cmd);
+                    }
+                    $_POST['path'] = $path;
+                }
+                else
+                {
+                    dao::$errors['serviceProject'] = $this->lang->repo->error->noCloneAddr;
+                    return false;
+                }
+            }
+        }
+        elseif($scm == 'Git')
+        {
+            if(!is_dir($path))
+            {
+                dao::$errors['path'] = sprintf($this->lang->repo->error->noFile, $path);
+                return false;
+            }
+
+            if(!is_writable($path) || !is_executable($path))
+            {
+                dao::$errors['path'] = sprintf($this->lang->repo->error->noPriv, $path);
+                return false;
+            }
+
+            if(!chdir($path))
+            {
+                dao::$errors['path'] = $this->lang->repo->error->path;
+                return false;
+            }
+
+            $command = "$client tag 2>&1";
+            exec($command, $output, $result);
+            if($result)
+            {
+                dao::$errors['submit'] = $this->lang->repo->error->cmd . "\n" . sprintf($this->lang->repo->error->output, $command, $result, implode("\n", $output));
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 构建创建版本库页面数据。
+     * Build form fields for create repo.
+     *
+     * @param  int       $objectID
+     * @access protected
+     * @return void
+     */
+    protected function buildCreateForm(int $objectID)
+    {
+        $this->repo->saveState(0, $objectID);
+
+        $this->app->loadLang('action');
+        $this->loadModel('product');
+        if($this->app->tab == 'project' or $this->app->tab == 'execution')
+        {
+            $products = $this->loadModel('project')->getBranchesByProject($objectID);
+            $products = $this->product->getProducts($objectID, 'all', '', false, array_keys($products));
+        }
+        else
+        {
+            $products = $this->product->getPairs('', 0, '', 'all');
+        }
+
+        $this->view->title        = $this->lang->repo->common . $this->lang->hyphen . $this->lang->repo->create;
+        $this->view->groups       = $this->loadModel('group')->getPairs();
+        $this->view->users        = $this->loadModel('user')->getPairs('noletter|noempty|nodeleted|noclosed');
+        $this->view->products     = $products;
+        $this->view->objectID     = $objectID;
+        $this->view->spaces       = $this->loadModel('space')->getPairs($this->app->user->account);
     }
 
     /**
@@ -66,7 +334,7 @@ class repoZen extends repo
         $this->view->products     = $products;
         $this->view->repoGroups   = $repoGroups;
         $this->view->objectID     = $objectID;
-        $this->view->spaces       = $this->loadModel('space')->getPairs($this->app->user->admin ? '' : $this->app->user->account, true);
+        $this->view->spaces       = $this->loadModel('space')->getPairs($this->app->user->admin ? '' : $this->app->user->account);
     }
 
     /**
@@ -421,7 +689,7 @@ class repoZen extends repo
         unset($this->lang->story->statusList['closed']);
         $storyStatusList = $this->lang->story->statusList;
 
-        $this->config->product->search['actionURL']                   = $this->createLink('repo', 'linkStory', "repoID=$repoID&revision=$revision&browseType=bySearch&queryID=myQueryID");
+        $this->config->product->search['actionURL']                   = $this->createLink('repo', 'linkStory', "repoID=$repoID&revision=$revision&browseType=bysearch&queryID=myQueryID");
         $this->config->product->search['queryID']                     = $queryID;
         $this->config->product->search['style']                       = 'simple';
         $this->config->product->search['params']['plan']['values']    = $this->loadModel('productplan')->getForProducts(array_keys($products));
@@ -469,7 +737,7 @@ class repoZen extends repo
         $linkedStories = $this->repo->getRelationByCommit($repoID, $revision, 'story');
         $linkedStories = empty($linkedStories) ? array() : array_column($linkedStories, 'id');
         $allStories    = array();
-        if($browseType == 'bySearch')
+        if($browseType == 'bysearch')
         {
             foreach($products as $productID => $product)
             {
@@ -698,7 +966,7 @@ class repoZen extends repo
      */
     protected function checkDeleteError(int $repoID): string
     {
-        $relationIds = $this->dao->select('distinct `AID` as `AID`')->from(TABLE_RELATION)
+        $relationIds = $this->dao->select('distinct AID as AID')->from(TABLE_RELATION)
             ->where('extra')->eq($repoID)
             ->andWhere('AType')->eq('design')
             ->fetchAll();
@@ -755,7 +1023,6 @@ class repoZen extends repo
     {
         $oldRevision = isset($this->post->revision[1]) ? $this->post->revision[1] : '';
         $newRevision = isset($this->post->revision[0]) ? $this->post->revision[0] : '';
-        $encoding    = '';
 
         if($this->post->encoding)      $encoding      = $this->post->encoding;
         if($this->post->isBranchOrTag) $isBranchOrTag = (int)$this->post->isBranchOrTag;
@@ -780,8 +1047,6 @@ class repoZen extends repo
         foreach($diffs as $diff)
         {
             $diff->fileName = helper::convertEncoding($diff->fileName, $encoding);
-            if(isset($diff->oldContent)) $diff->oldContent = helper::convertEncoding($diff->oldContent, $encoding);
-            if(isset($diff->newContent)) $diff->newContent = helper::convertEncoding($diff->newContent, $encoding);
             if(empty($diff->contents)) continue;
 
             foreach($diff->contents as $content)
@@ -809,7 +1074,7 @@ class repoZen extends repo
      */
     protected function syncLocalCommit(object $repo): string
     {
-        $logFile = realPath($this->app->getTmpRoot() . $this->config->repo->repoSyncLog->logFilePrefix . strtolower($repo->scmType) . ".{$repo->name}.log");
+        $logFile = realPath($this->app->getTmpRoot() . $this->config->repo->repoSyncLog->logFilePrefix . strtolower($repo->SCM) . ".{$repo->name}.log");
         if($logFile && file_exists($logFile))
         {
             $content  = file($logFile);
@@ -1007,47 +1272,6 @@ class repoZen extends repo
         }
 
         return false;
-    }
-
-    /**
-     * 根据步骤生成标题。
-     * Generate a title from steps.
-     *
-     * @param  string $steps
-     * @access public
-     * @return string
-     */
-    public function generateTitleFromSteps(string $steps = ''): string
-    {
-        if(trim($steps) === '') return '';
-
-        $text = preg_replace(array('#<br\s*/?>#i', '#</(p|div|li|tr|table|h[1-6])>#i'), "\n", $steps);
-        $text = strip_tags((string)$text);
-        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $text = str_replace(array("\xc2\xa0", "\r"), ' ', $text);
-
-        $title = '';
-        foreach(preg_split('/\n+/u', $text) as $line)
-        {
-            $line = trim($line);
-            $line = preg_replace('/^(?:\d+[\.、．)）]|[-•*])\s*/u', '', $line);
-            $line = preg_replace('/^(?:步骤|重现步骤|操作步骤|Step)\s*\d*[:：]\s*/iu', '', $line);
-            $line = trim($line);
-            if($line === '' || mb_strlen($line, 'UTF-8') < 2) continue;
-
-            $title = $line;
-            break;
-        }
-
-        if($title === '') return '';
-
-        $title = preg_replace('/\s+/u', ' ', $title);
-        if(mb_strlen($title, 'UTF-8') > 100)
-        {
-            $title = mb_substr($title, 0, 100, 'UTF-8') . '...';
-        }
-
-        return $title;
     }
 
     /**
@@ -1511,7 +1735,7 @@ class repoZen extends repo
         $provider = $this->provider->getByID($providerID);
 
         $repos   = !$provider ? array() : $this->repo->getProviderRepos($provider);
-        $groupID = helper::safe64Decode($groupID);
+        $groupID = urldecode($groupID);
         $groups  = $groupRepos = array();
         foreach($repos as $repo)
         {

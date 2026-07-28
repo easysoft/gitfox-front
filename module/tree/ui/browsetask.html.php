@@ -73,8 +73,7 @@ foreach($sons as $son)
                     set::value($son->order),
                     set::control('hidden')
                 )
-            ),
-            batchActions(set::actionClass('action-group existing-actions'))
+            )
         )
     );
 }
@@ -91,7 +90,7 @@ for($i = 0; $i < \tree::NEW_CHILD_COUNT; $i ++)
                 input
                 (
                     setClass('col-module'),
-                    set::name("modules[]"),
+                    set::name("modules[$i]"),
                     set::type('input'),
                     set::value(''),
                     set::placeholder($lang->tree->name)
@@ -99,13 +98,20 @@ for($i = 0; $i < \tree::NEW_CHILD_COUNT; $i ++)
                 input
                 (
                     setClass('col-short'),
-                    set::name("shorts[]"),
+                    set::name("shorts[$i]"),
                     set::type('input'),
                     set::value(''),
                     set::placeholder($lang->tree->short)
+                ),
+                input
+                (
+                    setClass('hidden'),
+                    set::name("branch[$i]"),
+                    set::value(0),
+                    set::control('hidden')
                 )
             ),
-            batchActions(set::actionClass('action-group'))
+            batchActions()
         )
     );
 }

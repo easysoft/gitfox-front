@@ -19,9 +19,8 @@ featureBar
 );
 
 /* zin: Define the toolbar on main menu. */
-$canModify    = common::canModify('execution', $execution);
 $canExportBug = hasPriv('bug', 'export');
-$canCreateBug = hasPriv('bug', 'create') && $canModify;
+$canCreateBug = hasPriv('bug', 'create') && common::canModify('execution', $execution);
 
 if($canExportBug) $exportItem = array
 (
@@ -89,7 +88,6 @@ if(isset($cols['story']))       $cols['story']['map']       = array('') + $stori
 if(isset($cols['activatedCount'])) $cols['activatedCount']['map'] = array('');
 
 $bugs = initTableData($bugs, $cols, $this->execution);
-if(!$canModify) foreach($bugs as $bug) $bug->actions = array();
 
 dtable
 (

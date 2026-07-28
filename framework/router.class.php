@@ -17,7 +17,7 @@
  *
  * @package framework
  */
-include_once __DIR__ . '/base/router.class.php';
+include __DIR__ . '/base/router.class.php';
 
 
 #[AllowDynamicProperties]
@@ -364,7 +364,7 @@ class router extends baseRouter
         $config->projectLink   = 'project-browse';
         $config->executionLink = 'execution-task';
         $config->docLink       = 'doc-lastViewedSpace';
-        $config->devopsLink    = 'space-browse';
+        $config->devopsLink    = 'repo-maintain';
 
         /* Get user preference. */
         $account     = $_SESSION['user']->account ?? '';

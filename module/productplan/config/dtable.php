@@ -1,8 +1,5 @@
 <?php
 global $app, $lang;
-
-$account = $app->user->account ?? '';
-
 $config->productplan->dtable = new stdclass();
 
 $config->productplan->dtable->fieldList['id']['name']     = 'id';
@@ -116,7 +113,6 @@ $config->productplan->view->dtable->fieldList['id']['group']    = 1;
 
 $config->productplan->view->dtable->fieldList['title']['title']        = $lang->story->title;
 $config->productplan->view->dtable->fieldList['title']['type']         = 'title';
-$config->productplan->view->dtable->fieldList['title']['nestedToggle'] = true;
 $config->productplan->view->dtable->fieldList['title']['link']         = array('url' => helper::createLink('story', 'view', 'storyID={id}'));
 $config->productplan->view->dtable->fieldList['title']['sortType']     = true;
 $config->productplan->view->dtable->fieldList['title']['minWidth']     = '342';
@@ -194,7 +190,7 @@ $config->productplan->view->dtable->fieldList['stage']['group']     = 6;
 
 $config->productplan->view->dtable->fieldList['assignedTo']['title']       = $lang->story->assignedTo;
 $config->productplan->view->dtable->fieldList['assignedTo']['sortType']    = true;
-$config->productplan->view->dtable->fieldList['assignedTo']['currentUser'] = $account;
+$config->productplan->view->dtable->fieldList['assignedTo']['currentUser'] = $app->user->account;
 $config->productplan->view->dtable->fieldList['assignedTo']['assignLink']  = array('module' => 'story', 'method' => 'assignTo', 'params' => 'storyID={id}');
 $config->productplan->view->dtable->fieldList['assignedTo']['type']        = 'assign';
 $config->productplan->view->dtable->fieldList['assignedTo']['show']        = true;
@@ -388,7 +384,7 @@ $config->productplan->viewBug->dtable->fieldList['confirmed']['sortType'] = true
 
 $config->productplan->viewBug->dtable->fieldList['assignedTo']['title']       = $lang->bug->assignedTo;
 $config->productplan->viewBug->dtable->fieldList['assignedTo']['sortType']    = true;
-$config->productplan->viewBug->dtable->fieldList['assignedTo']['currentUser'] = $account;
+$config->productplan->viewBug->dtable->fieldList['assignedTo']['currentUser'] = $app->user->account;
 $config->productplan->viewBug->dtable->fieldList['assignedTo']['assignLink']  = array('module' => 'bug', 'method' => 'assignTo', 'params' => 'bugID={id}');
 $config->productplan->viewBug->dtable->fieldList['assignedTo']['type']        = 'assign';
 $config->productplan->viewBug->dtable->fieldList['assignedTo']['show']        = true;

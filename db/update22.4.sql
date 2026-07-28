@@ -1,68 +1,52 @@
-ALTER TABLE `zt_ai_agent` ADD COLUMN `displayPosition` varchar(20) NOT NULL DEFAULT '' COMMENT '显示位置，目前包括：详情页（detail）、表单页（form）' AFTER `module`;
-ALTER TABLE `zt_ai_agent` ADD COLUMN `actionPurpose` varchar(100) NOT NULL DEFAULT '' COMMENT '操作目的编码' AFTER `displayPosition`;
+INSERT INTO `zt_workflowdatasource` (`type`, `name`, `code`, `buildin`, `vision`, `createdBy`, `createdDate`, `datasource`, `view`, `keyField`, `valueField`) VALUES
+('lang', '任务模式', 'taskMode',            '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'taskMode',      '', '', ''),
+('lang', '需求类型', 'storyCategory',       '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'storyCategory', '', '', ''),
+('sql',  '相关文档', 'taskDocs',            '1', 'or',  'admin', '1970-01-01 00:00:01', 'SELECT `id`,`title` FROM zt_doc WHERE `deleted`=\'0\'',   'view_datasource_taskDocs',  'id', 'title'),
+('sql',  '所属场景', 'caseScene',           '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'SELECT `id`,`title` FROM zt_scene WHERE `deleted`=\'0\'', 'view_datasource_caseScene', 'id', 'title'),
+('lang', '注入环节', 'bugInjection',        '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'bugInjection', '', '', ''),
+('lang', '发现环节', 'bugIdentify',         '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'bugIdentify',  '', '', ''),
+('lang', '关闭原因', 'ticketClosedReason',  '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'ticketClosedReason', '', '', ''),
+('lang', '反馈优先级','feedbackPri',        '1', 'rnd', 'admin', '1970-01-01 00:00:01', 'feedbackPri',  '', '', '');
 
-UPDATE `zt_ai_agent` SET `displayPosition` = 'detail', `actionPurpose` = `targetForm` WHERE `displayPosition` = '';
-ALTER TABLE `zt_ai_agent` ADD COLUMN `skill` varchar(255) NOT NULL DEFAULT '' COMMENT '关联的技能ID' AFTER `knowledgeLib`;
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'taskMode'           LIMIT 1) WHERE `module` = 'task'     AND `field` = 'mode';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'storyCategory'      LIMIT 1) WHERE `module` = 'story'    AND `field` = 'category';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'taskDocs'           LIMIT 1) WHERE `module` = 'task'     AND `field` = 'docs';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'caseScene'          LIMIT 1) WHERE `module` = 'testcase' AND `field` = 'scene';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'bugInjection'       LIMIT 1) WHERE `module` = 'bug'      AND `field` = 'injection';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'bugIdentify'        LIMIT 1) WHERE `module` = 'bug'      AND `field` = 'identify';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'ticketClosedReason' LIMIT 1) WHERE `module` = 'ticket'   AND `field` = 'closedReason';
+UPDATE `zt_workflowfield` SET `options` = (SELECT `id` FROM `zt_workflowdatasource` WHERE `code` = 'feedbackPri'        LIMIT 1) WHERE `module` = 'feedback' AND `field` = 'pri';
 
-CREATE TABLE `zt_ai_skill` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Skill名称',
-  `type` varchar(20) NOT NULL DEFAULT 'private' COMMENT '类型：个人/公开',
-  `category` int unsigned NOT NULL DEFAULT 0 COMMENT '技能类型(模块ID)',
-  `status` varchar(20) NOT NULL DEFAULT '' COMMENT '状态',
-  `fromID` int unsigned NOT NULL DEFAULT 0 COMMENT '来源ID（可将公开技能复制成个人技能）',
-  `skillID` varchar(64) NOT NULL DEFAULT '' COMMENT 'ZAI中的skillID',
-  `desc` text DEFAULT NULL COMMENT '描述',
-  `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '创建人',
-  `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
-  `editedBy` varchar(30) NOT NULL DEFAULT '' COMMENT '最后修改人ID',
-  `editedDate` datetime DEFAULT NULL COMMENT '最后修改时间',
-  `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
+DROP VIEW IF EXISTS `view_datasource_taskDocs`;
+DROP VIEW IF EXISTS `view_datasource_caseScene`;
 
-CREATE TABLE `zt_ai_useragent` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `account` varchar(30) NOT NULL DEFAULT '' COMMENT '禅道用户名',
-  `agent` varchar(255) NOT NULL DEFAULT '' COMMENT 'ZAI agent ID',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB;
-CREATE UNIQUE INDEX `uk_account_agent` ON `zt_ai_useragent` (`account`, `agent`);
+CREATE VIEW `view_datasource_taskDocs`  AS SELECT `id`,`title` FROM `zt_doc`   WHERE `deleted` = '0';
+CREATE VIEW `view_datasource_caseScene` AS SELECT `id`,`title` FROM `zt_scene` WHERE `deleted` = '0';
 
-ALTER TABLE `zt_testrun` ADD COLUMN `caseVersion` smallint unsigned NOT NULL DEFAULT 0 COMMENT '用例版本' AFTER `case`;
-ALTER TABLE `zt_suitecase` ADD COLUMN `caseVersion` smallint unsigned NOT NULL DEFAULT 0 COMMENT '用例版本' AFTER `case`;
-ALTER TABLE `zt_release` MODIFY COLUMN `releasedDate` datetime DEFAULT NULL;
+DELETE FROM zt_workflowfield WHERE `module`='ticket'   AND `field`='consumed';
+DELETE FROM zt_workflowfield WHERE `module`='ticket'   AND `field`='deleted';
+DELETE FROM zt_workflowfield WHERE `module`='feedback' AND `field`='faq';
+DELETE FROM zt_workflowfield WHERE `module`='feedback' AND `field`='deleted';
 
-INSERT INTO `zt_config`(`vision`, `owner`, `module`, `section`, `key`, `value`) VALUES ('', 'system', 'project',   '', 'ganttVersionSettings', 'deliverable');
-INSERT INTO `zt_config`(`vision`, `owner`, `module`, `section`, `key`, `value`) VALUES ('', 'system', 'execution', '', 'ganttVersionSettings', 'gantt');
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'assignedDate';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'realStarted';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'startedDate';
+UPDATE `zt_workflowfield` SET `control` = 'date'     WHERE `module` = 'ticket'   AND `field` = 'deadline';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'openedDate';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'activatedDate';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'closedDate';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'finishedDate';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'editedDate';
+UPDATE `zt_workflowfield` SET `control` = 'datetime' WHERE `module` = 'ticket'   AND `field` = 'resolvedDate';
+UPDATE `zt_workflowfield` SET `control` = 'checkbox' WHERE `module` = 'feedback' AND `field` = 'public';
 
-UPDATE `zt_config` SET `value` = 'ui20' WHERE `module` = 'common' AND `section` = 'global' AND `key` = 'showUpgradeGuide';
+UPDATE `zt_workflowaction` SET `action` = 'assignTo' WHERE `module` = 'ticket'   AND `action` = 'assign';
+UPDATE `zt_workflowaction` SET `type`   = 'batch'    WHERE `module` = 'testcase' AND `action` = 'batchcreate';
+UPDATE `zt_workflowaction` SET `type`   = 'batch'    WHERE `module` = 'testcase' AND `action` = 'batchedit';
+UPDATE `zt_workflowaction` SET `type`   = 'batch'    WHERE `module` = 'ticket'   AND `action` = 'batchedit';
 
-DROP VIEW IF EXISTS `ztv_projectnotpl`;
-CREATE OR REPLACE VIEW `ztv_projectnotpl` AS SELECT * FROM `zt_project` WHERE `deleted` = '0' AND `isTpl` = 0;
+ALTER TABLE `zt_workflowlayout` ADD `foldable`   tinyint unsigned NOT NULL DEFAULT 0 AFTER `mobileShow`;
+ALTER TABLE `zt_workflowlayout` ADD `wrapBefore` tinyint unsigned NOT NULL DEFAULT 0 AFTER `foldable`;
+ALTER TABLE `zt_workflowlayout` ADD `wrapAfter`  tinyint unsigned NOT NULL DEFAULT 0 AFTER `wrapBefore`;
 
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=svn&methodName=run';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=git&methodName=run';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=ci&methodName=checkCompileStatus';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=ci&methodName=exec';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=mr&methodName=syncMR';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=compile&methodName=ajaxSyncCompile';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=ci&methodName=initQueue';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=instance&methodName=cronCleanBackup';
-
-DELETE FROM `zt_cron` WHERE `command` = 'moduleName=instance&methodName=syncGitFoxData';
-DELETE FROM `zt_queue` WHERE `command` = 'moduleName=instance&methodName=syncGitFoxData';
-
-ALTER TABLE `zt_queue` ADD COLUMN `pending` tinyint unsigned NULL DEFAULT NULL COMMENT '待处理标记：1 表示该 cron 已有 wait/doing 任务，NULL 表示已完成' AFTER `status`;
-ALTER TABLE `zt_queue` ADD COLUMN `startedDate` datetime DEFAULT NULL COMMENT '任务开始执行时间，用于超时自愈' AFTER `createdDate`;
-CREATE UNIQUE INDEX `uk_cron_pending` ON `zt_queue` (`cron`, `pending`);
-
-ALTER TABLE `zt_cron` ADD COLUMN `timeout` smallint unsigned NOT NULL DEFAULT 0 COMMENT '单次执行超时时间（秒），0 表示使用系统默认配置' AFTER `lastTime`;
-
-UPDATE `zt_queue` SET `status` = 'done', `pending` = NULL, `startedDate` = NULL WHERE `status` IN ('wait', 'doing');
-UPDATE `zt_queue` SET `pending` = 1 WHERE `status` IN ('wait', 'doing') AND `pending` IS NULL;
-
-UPDATE `zt_cron` SET `timeout` = 7200 WHERE `timeout` = 0 AND `command` LIKE 'moduleName=metric&methodName=updateMetricLib';
-UPDATE `zt_cron` SET `timeout` = 3600 WHERE `timeout` = 0 AND `command` LIKE 'moduleName=metric&methodName=updateDashboardMetricLib';
-UPDATE `zt_cron` SET `timeout` = 3600 WHERE `timeout` = 0 AND `command` LIKE 'moduleName=backup&methodName=backup';
-UPDATE `zt_cron` SET `timeout` = 300  WHERE `timeout` = 0;
+UPDATE `zt_workflowlayout` SET `action` = 'assignTo' WHERE `module` = 'ticket'   AND `action` = 'assign';

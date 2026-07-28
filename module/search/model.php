@@ -156,12 +156,12 @@ class searchModel extends model
             if($fieldControl == 'input' && $value === '0') $this->post->set($valueName, 'ZERO');
             if($field == 'id' && $value === '0') $this->post->set($valueName, 'ZERO');
 
-            /* Skip empty values in where clause, but keep field selection in session. */
-            if($value === '' || $value === false) continue; // false means no exist this post item. '' means no search data. ignore it.
-
             /* set queryForm. */
             list($andOr, $operator, $value) = $this->searchTao->processQueryFormDatas($fieldParams, $field, $andOrName, $operatorName, $valueName);
             $queryForm[$formIndex] = array('field' => $field, 'andOr' => strtolower($andOr), 'operator' => $operator, 'value' => $value);
+
+            /* Skip empty values in where clause, but keep field selection in session. */
+            if($value === '' || $value === false) continue; // false means no exist this post item. '' means no search data. ignore it.
 
             /* Set where. */
             $where = $this->searchTao->setWhere($where, $field, $operator, $value, $andOr, $fieldControl);
@@ -236,8 +236,7 @@ class searchModel extends model
             if($andOr != 'AND' and $andOr != 'OR') $andOr = 'AND';
 
             /* Set operator. */
-            $value    = addcslashes(trim((string)$this->post->$valueName), '%');
-            $value    = htmlspecialchars($value, ENT_QUOTES);
+            $value    = addcslashes(trim($this->post->$valueName), '%');
             $operator = $this->post->$operatorName;
             if(!isset($this->lang->search->operators[$operator])) $operator = '=';
 
@@ -252,7 +251,7 @@ class searchModel extends model
                 }
                 else
                 {
-                    $condition = $fieldControl == 'select' ? ' LIKE ' . $this->dbh->quote('%,' . $value . ',%') : ' LIKE ' . $this->dbh->quote('%' . $value . '%');
+                    $condition = $fieldControl == 'select' ? " LIKE CONCAT('%,', '{$value}', ',%')" : ' LIKE ' . $this->dbh->quote("%$value%");
                 }
             }
             elseif($operator == "notinclude")
@@ -264,7 +263,7 @@ class searchModel extends model
                 }
                 else
                 {
-                    $condition = $fieldControl == 'select' ? ' NOT LIKE ' . $this->dbh->quote('%,' . $value . ',%') : ' NOT LIKE ' . $this->dbh->quote('%' . $value . '%');
+                    $condition = $fieldControl == 'select' ? " NOT LIKE CONCAT('%,', '{$value}', ',%')" : ' NOT LIKE ' . $this->dbh->quote("%$value%");
                 }
             }
             elseif($operator == 'belong')
@@ -607,14 +606,14 @@ class searchModel extends model
             $filterObjects[] = $object;
         }
 
-        $typeCount = $this->dao->select("`objectType`, COUNT(1) AS objectCount")->from(TABLE_SEARCHINDEX)
+        $typeCount = $this->dao->select("objectType, COUNT(1) AS objectCount")->from(TABLE_SEARCHINDEX)
             ->where('((vision')->eq($this->config->vision)
             ->andWhere('objectType')->in($allowedObjects)
             ->markRight(1)
-            ->orWhere('(`objectType`')->in($filterObjects)
+            ->orWhere('(objectType')->in($filterObjects)
             ->markRight(2)
             ->andWhere('addedDate')->le(helper::now())
-            ->groupBy('`objectType`')
+            ->groupBy('objectType')
             ->fetchPairs();
         arsort($typeCount);
         return $typeCount;
@@ -679,7 +678,7 @@ class searchModel extends model
             ->andWhere('((vision')->eq($this->config->vision)
             ->andWhere('objectType')->in($allowedObjects)
             ->markRight(1)
-            ->orWhere('(`objectType`')->in($filterObjects)
+            ->orWhere('(objectType')->in($filterObjects)
             ->markRight(2)
             ->andWhere('addedDate')->le(helper::now())
             ->orderBy('score_desc, editedDate_desc')

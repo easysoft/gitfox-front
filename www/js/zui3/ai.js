@@ -2,13 +2,13 @@ window.checkZAIPanel = async function(showMessage)
 {
     const zaiPanel = zui.AIPanel.shared;
     const store = zaiPanel ? zaiPanel.store : null;
-    if(!store || !store.isConfigOK())
+    if(!store || !store.isConfigOK)
     {
         if(showMessage) zui.Modal.alert((store ? store.error : '') || {content: {html: zaiLang.zaiConfigNotValid}});
         return;
     }
-    await store.waitInited();
-    if(!store.ok)
+    const isOK = await store.isOK();
+    if(!isOK)
     {
         if(showMessage) zui.Modal.alert((store ? store.error : '') || {content: {html: zaiLang.unauthorizedError}});
         return;
@@ -51,7 +51,7 @@ window.openPageForm = function(url, data, callback)
     });
 }
 
-window.getPromptFormConfig = function(fields, extraConfig)
+function getPromptFormConfig(fields, extraConfig)
 {
     if(!Array.isArray(fields) || !fields.length) return;
     const typeMap    = {radio: 'picker', checkbox: 'multiPicker', text: 'input'};
@@ -76,16 +76,16 @@ window.getPromptFormConfig = function(fields, extraConfig)
     }, extraConfig);
 }
 
-window.getAgentCreatingOptions = function(info, langData)
+window.executeZentaoPrompt = async function(info, testingMode)
 {
-    langData = langData || zui.AIPanel.shared.options.langData || {};
+    testingMode = testingMode && testingMode !== '0';
+    const zaiPanel = await checkZAIPanel(true);
+    if(!zaiPanel) return;
 
-    const isCoding     = info.targetForm === 'coding';
-    const noTargetForm = !info.targetForm || info.targetForm === 'empty.empty' || isCoding;
-    const toolName     = `zentao_tool_${info.promptID}`;
-    const klibs        = (info.knowledgeLib ? info.knowledgeLib.split(',') : []).filter(Boolean).map(x => `zentao:${x}`);
-    const formConfig   = getPromptFormConfig(info.fields, info.formConfig);
-    const agentTool    = noTargetForm ? null : {
+    const langData      = zaiPanel.options.langData || {};
+    const noTargetForm  = !info.targetForm || info.targetForm === 'empty.empty';
+    const toolName      = `zentao_tool_${info.promptID}`;
+    const agentTool     = noTargetForm ? null : {
         name       : toolName,
         displayName: info.name,
         description: info.name,
@@ -135,12 +135,9 @@ window.getAgentCreatingOptions = function(info, langData)
             const objType = info.objectType;
             if(result && typeof result === 'object' && !Array.isArray(result) && normalizedProps)
             {
-                const typeProps = normalizedProps[objType] || normalizedProps;
                 const engNames = {};
-                Object.keys(result).forEach(function(k)
-                {
-                    engNames[k] = (typeProps && typeProps[k] !== undefined) ? typeProps[k] : k;
-                });
+                Object.keys(result).forEach(function(k) { engNames[k] = k; });
+                const typeProps = normalizedProps[objType] || normalizedProps;
                 if(typeof typeProps === 'object')
                 {
                     Object.keys(typeProps).forEach(function(k)
@@ -180,40 +177,34 @@ window.getAgentCreatingOptions = function(info, langData)
             {
                 role: 'user',
                 content: [info.name + zui.formatString(langData.processedDataResult, {data: JSON.stringify(result)}), zui.formatString(langData.promptResultReturn, {formName: info.targetFormName})].join('\n\n'),
-                custom_data: {taskResults: [taskResult], asRole: 'assistant'},
+                custom_data: {taskResults: [taskResult], asRole: 'assistant'}
             };
-            return {message: message, noTools: true};
+            return {message: message};
         },
     }];
-
-    return {
-        title    : info.name,
-        type     : 'agent',
-        model    : info.model,
-        agent    : isCoding ? ['aui', 'zentao-api', 'coder'] : ['aui', 'zentao-api'],
-        tools    : tools,
-        prompt   : [info.role, zui.formatString(langData.processDataPrefix, {data: info.dataPrompt}), noTargetForm ? null : zui.formatString(langData.promptExtraLimit, {toolName: toolName})].filter(Boolean).join('\n\n'),
-        form     : formConfig,
-        memories : klibs.length ? [{collections: klibs}] : undefined,
-        skills   : Array.isArray(info.skills) && info.skills.length ? info.skills : undefined,
-    };
-};
-
-window.executeZentaoPrompt = async function(info, testingMode)
-{
-    testingMode = testingMode && testingMode !== '0';
-    const zaiPanel = await checkZAIPanel(true);
-    if(!zaiPanel) return;
-
+    const klibs        = (info.knowledgeLib ? info.knowledgeLib.split(',') : []).filter(Boolean).map(x => `zentao:${x}`);
+    const formConfig   = getPromptFormConfig(info.fields, info.formConfig);
     const postMessage  = {content: [{role: 'user', content: info.purpose, custom_data: {invisible: true}}]};
+    if(info.skillID)
+    {
+        postMessage.skillID   = info.skillID;
+        postMessage.skillName = info.skillName || '';
+    }
     const popupOptions = {
         id         : 'zentao-prompt-popoup',
         viewType   : 'chat',
         width      : info.content ? 800 : 600,
         postMessage,
-        creatingChat: getAgentCreatingOptions(info),
+        creatingChat: {
+            title    : info.name,
+            type     : 'agent',
+            model    : info.model,
+            tools    : tools,
+            prompt   : [info.role, zui.formatString(langData.processDataPrefix, {data: info.dataPrompt}), noTargetForm ? null : zui.formatString(langData.promptExtraLimit, {toolName: toolName})].filter(Boolean).join('\n\n'),
+            form     : formConfig,
+            memories : klibs.length ? [{collections: klibs}] : undefined,
+        },
     };
-    if(testingMode) delete popupOptions.creatingChat.agent;
     const popup = zaiPanel.openPopup(popupOptions);
     await new Promise(resolve => requestAnimationFrame(resolve));
     return popup;
@@ -232,10 +223,8 @@ window.executeZentaoPrompt = async function(info, testingMode)
  * @param {string}  agentRole      - 智能体角色描述
  * @param {string}  agentPurpose   - 智能体目的描述
  * @param {boolean} isBatch        - 是否为批量表单
- * @param {Array}   skills         - ZAI skillID UUID 列表
- * @param {Object}  fieldLabels    - 模块标准字段标签映射
  */
-window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextIDs, promptID, promptFields, allowedFields, agentRole, agentPurpose, isBatch, skills, fieldLabels)
+window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextIDs, promptID, promptFields, allowedFields, agentRole, agentPurpose, isBatch)
 {
     const zaiPanel = await checkZAIPanel(true);
     if(!zaiPanel) return;
@@ -266,7 +255,7 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
         const prop = isStepsEditor
             ? {
                 type: 'array',
-                description: (fieldLabels && fieldLabels[name]) || field.label || name,
+                description: field.label || name,
                     items: {
                         type: 'object',
                         properties: {
@@ -283,7 +272,7 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
             }
             : {
                 type: 'string',
-                description: (fieldLabels && fieldLabels[name]) || field.label || name,
+                description: field.label || name,
             };
         if(!isStepsEditor && Array.isArray(field.options) && field.options.length)
         {
@@ -293,7 +282,6 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
                 return o.value !== undefined ? String(o.value) : String(o);
             });
         }
-        if(field.controlType === 'zenEditor' || field.controlType === 'editor') prop.format = 'html';
         properties[name] = prop;
         if(field.required) required.push(name);
         if(field.label && field.label !== name) labelToName[field.label] = name;
@@ -492,7 +480,7 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
                     }
                 }
                 const taskResult = {
-                    agentID: 'zentao-api-readonly',
+                    agentID: 'zentao-api',
                     id: 'zentao-agent-result-' + Date.now(),
                     tool: agentToolDef,
                     title: response.title,
@@ -511,7 +499,8 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
                     content: [
                         langData.formResultGenerated,
                         JSON.stringify(result),
-                        zui.formatString(langData.promptResultReturn, {formName: langData.formCurrentTarget})
+                        '',
+                        langData.formApplyDataTip,
                     ].join('\n\n'),
                     custom_data: {
                         taskResults: [taskResult],
@@ -520,7 +509,6 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
                 };
                 return {
                     message,
-                    noTools: true,
                 };
             },
         },
@@ -542,13 +530,11 @@ window.executeUniversalPromptWithZentaoAPI = async function(formSchema, contextI
             ],
         },
         creatingChat: {
-            agent: 'zentao-api-readonly',
+            agent: 'zentao-api',
             title: langData.formFillTitle,
-            type:  'agent',
             prompt: prompt,
-            tools:  tools,
-            form:   formConfig,
-            skills: Array.isArray(skills) && skills.length ? skills : undefined,
+            tools: tools,
+            form: formConfig,
         },
     };
 
@@ -574,15 +560,7 @@ window.openAITaskPopup = async function(taskID)
 window.callZentaoAgent = async function(agentID, objectID)
 {
     const res = await $.ajax({url: $.createLink('ai', 'promptExecute', `promptId=${agentID}&objectId=${objectID}`), 'dataType': 'json'});
-    if(!res) return;
-
-    if(res.result !== 'success')
-    {
-        if(res.message) zui.Messager.show({content: res.message, type: 'danger', className: 'bg-danger text-canvas gap-2 messager-fail'});
-        return;
-    }
-
-    if(!res.callback) return;
+    if(!res || res.result !== 'success' || !res.callback) return;
     return executeZentaoPrompt(res.callback.params[0], res.callback.params[1]);
 };
 
@@ -729,7 +707,7 @@ function registerZentaoAIPlugin(lang)
                     if(new RegExp(`@(${objectName}${objectType !== objectName ? `|${objectType}` : ''})`, 'i').test(userPrompt)) return {};
                 }
             };
-        }).filter(Boolean)
+        })
     });
 
     plugin.defineContextProvider(
@@ -1005,29 +983,23 @@ $(() =>
                 });
             }) : undefined,
             onMountExternalSkill: zaiConfig.canAddSkill ? (async (chat, skill) => {
-                const externalSkill = aiStore.externalSkillsMap ? aiStore.externalSkillsMap[skill.id] : null;
-                const result = await $.post($.createLink('ai', 'addSkill', `skillID=${zui.encodeBase64(externalSkill ? externalSkill.id : skill.id)}`), undefined, 'json');
+                const externalSkill = aiStore.externalSkillsMap[skill.id];
+                if(!externalSkill) return;
+                const result = await $.post($.createLink('ai', 'addSkill', `skillID=${externalSkill.id}`), undefined, 'json');
                 return typeof result === 'object' && result.result !== 'fail';
             }) : undefined,
             fetchMySkills: async () => {
                 const result = await zui.fetchData($.createLink('ai', 'ajaxGetMySkills'));
                 const skills = (result.skills || []).map(skill => ({id: skill.skillID, description: skill.desc, name: skill.name}));
                 return skills;
-            }
-        }, zaiConfig, {
+            },
             chatAgent: zaiConfig.userAgent || (async () => {
                 if(zaiConfig.userAgent) return zaiConfig.userAgent;
 
                 const result = await zui.fetchData($.createLink('zai', 'ajaxGetUserAgent'));
                 return result.data;
-            }),
-            codingAgent: zaiConfig.codingAgent || (async () => {
-                if(zaiConfig.codingAgent) return zaiConfig.codingAgent;
-
-                const result = await zui.fetchData($.createLink('zai', 'ajaxGetUserAgent', 'type=executor'));
-                return result.data;
-            }),
-        }));
+            })
+        }, zaiConfig));
         if(!aiStore) return
 
         zui.AIPanel.init(
