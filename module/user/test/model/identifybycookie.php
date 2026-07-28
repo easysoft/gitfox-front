@@ -1,0 +1,195 @@
+#!/usr/bin/env php
+<?php
+
+/**
+
+title=测试 userModel->identifyByCookie();
+cid=19641
+
+- 空用户验证失败，返回 false。 @0
+- guest 用户验证失败，返回 false。 @0
+- user2 用户验证失败，返回 false。 @0
+- admin 用户验证成功，返回 true。 @1
+- admin 用户验证成功，$app 对象的中的用户是 admin。属性account @admin
+- admin 用户验证成功，session 中的用户是 admin。属性account @admin
+- admin 用户具有 6 个模块的权限。 @8
+- admin 用户具有 index 模块的 index 动作的权限。 @1
+- admin 用户具有 my 模块的 index 动作的权限。 @1
+- admin 用户具有 company 模块的 all 动作的权限。 @1
+- admin 用户具有 dept 模块的 browse 动作的权限。 @1
+- admin 用户具有 group 模块的 browse 动作的权限。 @1
+- admin 用户具有 program 模块的 browse 动作的权限。 @1
+- admin 用户具有 product 模块的 browse 动作的权限。 @1
+- admin 用户具有 execution 模块的 browse 动作的权限。 @1
+- admin 用户具有 2 个权限组。 @2
+- admin 用户具有的权限组 id 分别是 1 和 2。
+ - 属性1 @1
+ - 属性2 @2
+- 记录日志，最后一条日志对象类型是 user，对象 ID 是 1，动作是 login。
+ - 属性objectType @user
+ - 属性objectID @1
+ - 属性action @login
+- user1 用户验证成功，返回 true。 @1
+- user1 用户验证成功，$app 对象的中的用户是 user1。属性account @user1
+- user1 用户验证成功，session 中的用户是 user1。属性account @user1
+- user1 用户具有 2 个模块的权限。 @8
+- user1 用户具有 index 模块的 index 动作的权限。 @1
+- user1 用户具有 my 模块的 index 动作的权限。 @1
+- user1 用户具有 program 模块的 browse 动作的权限。 @1
+- user1 用户具有 product 模块的 browse 动作的权限。 @1
+- user1 用户具有 execution 模块的 all 动作的权限。 @1
+- user1 用户具有 qa 模块的 index 动作的权限。 @1
+- user1 用户具有 bug 模块的 browse 动作的权限。 @1
+- user1 用户具有 testcase 模块的 browse 动作的权限。 @1
+- user1 用户具有 2 个权限组。 @2
+- user1 用户具有的权限组 id 分别是 2 和 3。
+ - 属性2 @2
+ - 属性3 @3
+- 记录日志，最后一条日志对象类型是 user，对象 ID 是 2，动作是 login。
+ - 属性objectType @user
+ - 属性objectID @2
+ - 属性action @login
+- user1 用户使用错误密码验证失败，返回 false。 @0
+- user1 用户使用空密码验证失败，返回 false。 @0
+
+*/
+include dirname(__FILE__, 5) . '/test/lib/init.php';
+include dirname(__FILE__, 2) . '/lib/model.class.php';
+
+global $tester;
+$tester->dao->delete()->from(TABLE_ACTION)->exec();
+$tester->dao->delete()->from(TABLE_ACTIONRECENT)->exec();
+$tester->dao->delete()->from(TABLE_GROUPPRIV)->exec();
+$tester->dao->delete()->from(TABLE_USERGROUP)->exec();
+$tester->dao->delete()->from(TABLE_GROUP)->exec();
+$tester->dao->delete()->from(TABLE_COMPANY)->exec();
+$tester->dao->delete()->from(TABLE_USER)->exec();
+$tester->dao->exec('ALTER TABLE ' . TABLE_ACTION . ' AUTO_INCREMENT = 1');
+$tester->dao->exec('ALTER TABLE ' . TABLE_ACTIONRECENT . ' AUTO_INCREMENT = 1');
+$tester->dao->exec('ALTER TABLE ' . TABLE_GROUPPRIV . ' AUTO_INCREMENT = 1');
+$tester->dao->exec('ALTER TABLE ' . TABLE_USERGROUP . ' AUTO_INCREMENT = 1');
+$tester->dao->exec('ALTER TABLE ' . TABLE_GROUP . ' AUTO_INCREMENT = 1');
+$tester->dao->exec('ALTER TABLE ' . TABLE_COMPANY . ' AUTO_INCREMENT = 1');
+$tester->dao->exec('ALTER TABLE ' . TABLE_USER . ' AUTO_INCREMENT = 1');
+
+zenData('user')->gen(2);
+$userIDList = array_values($tester->dao->select('id')->from(TABLE_USER)->orderBy('id')->fetchPairs('id', 'id'));
+$tester->dao->update(TABLE_USER)->set('account')->eq('admin')->set('realname')->eq('admin')->set('password')->eq(md5('123456'))->set('deleted')->eq('0')->where('id')->eq($userIDList[0])->exec();
+$tester->dao->update(TABLE_USER)->set('account')->eq('user1')->set('realname')->eq('用户1')->set('password')->eq(md5('123456'))->set('deleted')->eq('0')->where('id')->eq($userIDList[1])->exec();
+
+zenData('company')->gen(1);
+$companyID = $tester->dao->select('id')->from(TABLE_COMPANY)->orderBy('id')->fetch('id');
+$tester->dao->update(TABLE_COMPANY)->set('admins')->eq(',admin,')->where('id')->eq($companyID)->exec();
+
+zenData('group')->gen(3);
+
+$userGroupTable = zenData('usergroup');
+$userGroupTable->account->range('admin{2},user1{2}');
+$userGroupTable->group->range('1,2{2},3');
+$userGroupTable->gen(4);
+
+$groupPrivTable = zenData('grouppriv');
+$groupPrivTable->group->range('1-3{3}');
+$groupPrivTable->module->range('company,dept,group,program,product,execution,qa,bug,testcase');
+$groupPrivTable->method->range('browse{5},all,index,browse{2}');
+$groupPrivTable->gen(9);
+
+global $app;
+$app->company = $tester->dao->select('*')->from(TABLE_COMPANY)->where('id')->eq($companyID)->fetch();
+$app->company->admins = ',admin,';
+
+$userTest = new userModelTest();
+$password = sha1(123456);
+$admin    = $userTest->getByIdTest('admin');
+$user1    = $userTest->getByIdTest('user1');
+
+/**
+ * 检测验证空用户。
+ */
+$tester->cookie->set('za', '');
+$tester->cookie->set('zp', $password);
+r($userTest->identifyByCookieTest()) && p() && e(0); // 空用户验证失败，返回 false。
+
+/**
+ * 检测验证 guest 用户。
+ */
+$tester->cookie->set('za', 'guest');
+$tester->cookie->set('zp', $password);
+r($userTest->identifyByCookieTest()) && p() && e(0); // guest 用户验证失败，返回 false。
+
+/**
+ * 检测验证不存在的用户。
+ */
+$tester->cookie->set('za', 'user2');
+$tester->cookie->set('zp', $password);
+r($userTest->identifyByCookieTest()) && p() && e(0); // user2 用户验证失败，返回 false。
+
+/**
+ * 检测验证 admin 用户。
+ */
+$tester->cookie->set('za', $admin->account);
+$tester->cookie->set('zp', sha1($admin->account . $admin->password . strtotime($admin->last)));
+r($userTest->identifyByCookieTest()) && p()          && e(1);       // admin 用户验证成功，返回 true。
+r($app->user)                        && p('account') && e('admin'); // admin 用户验证成功，$app 对象的中的用户是 admin。
+r($tester->session->user)            && p('account') && e('admin'); // admin 用户验证成功，session 中的用户是 admin。
+
+/* 检测 admin 用户权限。*/
+r(count($app->user->rights['rights']))                      && p() && e(8); // admin 用户具有 6 个模块的权限。
+r(isset($app->user->rights['rights']['index']['index']))    && p() && e(1); // admin 用户具有 index 模块的 index 动作的权限。
+r(isset($app->user->rights['rights']['my']['index']))       && p() && e(1); // admin 用户具有 my 模块的 index 动作的权限。
+r(isset($app->user->rights['rights']['company']['browse'])) && p() && e(1); // admin 用户具有 company 模块的 all 动作的权限。
+r(isset($app->user->rights['rights']['dept']['browse']))    && p() && e(1); // admin 用户具有 dept 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['group']['browse']))   && p() && e(1); // admin 用户具有 group 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['program']['browse'])) && p() && e(1); // admin 用户具有 program 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['product']['browse'])) && p() && e(1); // admin 用户具有 product 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['execution']['all']))  && p() && e(1); // admin 用户具有 execution 模块的 browse 动作的权限。
+
+/* 检测 admin 用户权限组。*/
+r(count($app->user->groups)) && p()      && e(2);     // admin 用户具有 2 个权限组。
+r($app->user->groups)        && p('1,2') && e('1,2'); // admin 用户具有的权限组 id 分别是 1 和 2。
+
+/* 检测 admin 用户视图功能在 computeUserView 和 grantUserView 方法的单元测试中实现。*/
+
+/* 检测是否记录 admin 登录日志。*/
+$action = $tester->dao->select('*')->from(TABLE_ACTION)->orderBy('id_desc')->limit(1)->fetch();
+r($action) && p('objectType,objectID,action') && e('user,1,login'); // 记录日志，最后一条日志对象类型是 user，对象 ID 是 1，动作是 login。
+
+/**
+ * 检测验证 user1 用户。
+ */
+$tester->cookie->set('za', $user1->account);
+$tester->cookie->set('zp', sha1($user1->account . $user1->password . strtotime($user1->last)));
+r($userTest->identifyByCookieTest()) && p()          && e(1);       // user1 用户验证成功，返回 true。
+r($app->user)                        && p('account') && e('user1'); // user1 用户验证成功，$app 对象的中的用户是 user1。
+r($tester->session->user)            && p('account') && e('user1'); // user1 用户验证成功，session 中的用户是 user1。
+
+/* 检测 user1 用户权限。*/
+r(count($app->user->rights['rights']))                       && p() && e(8); // user1 用户具有 2 个模块的权限。
+r(isset($app->user->rights['rights']['index']['index']))     && p() && e(1); // user1 用户具有 index 模块的 index 动作的权限。
+r(isset($app->user->rights['rights']['my']['index']))        && p() && e(1); // user1 用户具有 my 模块的 index 动作的权限。
+r(isset($app->user->rights['rights']['program']['browse']))  && p() && e(1); // user1 用户具有 program 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['product']['browse']))  && p() && e(1); // user1 用户具有 product 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['execution']['all']))   && p() && e(1); // user1 用户具有 execution 模块的 all 动作的权限。
+r(isset($app->user->rights['rights']['qa']['index']))        && p() && e(1); // user1 用户具有 qa 模块的 index 动作的权限。
+r(isset($app->user->rights['rights']['bug']['browse']))      && p() && e(1); // user1 用户具有 bug 模块的 browse 动作的权限。
+r(isset($app->user->rights['rights']['testcase']['browse'])) && p() && e(1); // user1 用户具有 testcase 模块的 browse 动作的权限。
+
+/* 检测 user1 用户权限组。*/
+r(count($app->user->groups)) && p()      && e(2);     // user1 用户具有 2 个权限组。
+r($app->user->groups)        && p('2,3') && e('2,3'); // user1 用户具有的权限组 id 分别是 2 和 3。
+
+/* 检测 user1 用户视图功能在 computeUserView 和 grantUserView 方法的单元测试中实现。*/
+
+/* 检测是否记录 user1 登录日志。*/
+$action = $tester->dao->select('*')->from(TABLE_ACTION)->orderBy('id_desc')->limit(1)->fetch();
+r($action) && p('objectType,objectID,action') && e('user,2,login'); // 记录日志，最后一条日志对象类型是 user，对象 ID 是 2，动作是 login。
+
+/* 检测 user1 用户使用错误密码验证。*/
+$tester->cookie->set('za', $user1->account);
+$tester->cookie->set('zp', sha1($user1->password));
+r($userTest->identifyByCookieTest()) && p() && e(0); // user1 用户使用错误密码验证失败，返回 false。
+
+/* 检测 user1 用户使用空密码验证。*/
+$tester->cookie->set('za', $user1->account);
+$tester->cookie->set('zp', '');
+r($userTest->identifyByCookieTest()) && p() && e(0); // user1 用户使用空密码验证失败，返回 false。

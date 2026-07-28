@@ -1,0 +1,12 @@
+---
+title: zt_bug
+author: Claude
+version: "1.0"
+fields:
+- field: resolvedDate
+  range: "2025-09-17 10:00:00{3},2025-09-18 11:00:00{2},2025-09-19 12:00:00"
+  type: timestamp
+  format: "YYYY-MM-DD hh:mm:ss"
+- field: status
+  range: "resolved"
+...

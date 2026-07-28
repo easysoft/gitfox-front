@@ -1,0 +1,20 @@
+title: zt_ops_space
+author: Yang Li
+version: "1.0"
+fields:
+  - field: id
+    range: 1-10
+  - field: name
+    range: 1-10
+    prefix: "space"
+  - field: code
+    range: 1-10
+    prefix: "code"
+  - field: acl
+    range: open,private
+  - field: auth
+    range: extend,reset
+  - field: createdBy
+    range: admin,test1,test2,test3,test4
+  - field: deleted
+    range: 0
