@@ -22,7 +22,6 @@ $test = new codescanZenTest();
 
 $issue = new stdclass();
 $issue->message = 'test message content';
-$issue->content = 'test message content';
 $issue->path = '/src/main.php';
 $issue->rulePriority = 'high';
 $issue->ruleType = 'bug';

@@ -95,7 +95,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return bool
      */
-    public function validateTriggerTest(?object $trigger = null)
+    public function validateTriggerTest(object $trigger = null)
     {
         $instance = $this->getZenInstance();
         if($trigger === null) $trigger = new stdclass();
@@ -207,7 +207,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return array
      */
-    public function processConditionsTest(?object $plan = null)
+    public function processConditionsTest(object $plan = null)
     {
         $instance = $this->getZenInstance();
         if($plan === null) $plan = new stdclass();
@@ -223,7 +223,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return object
      */
-    public function processPlanDataTest(?object $plan = null)
+    public function processPlanDataTest(object $plan = null)
     {
         $instance = $this->getZenInstance();
         if($plan === null) $plan = new stdclass();
@@ -239,7 +239,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return object
      */
-    public function buildPlanDataTest(?object $plan = null)
+    public function buildPlanDataTest(object $plan = null)
     {
         $instance = $this->getZenInstance();
         if($plan === null) $plan = new stdclass();
@@ -256,7 +256,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return object
      */
-    public function processTaskDataTest(?object $task = null, array $repoList = array())
+    public function processTaskDataTest(object $task = null, array $repoList = array())
     {
         $instance = $this->getZenInstance();
         if($task === null) $task = new stdclass();
@@ -272,7 +272,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return object
      */
-    public function processIssueDataTest(?object $issue = null)
+    public function processIssueDataTest(object $issue = null)
     {
         $instance = $this->getZenInstance();
         if($issue === null) $issue = new stdclass();
@@ -294,10 +294,7 @@ class codescanZenTest extends baseTest
         $instance = $this->getZenInstance();
         $method = new ReflectionMethod($instance, 'processExecBranch');
         $method->setAccessible(true);
-        ob_start();
-        $result = $method->invoke($instance, $planID, $repoID);
-        ob_end_clean();
-        return $result;
+        return $method->invoke($instance, $planID, $repoID);
     }
 
     /**
@@ -324,7 +321,7 @@ class codescanZenTest extends baseTest
      * @access public
      * @return object
      */
-    public function processRuleDataTest(?object $rule = null)
+    public function processRuleDataTest(object $rule = null)
     {
         $instance = $this->getZenInstance();
         if($rule === null) $rule = new stdclass();
@@ -339,17 +336,15 @@ class codescanZenTest extends baseTest
      * @param  array  $fileTree
      * @param  string $urlParam
      * @param  array  $params
-     * @param  string $branch
-     * @param  bool   $topLevel
      * @access public
      * @return array
      */
-    public function processIssueFileTreeTest(array $fileTree = array(), string $urlParam = '', array $params = array(), string $branch = '', bool $topLevel = false)
+    public function processIssueFileTreeTest(array $fileTree = array(), string $urlParam = '', array $params = array())
     {
         $instance = $this->getZenInstance();
         $method = new ReflectionMethod($instance, 'processIssueFileTree');
         $method->setAccessible(true);
-        return $method->invoke($instance, $fileTree, $urlParam, $params, $branch, $topLevel);
+        return $method->invoke($instance, $fileTree, $urlParam, $params);
     }
 
     /**
