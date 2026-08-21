@@ -2,7 +2,7 @@ ALTER TABLE `zt_ai_agent` ADD COLUMN `displayPosition` varchar(20) NOT NULL DEFA
 ALTER TABLE `zt_ai_agent` ADD COLUMN `actionPurpose` varchar(100) NOT NULL DEFAULT '' COMMENT '操作目的编码' AFTER `displayPosition`;
 
 UPDATE `zt_ai_agent` SET `displayPosition` = 'detail', `actionPurpose` = `targetForm` WHERE `displayPosition` = '';
-ALTER TABLE `zt_ai_agent` ADD COLUMN `skill` int unsigned DEFAULT 0 COMMENT '关联的技能ID' AFTER `knowledgeLib`;
+ALTER TABLE `zt_ai_agent` ADD COLUMN `skill` varchar(255) NOT NULL DEFAULT '' COMMENT '关联的技能ID' AFTER `knowledgeLib`;
 
 CREATE TABLE `zt_ai_skill` (
   `id` int unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
@@ -31,8 +31,24 @@ CREATE UNIQUE INDEX `uk_account_agent` ON `zt_ai_useragent` (`account`, `agent`)
 
 ALTER TABLE `zt_testrun` ADD COLUMN `caseVersion` smallint unsigned NOT NULL DEFAULT 0 COMMENT '用例版本' AFTER `case`;
 ALTER TABLE `zt_suitecase` ADD COLUMN `caseVersion` smallint unsigned NOT NULL DEFAULT 0 COMMENT '用例版本' AFTER `case`;
+ALTER TABLE `zt_release` MODIFY COLUMN `releasedDate` datetime DEFAULT NULL;
 
 INSERT INTO `zt_config`(`vision`, `owner`, `module`, `section`, `key`, `value`) VALUES ('', 'system', 'project',   '', 'ganttVersionSettings', 'deliverable');
 INSERT INTO `zt_config`(`vision`, `owner`, `module`, `section`, `key`, `value`) VALUES ('', 'system', 'execution', '', 'ganttVersionSettings', 'gantt');
 
 UPDATE `zt_config` SET `value` = 'ui20' WHERE `module` = 'common' AND `section` = 'global' AND `key` = 'showUpgradeGuide';
+
+DROP VIEW IF EXISTS `ztv_projectnotpl`;
+CREATE OR REPLACE VIEW `ztv_projectnotpl` AS SELECT * FROM `zt_project` WHERE `deleted` = '0' AND `isTpl` = 0;
+
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=svn&methodName=run';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=git&methodName=run';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=ci&methodName=checkCompileStatus';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=ci&methodName=exec';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=mr&methodName=syncMR';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=compile&methodName=ajaxSyncCompile';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=ci&methodName=initQueue';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=instance&methodName=cronCleanBackup';
+
+DELETE FROM `zt_cron` WHERE `command` = 'moduleName=instance&methodName=syncGitFoxData';
+DELETE FROM `zt_queue` WHERE `command` = 'moduleName=instance&methodName=syncGitFoxData';
