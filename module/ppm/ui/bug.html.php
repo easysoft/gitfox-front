@@ -10,7 +10,55 @@ declare(strict_types=1);
  */
 namespace zin;
 
-$domBox = div
+$aiIssueCount     = (int)data('aiIssueCount');
+$scanIssueCount   = (int)$scanPager->recTotal;
+$manualIssueCount = (int)$bugPager->recTotal;
+
+$scanTabItems = array();
+if(!empty($lang->ppm->aiScanIssueList))       $scanTabItems['ai']     = array('text' => "{$lang->ppm->aiScanIssueList} ({$aiIssueCount})",       'url' => 'javascript:;', 'props' => array('data-tab' => 'ai',     'data-target' => '#aiBugsPane'));
+if(!empty($lang->ppm->staticScanIssueList))   $scanTabItems['scan']   = array('text' => "{$lang->ppm->staticScanIssueList} ({$scanIssueCount})",   'url' => 'javascript:;', 'props' => array('data-tab' => 'scan',   'data-target' => '#staticScanPane'));
+if(!empty($lang->ppm->manualReviewIssueList)) $scanTabItems['static'] = array('text' => "{$lang->ppm->manualReviewIssueList} ({$manualIssueCount})", 'url' => 'javascript:;', 'props' => array('data-tab' => 'static', 'data-target' => '#staticBugs'));
+
+$currentIssueTab = (string)(data('issueTab') ?: zget($_GET, 'issueTab', ''));
+$isFirst = true;
+foreach($scanTabItems as $tabKey => $tabItem)
+{
+    $scanTabItems[$tabKey]['active'] = $currentIssueTab ? ($tabKey === $currentIssueTab) : $isFirst;
+    $isFirst = false;
+}
+
+$staticRows = array();
+foreach((array)$staticIssues as $staticIssue)
+{
+    $staticIssue->repoID = (int)zget($staticIssue, 'repoID', 0) ?: (int)$ppm->targetRepoID;
+    $staticRows[] = $staticIssue;
+}
+$staticCols = $this->loadModel('datatable')->getSetting('codescan', 'issue');
+$staticCols['content']['name'] = 'title';
+if(hasPriv('codescan', 'issueview')) $staticCols['content']['link'] = array('module' => 'codescan', 'method' => 'issueview', 'params' => 'issueID={id}&repoID={repoID}');
+$staticRows = initTableData($staticRows, $staticCols, $this->loadModel('codescan'));
+
+$staticPanel = div
+(
+    setID('staticScanPane'),
+    setStyle(array('display' => 'none')),
+    dtable
+    (
+        setID('staticScanIssues'),
+        set::customCols(false),
+        set::cols($staticCols),
+        set::data($staticRows),
+        set::responsive(true),
+        set::footPager(usePager('scanPager', '', array
+        (
+            'recPerPage'  => $scanPager->recPerPage,
+            'recTotal'    => $scanPager->recTotal,
+            'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$scanPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=scan")
+        ), null, '', 'scan'))
+    )
+);
+
+$manualPanel = div
 (
     setID('staticBugs'),
     dtable
@@ -18,7 +66,23 @@ $domBox = div
         set::id('bugs'),
         set::cols($config->ppm->bug->dtable->fieldList),
         set::data(array_values($bugs)),
-        set::loadPartial(true),
-        set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&page={page}"))))
+        set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static")), null, '', 'static'))
     )
+);
+
+$domBox = div
+(
+    setClass('flex gap-4'),
+    sidebar
+    (
+        set::width(140),
+        nav
+        (
+            setID('scanTabs'),
+            set::stacked(true),
+            set::compact(),
+            set::items(array_values($scanTabItems))
+        )
+    ),
+    div(setID('scanPanes'), setClass('flex-auto min-w-0'), $staticPanel, $manualPanel)
 );
