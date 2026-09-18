@@ -63,6 +63,9 @@ if(!hasPriv('repo', 'diff')) unset($config->ppm->commitLogs->dtable->fieldList['
 if(!empty($reviewers)) $ppm->reviewers = implode(',', array_keys($reviewers));
 $actions = $this->loadModel('common')->buildOperateMenu($ppm);
 
+$isMergeReady  = $ppm->status == 'opened' && $canMerge && !$checkMessage;
+$showMergeIcon = $isMergeReady && !empty($defaultMergeType) && $type == 'basic';
+
 include "{$type}.html.php";
 
 div
@@ -89,7 +92,7 @@ div
                     setClass('my-2 detail-header flex'),
                     set::style(array('justify-content' => 'space-between')),
                     div(setClass('mr-2'), span(html(sprintf($lang->ppm->MRHistory, zget($users, $ppm->createdBy), $ppm->createdDate, $ppm->sourceBranch, $commitPager->recTotal, $ppm->targetBranch)))),
-                    $ppm->status == 'opened' && $canMerge && !$checkMessage && $defaultMergeType && $type == 'basic' ? div(img(set::src($config->ppm->mergeImages[$defaultMergeType]))) : null
+                    $showMergeIcon ? div(img(set::src($config->ppm->mergeImages[$defaultMergeType]))) : null
                 ),
                 div
                 (
