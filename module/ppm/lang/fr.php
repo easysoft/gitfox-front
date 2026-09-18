@@ -24,7 +24,7 @@ $lang->ppm->createAction      = '%s, <strong>%s</strong> submitted a <a href="%s
 $lang->ppm->editAction        = '%s, <strong>%s</strong> edited <a href="%s">Merge Request</a>。';
 $lang->ppm->removeAction      = '%s, <strong>%s</strong> deleted <a href="%s">Merge Request</a>。';
 $lang->ppm->submitType        = 'Submit type';
-$lang->ppm->linkedObject      = 'Linked items';
+$lang->ppm->linkedObject      = 'Changed items';
 $lang->ppm->object            = 'Object';
 $lang->ppm->mergeInfo         = 'check Info';
 $lang->ppm->locateView        = 'View';
@@ -363,3 +363,12 @@ $lang->ppm->diffHub->labels['status-active-confirmed'] = 'Activated';
 $lang->ppm->diffHub->labels['operate-confirm']         = 'Confirm';
 $lang->ppm->diffHub->labels['operate-assign']          = 'Assign';
 $lang->ppm->diffHub->labels['operate-resolve']         = 'Resolve';
+
+$lang->ppm->staticScanIssueList   = 'Static Scan Issues';
+$lang->ppm->manualReviewIssueList = 'Manual Review Issues';
+
+$lang->ppm->issueStatusTabs           = array();
+$lang->ppm->issueStatusTabs['wait']   = 'Active';
+$lang->ppm->issueStatusTabs['solved'] = 'Resolved';
+$lang->ppm->issueStatusTabs['ignore'] = 'Ignored';
+$lang->ppm->issueStatusTabs['closed'] = 'Closed';

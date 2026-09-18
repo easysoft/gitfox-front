@@ -24,7 +24,7 @@ $lang->ppm->createAction      = '%s, 由 <strong>%s</strong> 提交了 <a href="
 $lang->ppm->editAction        = '%s, 由 <strong>%s</strong> 编辑了 <a href="%s">合并请求</a>。';
 $lang->ppm->removeAction      = '%s, 由 <strong>%s</strong> 删除了 <a href="%s">合并请求</a>。';
 $lang->ppm->submitType        = '提交方式';
-$lang->ppm->linkedObject      = '关联项';
+$lang->ppm->linkedObject      = '改动项';
 $lang->ppm->object            = '对象';
 $lang->ppm->mergeInfo         = '检查项';
 $lang->ppm->locateView        = '查看详情';
@@ -363,3 +363,12 @@ $lang->ppm->diffHub->labels['status-active-confirmed'] = '激活';
 $lang->ppm->diffHub->labels['operate-confirm']         = '确认';
 $lang->ppm->diffHub->labels['operate-assign']          = '指派';
 $lang->ppm->diffHub->labels['operate-resolve']         = '解决';
+
+$lang->ppm->staticScanIssueList   = '静态扫描问题';
+$lang->ppm->manualReviewIssueList = '人工审查问题';
+
+$lang->ppm->issueStatusTabs           = array();
+$lang->ppm->issueStatusTabs['wait']   = '激活';
+$lang->ppm->issueStatusTabs['solved'] = '已解决';
+$lang->ppm->issueStatusTabs['ignore'] = '已忽略';
+$lang->ppm->issueStatusTabs['closed'] = '已关闭';

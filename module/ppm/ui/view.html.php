@@ -25,11 +25,11 @@ $newRevision  = helper::safe64Encode($newRevision);
 jsVar('mrID', $ppm->id);
 jsVar('sseURL', "{$config->devops->gitfoxURL}:{$config->devops->gitfoxPort}/api/v2/spaces/{$repo->spaceID}/events");
 
-$encoding      = empty($encoding) ? '' : $encoding;
-$checkMessage  = zget($checkResult, 'message', '');
-$conflictFiles = zget($checkResult, 'conflictFiles', array());
-$minReviewers  = empty($flow) ? 0 : $flow->definition->reviewFlow->approvals->minReviewers;
-$issueListTotal = $bugPager->recTotal + (int)data('aiIssueCount');
+$encoding       = empty($encoding) ? '' : $encoding;
+$checkMessage   = zget($checkResult, 'message', '');
+$conflictFiles  = zget($checkResult, 'conflictFiles', array());
+$minReviewers   = empty($flow) ? 0 : $flow->definition->reviewFlow->approvals->minReviewers;
+$issueListTotal = $bugPager->recTotal + (int)data('aiIssueCount') + (int)data('staticIssueTotal');
 
 $basicItems = array();
 if($type != 'files')

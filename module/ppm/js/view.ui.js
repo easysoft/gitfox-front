@@ -171,3 +171,51 @@ $(function()
 
     observer.observe($target[0], {attributes: true, attributeFilter: ['class']});
 });
+
+/**
+ * 问题清单分类菜单切换：AI 评审问题 / 静态扫描问题 / 人工审查问题。
+ * Switch between the issue list panels.
+ */
+(function()
+{
+    var paneIdList = ['staticBugs', 'aiBugsPane', 'staticScanPane'];
+
+    function switchScanTab(e)
+    {
+        var link = e.target && e.target.closest ? e.target.closest('#scanTabs a') : null;
+        if(!link) return;
+        e.preventDefault();
+
+        var links = document.querySelectorAll('#scanTabs a');
+        for(var i = 0; i < links.length; i++)
+        {
+            links[i].classList.remove('active');
+            if(links[i].parentElement) links[i].parentElement.classList.remove('active');
+        }
+        link.classList.add('active');
+        if(link.parentElement) link.parentElement.classList.add('active');
+
+        for(var j = 0; j < paneIdList.length; j++)
+        {
+            var paneEl = document.getElementById(paneIdList[j]);
+            if(paneEl) paneEl.style.display = 'none';
+        }
+
+        var tar = link.getAttribute('data-target');
+        if(tar)
+        {
+            var pane = document.querySelector(tar);
+            if(pane) pane.style.display = '';
+        }
+    }
+
+    document.removeEventListener('click', switchScanTab);
+    document.addEventListener('click', switchScanTab);
+
+    /* 初始化：优先展示服务端标记为 active 的分类（翻页后还原），没有则选第一个。 */
+    setTimeout(function()
+    {
+        var defaultTab = document.querySelector('#scanTabs a.active') || document.querySelector('#scanTabs a');
+        if(defaultTab) defaultTab.click();
+    }, 0);
+})();
