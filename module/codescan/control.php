@@ -1312,7 +1312,7 @@ class codescan extends control
 
         $taskList = $this->codescanZen->getListByQuery('task', (int)$serviceRepoID);
         foreach($taskList as &$repoTask) $repoTask = $this->codescanZen->processTaskData($repoTask, $repoList);
-        if(isset($issueList->data) && is_array($issueList->data)) foreach($issueList->data as &$issue) $issue = $this->codescanZen->processIssueData($issue);
+        if(isset($issueList->data) && is_array($issueList->data)) foreach($issueList->data as &$issue) $issue = $this->codescan->processIssueData($issue);
 
         $this->view->title         = $this->lang->codescan->issue;
         $this->view->type          = 'issue';
@@ -1355,7 +1355,7 @@ class codescan extends control
         if(isset($this->config->codescan->issue->actionList)) $this->config->codescan->actionList = $this->config->codescan->issue->actionList;
 
         $issue = $this->codescan->getScanIssue($issueID);
-        if($issue) $issue = $this->codescanZen->processIssueData($issue);
+        if($issue) $issue = $this->codescan->processIssueData($issue);
         $repo     = $this->loadModel('repo')->getByID($repoID);
         if(!$repo) $this->sendError($this->lang->codescan->notice->repoNotFound, true);
 

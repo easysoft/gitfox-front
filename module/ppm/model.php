@@ -1283,7 +1283,7 @@ class ppmModel extends model
         $commitList = array_column($this->getMRCommitsCached($repoID, $ppmID), 'sha');
         if(empty($commitList)) return 0;
 
-        return (int)$this->dao->select('count(*) as `count`')->from(TABLE_BUG)
+        return (int)$this->dao->select('COUNT(*) AS `count`')->from(TABLE_BUG)
             ->where('repo')->eq($repoID)
             ->andWhere('(v2')->in($commitList)
             ->orWhere('mr')->eq($ppmID)
@@ -1372,11 +1372,11 @@ class ppmModel extends model
 
         $issues = $this->dao->select('t1.*')
             ->from(TABLE_SCANISSUE)->alias('t1')
-            ->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.issueKey')
+            ->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.`issueKey`')
             ->where('t1.deleted')->eq(0)
-            ->andWhere('t1.scanMethod')->in($scanMethods)
-            ->andWhere('t1.repoID')->eq($repoID)
-            ->beginIF($ppmID > 0)->andWhere('t1.ppmID')->eq($ppmID)->fi()
+            ->andWhere('t1.`scanMethod`')->in($scanMethods)
+            ->andWhere('t1.`repoID`')->eq($repoID)
+            ->beginIF($ppmID > 0)->andWhere('t1.`ppmID`')->eq($ppmID)->fi()
             ->andWhere('t2.deleted')->eq(0)
             ->page($pager)
             ->fetchAll('id');
@@ -1419,7 +1419,7 @@ class ppmModel extends model
         $statusList  = array_keys(zget($this->config->ppm->issueStatusMaps, $type, array()));
         if(empty($statusList)) return 0;
 
-        return (int)$this->dao->select('count(*) as `count`')
+        return (int)$this->dao->select('COUNT(*) AS `count`')
             ->from(TABLE_SCANISSUE)
             ->where('deleted')->eq(0)
             ->andWhere('scanMethod')->in($scanMethods)

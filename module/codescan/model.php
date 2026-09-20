@@ -21,7 +21,7 @@ class codescanModel extends model
      */
     public function processIssueData(object $issue): object
     {
-        $issue->title    = zget($issue, 'title', '');
+        $issue->title      = zget($issue, 'title', '');
         $issue->file       = zget($issue, 'path', '');
         $issue->priority   = zget($issue, 'rulePriority', '');
         $issue->type       = zget($issue, 'ruleType', '');
@@ -37,7 +37,7 @@ class codescanModel extends model
         $issue->oldCode     = zget($issue, 'oldCode', '');
         $issue->newCode     = zget($issue, 'newCode', '');
         $issue->ppmID       = (int)zget($issue, 'ppmID', 0);
-        $issue->ppmTitle     = zget($issue, 'ppmTitle', '');
+        $issue->ppmTitle    = zget($issue, 'ppmTitle', '');
         $issue->oldFilePath = zget($issue, 'oldFilePath', '');
         $issue->createdBy   = zget($issue, 'createdBy', '');
         $issue->editedBy    = zget($issue, 'editedBy', '');
