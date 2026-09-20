@@ -266,22 +266,6 @@ class codescanZenTest extends baseTest
     }
 
     /**
-     * Test processIssueData method.
-     *
-     * @param  object $issue
-     * @access public
-     * @return object
-     */
-    public function processIssueDataTest(?object $issue = null)
-    {
-        $instance = $this->getZenInstance();
-        if($issue === null) $issue = new stdclass();
-        $method = new ReflectionMethod($instance, 'processIssueData');
-        $method->setAccessible(true);
-        return $method->invoke($instance, $issue);
-    }
-
-    /**
      * Test processExecBranch method.
      *
      * @param  int $planID

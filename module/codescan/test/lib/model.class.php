@@ -22,6 +22,18 @@ class codescanModelTest extends baseTest
     }
 
     /**
+     * Test processIssueData method.
+     *
+     * @param  object $issue
+     * @access public
+     * @return object
+     */
+    public function processIssueDataTest(object $issue): object
+    {
+        return $this->instance->processIssueData($issue);
+    }
+
+    /**
      * Test getScanRulesets method.
      *
      * @param  array $params

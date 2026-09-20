@@ -11,8 +11,25 @@ declare(strict_types=1);
 namespace zin;
 
 $aiIssueCount     = (int)data('aiIssueCount');
-$scanIssueCount   = (int)$scanPager->recTotal;
-$manualIssueCount = (int)$bugPager->recTotal;
+$scanIssueCount   = (int)data('staticIssueTotal');
+$manualIssueCount = (int)data('bugsTotal');
+
+$issueStatus = (string)data('issueStatus');
+
+$buildIssueStatusBar = function(string $tabKey) use ($ppm, $lang, $config, $issueStatus)
+{
+    $items = array();
+    foreach(zget($config->ppm->issueStatusList, $tabKey, array()) as $statusKey)
+    {
+        $items[] = array
+        (
+            'text'   => zget($lang->ppm->issueStatusTabs, $statusKey, $statusKey),
+            'active' => $issueStatus === $statusKey,
+            'url'    => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$tabKey}&issueStatus={$statusKey}")
+        );
+    }
+    return nav(setClass('mb-2'), set::items($items));
+};
 
 $scanTabItems = array();
 if(!empty($lang->ppm->aiScanIssueList))       $scanTabItems['ai']     = array('text' => "{$lang->ppm->aiScanIssueList} ({$aiIssueCount})",       'url' => 'javascript:;', 'props' => array('data-tab' => 'ai',     'data-target' => '#aiBugsPane'));
@@ -42,6 +59,7 @@ $staticPanel = div
 (
     setID('staticScanPane'),
     setStyle(array('display' => 'none')),
+    $buildIssueStatusBar('scan'),
     dtable
     (
         setID('staticScanIssues'),
@@ -53,7 +71,7 @@ $staticPanel = div
         (
             'recPerPage'  => $scanPager->recPerPage,
             'recTotal'    => $scanPager->recTotal,
-            'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$scanPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=scan")
+            'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$scanPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=scan&issueStatus={$issueStatus}")
         ), null, '', 'scan'))
     )
 );
@@ -61,12 +79,13 @@ $staticPanel = div
 $manualPanel = div
 (
     setID('staticBugs'),
+    $buildIssueStatusBar('static'),
     dtable
     (
         set::id('bugs'),
         set::cols($config->ppm->bug->dtable->fieldList),
         set::data(array_values($bugs)),
-        set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static")), null, '', 'static'))
+        set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static&issueStatus={$issueStatus}")), null, '', 'static'))
     )
 );
 
@@ -75,7 +94,8 @@ $domBox = div
     setClass('flex gap-4'),
     sidebar
     (
-        set::width(140),
+        set::width(100),
+        set::minWidth(100),
         nav
         (
             setID('scanTabs'),

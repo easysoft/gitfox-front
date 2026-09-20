@@ -543,40 +543,6 @@ class codescanZen extends codescan
     }
 
     /**
-     * 处理问题数据。
-     * Process issue data.
-     *
-     * @param  object    $issue
-     * @access public
-     * @return object
-     */
-    public function processIssueData(object $issue): object
-    {
-        $issue->title    = zget($issue, 'title', '');
-        $issue->file       = zget($issue, 'path', '');
-        $issue->priority   = zget($issue, 'rulePriority', '');
-        $issue->type       = zget($issue, 'ruleType', '');
-        $issue->rulePlugin = zget($issue->payload, 'tool', '');
-
-        /* 新增字段：AI 扫描 + API v2.0 字段 */
-        $issue->scanMethod  = zget($issue, 'scanMethod', '');
-        $issue->category    = zget($issue, 'category', '');
-        $issue->severity    = zget($issue, 'severity', '');
-        $issue->content     = zget($issue, 'content', '');
-        $issue->startLine   = (int)zget($issue, 'startLine', 0);
-        $issue->endLine     = (int)zget($issue, 'endLine', 0);
-        $issue->oldCode     = zget($issue, 'oldCode', '');
-        $issue->newCode     = zget($issue, 'newCode', '');
-        $issue->ppmID       = (int)zget($issue, 'ppmID', 0);
-        $issue->ppmTitle     = zget($issue, 'ppmTitle', '');
-        $issue->oldFilePath = zget($issue, 'oldFilePath', '');
-        $issue->createdBy   = zget($issue, 'createdBy', '');
-        $issue->editedBy    = zget($issue, 'editedBy', '');
-
-        return $issue;
-    }
-
-    /**
      * 处理执行分支数据。
      * Process execution branch data.
      *
@@ -657,7 +623,7 @@ class codescanZen extends codescan
             $params['page'] = $params['page'] + 1;
         }
 
-        foreach($list as $index => $item) $list[$index] = $this->processIssueData($item);
+        foreach($list as $index => $item) $list[$index] = $this->codescan->processIssueData($item);
 
         return $list;
     }

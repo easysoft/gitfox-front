@@ -266,4 +266,29 @@ class ppmModelTest extends ppmBaseTest
     {
         return $this->invokeMethod('buildStaticScanParams', array($repoID, $page, $pageSize, $ppmID));
     }
+
+    public function getIssueBadgeCountTest(string $type, int $repoID, int $ppmID)
+    {
+        return $this->invokeMethod('getIssueBadgeCount', array($type, $repoID, $ppmID));
+    }
+
+    public function getTransferredIssuesTest(string $type, int $repoID, int $ppmID, object $pager)
+    {
+        return $this->invokeMethod('getTransferredIssues', array($type, $repoID, $ppmID, $pager));
+    }
+
+    public function getBugsByCommitsTotalTest(int $repoID, int $ppmID)
+    {
+        return $this->invokeMethod('getBugsByCommitsTotal', array($repoID, $ppmID));
+    }
+
+    public function getMRCommitsCachedTest(int $repoID, int $ppmID)
+    {
+        return $this->invokeMethod('getMRCommitsCached', array($repoID, $ppmID));
+    }
+
+    public function mapIssueStatusTest(string $type, string $status)
+    {
+        return $this->invokeMethod('mapIssueStatus', array($type, $status));
+    }
 }

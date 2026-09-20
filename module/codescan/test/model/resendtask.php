@@ -10,11 +10,11 @@ title=测试 codescanModel->resendTask();
 timeout=0
 cid=0
 
-- 重试 1 号任务 @1,1
-- 重试 2 号任务 @2,1
-- 重试 3 号任务 @3,1
-- 重试 4 号任务 @4,1
-- 重试 0 号任务 @0,1
+- 执行test模块的resendTaskTest方法，参数是1  @0
+- 执行test模块的resendTaskTest方法，参数是2  @0
+- 执行test模块的resendTaskTest方法，参数是3  @0
+- 执行test模块的resendTaskTest方法，参数是4  @0
+- 执行test模块的resendTaskTest方法  @0
 
 */
 
