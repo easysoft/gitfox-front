@@ -1263,4 +1263,74 @@ class ppmModel extends model
         }
         return $bugs;
     }
+
+    /**
+     * 获取静态扫描问题列表（scanMethod=check/smell），供问题清单的「静态扫描问题」面板使用。
+     * Get the static scan issue list for the issue list panel.
+     *
+     * @param  int    $repoID
+     * @param  object $pager
+     * @param  int    $ppmID  当前代码评审 ID，用于按评审过滤。
+     * @access public
+     * @return array
+     */
+    public function getStaticScanIssues(int $repoID, object $pager, int $ppmID = 0): array
+    {
+        $codescan    = $this->loadModel('codescan');
+        helper::importControl('codescan');
+        $codescanZen = $this->app->loadTarget('codescan', '', 'zen');
+
+        $scanResult = $codescan->getScanIssueList(0, $this->buildStaticScanParams($repoID, (int)$pager->pageID, (int)$pager->recPerPage, $ppmID));
+        if(empty($scanResult) || empty($scanResult->data)) return array();
+
+        $pager->recTotal = (int)zget(zget($scanResult, 'pager', new stdclass()), 'total', 0);
+
+        $issues = array();
+        foreach($scanResult->data as $rawIssue)
+        {
+            $issue = $codescanZen->processIssueData($rawIssue);
+            if(empty($issue->file)) $issue->file = zget($issue, 'filePath', '');
+            $issues[] = $issue;
+        }
+
+        return $issues;
+    }
+
+    /**
+     * 获取静态扫描问题（scanMethod=check/smell）总数，供问题清单的计数徽标使用。
+     * Get the total count of static scan issues.
+     *
+     * @param  int $repoID
+     * @param  int $ppmID  当前代码评审 ID，用于按评审过滤。
+     * @access public
+     * @return int
+     */
+    public function getStaticScanIssueTotal(int $repoID, int $ppmID = 0): int
+    {
+        $scanResult = $this->loadModel('codescan')->getScanIssueList(0, $this->buildStaticScanParams($repoID, 1, 1, $ppmID));
+        return (int)zget(zget($scanResult, 'pager', new stdclass()), 'total', 0);
+    }
+
+    /**
+     * 组装静态扫描问题（scanMethod=check/smell）的接口查询参数，与 codescan issue 列表同一套口径。
+     *
+     * @param  int $repoID
+     * @param  int $page
+     * @param  int $pageSize
+     * @param  int $ppmID
+     * @access private
+     * @return array
+     */
+    private function buildStaticScanParams(int $repoID, int $page, int $pageSize, int $ppmID): array
+    {
+        $apiParams = array(
+            'repoID'      => $repoID,
+            'scanMethods' => array('check', 'smell'),
+            'page'        => $page,
+            'pageSize'    => $pageSize,
+        );
+        if($ppmID > 0) $apiParams['ppmID'] = $ppmID;
+
+        return $apiParams;
+    }
 }

@@ -251,4 +251,19 @@ class ppmModelTest extends ppmBaseTest
     {
         return $this->invokeMethod('execJob', array($ppmID, $jobID));
     }
+
+    public function getStaticScanIssuesTest(int $repoID, object $pager, int $ppmID = 0)
+    {
+        return $this->invokeMethod('getStaticScanIssues', array($repoID, $pager, $ppmID));
+    }
+
+    public function getStaticScanIssueTotalTest(int $repoID, int $ppmID = 0)
+    {
+        return $this->invokeMethod('getStaticScanIssueTotal', array($repoID, $ppmID));
+    }
+
+    public function buildStaticScanParamsTest(int $repoID, int $page, int $pageSize, int $ppmID)
+    {
+        return $this->invokeMethod('buildStaticScanParams', array($repoID, $page, $pageSize, $ppmID));
+    }
 }

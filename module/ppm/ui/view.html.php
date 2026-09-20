@@ -25,11 +25,11 @@ $newRevision  = helper::safe64Encode($newRevision);
 jsVar('mrID', $ppm->id);
 jsVar('sseURL', "{$config->devops->gitfoxURL}:{$config->devops->gitfoxPort}/api/v2/spaces/{$repo->spaceID}/events");
 
-$encoding      = empty($encoding) ? '' : $encoding;
-$checkMessage  = zget($checkResult, 'message', '');
-$conflictFiles = zget($checkResult, 'conflictFiles', array());
-$minReviewers  = empty($flow) ? 0 : $flow->definition->reviewFlow->approvals->minReviewers;
-$issueListTotal = $bugPager->recTotal + (int)data('aiIssueCount');
+$encoding       = empty($encoding) ? '' : $encoding;
+$checkMessage   = zget($checkResult, 'message', '');
+$conflictFiles  = zget($checkResult, 'conflictFiles', array());
+$minReviewers   = empty($flow) ? 0 : $flow->definition->reviewFlow->approvals->minReviewers;
+$issueListTotal = $bugPager->recTotal + (int)data('aiIssueCount') + (int)data('staticIssueTotal');
 
 $basicItems = array();
 if($type != 'files')
@@ -63,6 +63,9 @@ if(!hasPriv('repo', 'diff')) unset($config->ppm->commitLogs->dtable->fieldList['
 if(!empty($reviewers)) $ppm->reviewers = implode(',', array_keys($reviewers));
 $actions = $this->loadModel('common')->buildOperateMenu($ppm);
 
+$isMergeReady  = $ppm->status == 'opened' && $canMerge && !$checkMessage;
+$showMergeIcon = $isMergeReady && !empty($defaultMergeType) && $type == 'basic';
+
 include "{$type}.html.php";
 
 div
@@ -89,7 +92,7 @@ div
                     setClass('my-2 detail-header flex'),
                     set::style(array('justify-content' => 'space-between')),
                     div(setClass('mr-2'), span(html(sprintf($lang->ppm->MRHistory, zget($users, $ppm->createdBy), $ppm->createdDate, $ppm->sourceBranch, $commitPager->recTotal, $ppm->targetBranch)))),
-                    $ppm->status == 'opened' && $canMerge && !$checkMessage && $defaultMergeType && $type == 'basic' ? div(img(set::src($config->ppm->mergeImages[$defaultMergeType]))) : null
+                    $showMergeIcon ? div(img(set::src($config->ppm->mergeImages[$defaultMergeType]))) : null
                 ),
                 div
                 (
