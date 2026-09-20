@@ -49,10 +49,6 @@ $ppm->gen(1);
 
 su('admin');
 
-/* codescanZen 继承自 codescan control，其构造函数会做 gitfox 健康检查，CLI 无服务时会重定向并抛异常。
-   这里预注 loadTarget 缓存绕开该构造：无扫描数据时方法取数后即返回，不会用到 zen 实例。 */
-baseRouter::$loadedTargets['zen'][$app->appName]['codescan'] = false;
-
 $ppmModel = new ppmModelTest();
 $pager1   = new pager(0, 20, 1);
 $pager2   = new pager(0, 20, 2);

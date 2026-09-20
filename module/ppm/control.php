@@ -386,11 +386,12 @@ class ppm extends control
      * @param  int    $recTotal
      * @param  int    $recPerPage
      * @param  int    $pageID
-     * @param  string $issueTab 问题清单当前分类（ai|scan|static），该分类独占下面三个分页参数。
+     * @param  string $issueTab    问题清单当前分类（ai|scan|static），该分类独占下面三个分页参数。
+     * @param  string $issueStatus 问题清单当前状态，默认激活。
      * @access public
      * @return void
      */
-    public function view(int $id, string $type = 'basic', string $param = 'all', int $recTotal = 0, int $recPerPage = 20, int $pageID = 0, string $issueTab = '')
+    public function view(int $id, string $type = 'basic', string $param = 'all', int $recTotal = 0, int $recPerPage = 20, int $pageID = 0, string $issueTab = '', string $issueStatus = 'wait')
     {
         $ppm  = $this->ppm->fetchByID($id);
         if(!empty($ppm->repoID)) $this->loadModel('repo')->saveState((int)$ppm->repoID);
@@ -421,9 +422,21 @@ class ppm extends control
         $this->view->repoID           = $repo->id;
         $this->view->flow             = $flow;
         $this->view->commitLogs       = $this->ppm->apiGetMRCommits($ppm->targetRepoID, $ppm->id, $commitPager);
-        $this->view->bugs             = $this->ppm->getBugsByCommits($repo->id, $ppm->id, $bugPager);
-        $this->view->staticIssues     = $type == 'bug' ? $this->ppm->getStaticScanIssues((int)$ppm->targetRepoID, $scanPager, (int)$ppm->id) : array();
-        $this->view->staticIssueTotal = $type == 'bug' ? (int)$scanPager->recTotal : $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
+        $this->view->bugs             = $this->ppm->getBugsByCommits($repo->id, $ppm->id, $bugPager, $type == 'bug' ? $issueStatus : '');
+        $this->view->bugsTotal        = $this->ppm->getBugsByCommitsTotal($repo->id, $ppm->id);
+        if($type != 'bug')
+        {
+            $this->view->staticIssues = array();
+        }
+        elseif($issueStatus == 'bug')
+        {
+            $this->view->staticIssues = $this->ppm->getTransferredIssues('scan', (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager);
+        }
+        else
+        {
+            $this->view->staticIssues = $this->ppm->getStaticScanIssues((int)$ppm->targetRepoID, $scanPager, (int)$ppm->id, $issueStatus);
+        }
+        $this->view->staticIssueTotal = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
         $this->view->linkObjects      = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
         $this->view->commitPager      = $commitPager;
         $this->view->bugPager         = $bugPager;
@@ -431,6 +444,7 @@ class ppm extends control
         $this->view->objectPager      = $objectPager;
         $this->view->type             = $type;
         $this->view->issueTab         = $issueTab;
+        $this->view->issueStatus      = $issueStatus;
         $this->view->fromRevision     = helper::safe64Encode($fromRevision);
         $this->view->toRevision       = helper::safe64Encode($toRevision);
         $this->view->users            = $this->loadModel('user')->getPairs('noletter');
