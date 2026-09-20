@@ -372,3 +372,4 @@ $lang->ppm->issueStatusTabs['wait']   = 'Active';
 $lang->ppm->issueStatusTabs['solved'] = 'Resolved';
 $lang->ppm->issueStatusTabs['ignore'] = 'Ignored';
 $lang->ppm->issueStatusTabs['closed'] = 'Closed';
+$lang->ppm->issueStatusTabs['bug']    = 'Converted to Bug';
