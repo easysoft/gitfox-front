@@ -520,7 +520,6 @@ define('TABLE_ARTIFACTPACKAGES', '`ops_artifact_packages`');
 define('TABLE_ARTIFACTVERSIONS', '`ops_artifact_versions`');
 define('TABLE_PROVIDER',         '`ops_provider`');
 define('TABLE_RUNNER',           '`ops_runner`');
-define('TABLE_CREDENTIAL',       '`ops_credentials`');
 
 $config->objectTables['dept']           = TABLE_DEPT;
 $config->objectTables['product']        = TABLE_PRODUCT;
