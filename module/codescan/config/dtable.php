@@ -544,6 +544,14 @@ $config->codescan->issue->dtable->fieldList['status']['fixed']     = 'right';
 $config->codescan->issue->dtable->fieldList['status']['width']     = 150;
 $config->codescan->issue->dtable->fieldList['status']['statusMap'] = $lang->codescan->issueStatusList;
 
+$config->codescan->issue->dtable->fieldList['actions']['name']  = 'actions';
+$config->codescan->issue->dtable->fieldList['actions']['title'] = $lang->actions;
+$config->codescan->issue->dtable->fieldList['actions']['type']  = 'actions';
+$config->codescan->issue->dtable->fieldList['actions']['width'] = 150;
+$config->codescan->issue->dtable->fieldList['actions']['fixed'] = 'right';
+$config->codescan->issue->dtable->fieldList['actions']['menu']  = $config->codescan->issue->actionMenu;
+$config->codescan->issue->dtable->fieldList['actions']['list']  = $config->codescan->issue->actionList;
+
 $app->loadLang('bug');
 $config->codescan->issue->dtable->fieldList['resolution']['title']    = $lang->bug->resolution;
 $config->codescan->issue->dtable->fieldList['resolution']['width']    = 150;

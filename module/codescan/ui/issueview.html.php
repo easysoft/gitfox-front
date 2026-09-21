@@ -66,7 +66,7 @@ detailHeader
         (
             set::icon('back'),
             set::type('secondary'),
-            set::back('codescan-issue,codescan-taskview'),
+            set::back('codescan-issue,codescan-taskview,ppm-view'),
             $lang->goback
         ),
         label(setClass('flex-none'), $issue->id),
@@ -311,7 +311,7 @@ div
     floatToolbar
     (
         set::object($issue),
-        isAjaxRequest('modal') ? null : to::prefix(backBtn(set::icon('back'), set::back('codescan-issue,codescan-taskview'), $lang->goback)),
+        isAjaxRequest('modal') ? null : to::prefix(backBtn(set::icon('back'), set::back('codescan-issue,codescan-taskview,ppm-view'), $lang->goback)),
         empty($actionList['mainActions']) ? null : set::main($actionList['mainActions'])
     )
 );

@@ -822,6 +822,7 @@ class codescanZen extends codescan
             foreach($typeMap as $code => $typeName)
             {
                 if($code == 'all') continue;
+                if($type == 'status' && in_array($code, array('todo', 'solving'))) continue;
 
                 $data[$type][] = array('name' => $typeName, 'value' => zget($typeList, $code, 0));
             }

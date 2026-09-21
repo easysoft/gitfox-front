@@ -227,12 +227,17 @@ $lang->codescan->operationList['branch_updated']  = '更新分支';
 $lang->codescan->operationList['tag_created']     = '创建标签';
 
 $lang->codescan->issueStatusList = array();
-$lang->codescan->issueStatusList['wait']    = '待处理';
-$lang->codescan->issueStatusList['todo']    = '已确认';
-$lang->codescan->issueStatusList['solving'] = '待解决';
+$lang->codescan->issueStatusList['wait']    = '激活';
 $lang->codescan->issueStatusList['solved']  = '已解决';
 $lang->codescan->issueStatusList['ignore']  = '已忽略';
 $lang->codescan->issueStatusList['closed']  = '已关闭';
+$lang->codescan->issueStatusList['todo']    = '已确认';
+$lang->codescan->issueStatusList['solving'] = '待解决';
+
+$lang->codescan->resolveIssue = '解决';
+$lang->codescan->closeIssue   = '关闭';
+$lang->codescan->ignoreReason = '忽略原因';
+$lang->codescan->closeReason  = '关闭原因';
 
 $lang->codescan->ignoreDateList = array();
 $lang->codescan->ignoreDateList['1 week']  = '一周';
@@ -246,7 +251,7 @@ $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;
 $lang->codescan->featureBar['ruleset']  = array('all' => '全部') + $lang->codescan->statusList;
 $lang->codescan->featureBar['solution'] = array('all' => '全部') + $lang->codescan->statusList;
-$lang->codescan->featureBar['issue']    = array('all' => '所有') + $lang->codescan->issueStatusList;
+$lang->codescan->featureBar['issue']    = array('all' => '所有', 'wait' => $lang->codescan->issueStatusList['wait'], 'solved' => $lang->codescan->issueStatusList['solved'], 'ignore' => $lang->codescan->issueStatusList['ignore'], 'closed' => $lang->codescan->issueStatusList['closed']);
 $lang->codescan->featureBar['plan']     = array('all' => '全部') + $lang->codescan->latestExecStatusList;
 unset($lang->codescan->featureBar['plan']['in_progress']);
 
@@ -256,6 +261,7 @@ $lang->codescan->notice->confirmDisable         = '确认要禁用该规则吗�
 $lang->codescan->notice->confirmUnlink          = '确认要移除此规则吗？';
 $lang->codescan->notice->confirmUnlinkSet       = '确认要移除此规则集吗？';
 $lang->codescan->notice->confirmActivateIssue   = '确认要激活此问题吗？';
+$lang->codescan->notice->confirmResolveIssue    = '确认要解决此问题吗？';
 $lang->codescan->notice->changeStateFailed      = '修改状态失败';
 $lang->codescan->notice->enableSuccess          = '启用成功';
 $lang->codescan->notice->disableSuccess         = '禁用成功';
