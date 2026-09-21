@@ -1644,9 +1644,7 @@ $lang->resource->codescan->overview     = 'overview';
 $lang->resource->codescan->issue        = 'issue';
 $lang->resource->codescan->issueView    = 'issueView';
 $lang->resource->codescan->resolveIssue = 'resolveIssue';
-$lang->resource->codescan->ignoreIssue  = 'ignoreIssue';
 $lang->resource->codescan->closeIssue   = 'closeIssue';
-$lang->resource->codescan->activeIssue  = 'activeIssue';
 
 $lang->resource->runner = new stdclass();
 $lang->resource->runner->browse      = 'browse';
