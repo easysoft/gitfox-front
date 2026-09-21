@@ -49,14 +49,15 @@ $(document).off('click','.batch-btn').on('click', '.batch-btn', function()
     const filter    = [];
     const url       = $(this).data('url');
     const type      = $(this).data('type');
-    const isBugBtn  = $(this).hasClass('bug-btn');
     const isAjaxBtn = $(this).hasClass('ajax-btn');
     let   hasIssue  = false;
     checkedList.forEach((id) => {
-        const rowData = dtable.$.getRowInfo(id).data;
-        const status  = rowData.status;
-        const allowed = (window.batchStatus && window.batchStatus[type] ? window.batchStatus[type] : []).includes(status);
-        if(!allowed || (type == 'bug' && rowData.bugID))
+        const rowData  = dtable.$.getRowInfo(id).data;
+        const status   = rowData.status;
+        const allowed  = (window.batchStatus && window.batchStatus[type] ? window.batchStatus[type] : []).includes(status);
+        const blocker  = window.batchBlockers && window.batchBlockers[type] ? window.batchBlockers[type] : '';
+        const blocked  = blocker ? !!rowData[blocker] : false;
+        if(!allowed || blocked)
         {
             filter.push('#' + id);
         }
