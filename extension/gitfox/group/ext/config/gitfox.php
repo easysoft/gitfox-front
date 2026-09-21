@@ -360,10 +360,8 @@ $config->group->package->processScanIssues = new stdclass();
 $config->group->package->processScanIssues->order  = 2610;
 $config->group->package->processScanIssues->subset = 'codereview';
 $config->group->package->processScanIssues->privs  = array();
-$config->group->package->processScanIssues->privs['codescan-ignoreIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-resolveIssue', 2 => 'codescan-closeIssue', 3 => 'codescan-activeIssue'));
-$config->group->package->processScanIssues->privs['codescan-resolveIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-ignoreIssue', 2 => 'codescan-closeIssue', 3 => 'codescan-activeIssue'));
-$config->group->package->processScanIssues->privs['codescan-closeIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 12, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-ignoreIssue', 2 => 'codescan-resolveIssue', 3 => 'codescan-activeIssue'));
-$config->group->package->processScanIssues->privs['codescan-activeIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 15, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-ignoreIssue', 2 => 'codescan-resolveIssue', 3 => 'codescan-closeIssue'));
+$config->group->package->processScanIssues->privs['codescan-resolveIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-closeIssue'));
+$config->group->package->processScanIssues->privs['codescan-closeIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 12, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-resolveIssue'));
 
 $config->group->package->browsePipeline = new stdclass();
 $config->group->package->browsePipeline->order  = 5;

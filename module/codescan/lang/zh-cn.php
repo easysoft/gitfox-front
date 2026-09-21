@@ -40,10 +40,7 @@ $lang->codescan->addCondition    = '添加条件';
 $lang->codescan->issue           = 'AI/扫描问题列表';
 $lang->codescan->issueView       = 'AI/扫描问题详情';
 $lang->codescan->allRepo         = '全部代码库';
-$lang->codescan->createBug       = '转Bug';
-$lang->codescan->ignoreIssue     = '忽略扫描问题';
 $lang->codescan->confirmIssue    = '确认扫描问题';
-$lang->codescan->activeIssue     = '激活扫描问题';
 $lang->codescan->ruleName        = '规则名';
 $lang->codescan->ruleID          = '规则ID';
 $lang->codescan->scanSetting     = '扫描配置';
@@ -51,7 +48,6 @@ $lang->codescan->allTask         = '所有任务';
 $lang->codescan->rule            = '规则';
 $lang->codescan->catalog         = '目录';
 $lang->codescan->overview        = '扫描概况';
-$lang->codescan->ignoreDate      = '忽略时长';
 $lang->codescan->refresh         = '更新数据';
 $lang->codescan->general         = '通用';
 $lang->codescan->default         = '默认';
@@ -237,22 +233,13 @@ $lang->codescan->issueStatusList['solving'] = '待解决';
 
 $lang->codescan->resolveIssue = '解决';
 $lang->codescan->closeIssue   = '关闭';
-$lang->codescan->ignoreReason = '忽略原因';
 $lang->codescan->closeReason  = '关闭原因';
-
-$lang->codescan->ignoreDateList = array();
-$lang->codescan->ignoreDateList['1 week']  = '一周';
-$lang->codescan->ignoreDateList['2 week']  = '两周';
-$lang->codescan->ignoreDateList['1 month'] = '一个月';
-$lang->codescan->ignoreDateList['3 month'] = '三个月';
-$lang->codescan->ignoreDateList['6 month'] = '半年';
-$lang->codescan->ignoreDateList['-1']      = '永久';
 
 $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;
 $lang->codescan->featureBar['ruleset']  = array('all' => '全部') + $lang->codescan->statusList;
 $lang->codescan->featureBar['solution'] = array('all' => '全部') + $lang->codescan->statusList;
-$lang->codescan->featureBar['issue']    = array('all' => '所有', 'wait' => $lang->codescan->issueStatusList['wait'], 'solved' => $lang->codescan->issueStatusList['solved'], 'ignore' => $lang->codescan->issueStatusList['ignore'], 'closed' => $lang->codescan->issueStatusList['closed']);
+$lang->codescan->featureBar['issue']    = array('all' => '所有', 'wait' => $lang->codescan->issueStatusList['wait'], 'solved' => $lang->codescan->issueStatusList['solved'], 'closed' => $lang->codescan->issueStatusList['closed']);
 $lang->codescan->featureBar['plan']     = array('all' => '全部') + $lang->codescan->latestExecStatusList;
 unset($lang->codescan->featureBar['plan']['in_progress']);
 
@@ -261,7 +248,6 @@ $lang->codescan->notice->confirmEnable          = '确认要启用该规则吗�
 $lang->codescan->notice->confirmDisable         = '确认要禁用该规则吗？';
 $lang->codescan->notice->confirmUnlink          = '确认要移除此规则吗？';
 $lang->codescan->notice->confirmUnlinkSet       = '确认要移除此规则集吗？';
-$lang->codescan->notice->confirmActivateIssue   = '确认要激活此问题吗？';
 $lang->codescan->notice->confirmResolveIssue    = '确认要解决此问题吗？';
 $lang->codescan->notice->changeStateFailed      = '修改状态失败';
 $lang->codescan->notice->enableSuccess          = '启用成功';
@@ -303,7 +289,6 @@ $lang->codescan->notice->thresholdError         = '阈值必须在0-100之间';
 $lang->codescan->notice->keywordNote            = "若提交注释中包含关键字则触发扫描，多个关键字用','分割";
 $lang->codescan->notice->execFail               = '扫描请求提交失败，请重试';
 $lang->codescan->notice->execSuccess            = '扫描请求提交成功，待队列调度后开始扫描';
-$lang->codescan->notice->bugCreated             = '问题%s已转为Bug或者状态不是待处理和待分配，本次操作已被过滤。';
 $lang->codescan->notice->statusDisable          = '问题%s的状态不是%s，本次操作已被过滤。';
 $lang->codescan->notice->copiedSuccess          = '复制成功';
 $lang->codescan->notice->repoNotFound           = '代码库未找到';

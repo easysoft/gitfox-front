@@ -15,8 +15,6 @@ cid=0
 - 批量问题标记为已解决返回成功  @1
 - 批量提交为每个问题各写一条操作历史  @3
 - 批量的操作历史动作名为 solvedScanIssue（入库转小写）  @solvedscanissue
-- 永久忽略问题返回成功  @1
-- 永久忽略的操作历史动作名为 ignoreScanIssue（入库转小写）  @ignorescanissue
 - 激活回激活态返回成功  @1
 - 零号问题提交仍返回成功  @1
 - 非法状态提交仍返回成功  @1
@@ -36,9 +34,6 @@ $batchActions = $tester->dao->select('`id`,`action`')->from(TABLE_ACTION)
     ->fetchAll('id');
 r(count($batchActions)) && p() && e('3');
 r(reset($batchActions)->action) && p() && e('solvedscanissue');
-
-r($test->changeIssueStateTest(6, 'ignore', '', '', -1)) && p() && e('1');
-r($tester->dao->select('`action`')->from(TABLE_ACTION)->where('objectType')->eq('codescanissue')->andWhere('objectID')->eq(6)->fetch('action')) && p() && e('ignorescanissue');
 
 r($test->changeIssueStateTest(6, 'wait')) && p() && e('1');
 r($test->changeIssueStateTest(0, 'wait')) && p() && e('1');

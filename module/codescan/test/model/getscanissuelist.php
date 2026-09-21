@@ -3,6 +3,8 @@
 include dirname(__FILE__, 5) . '/test/lib/init.php';
 include dirname(__FILE__, 2) . '/lib/model.class.php';
 
+zenData('entry')->gen(0);
+
 /**
 
 title=测试 codescanModel->getScanIssueList();
@@ -14,7 +16,8 @@ cid=0
 - 空参数与全量参数都返回数组  @1
 - file 参数归一化为 path 后返回空列表  @0
 - 分页与排序参数不影响空数据返回  @0
-- 非法 taskID（负数、超大值）返回空列表  @0
+- 非法 taskID（负数）返回空列表  @0
+- 非法 taskID（超大值）返回空列表  @0
 - issueID/plan 等参数归一化后返回空列表  @0
 - 任务与仓库维度混合参数仍返回数组  @1
 

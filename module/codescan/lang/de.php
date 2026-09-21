@@ -40,10 +40,7 @@ $lang->codescan->addCondition    = 'Add Condition';
 $lang->codescan->issue           = 'AI/Scan Issue List';
 $lang->codescan->issueView       = 'AI/Scan Issue Detail';
 $lang->codescan->allRepo         = 'All Repos';
-$lang->codescan->createBug       = 'Create Bug';
-$lang->codescan->ignoreIssue     = 'Ignore';
 $lang->codescan->confirmIssue    = 'Confirm';
-$lang->codescan->activeIssue     = 'Active';
 $lang->codescan->ruleName        = 'Rule Name';
 $lang->codescan->ruleID          = 'Rule ID';
 $lang->codescan->scanSetting     = 'Scan Setting';
@@ -51,7 +48,6 @@ $lang->codescan->allTask         = 'All Task';
 $lang->codescan->rule            = 'Rule';
 $lang->codescan->catalog         = 'File';
 $lang->codescan->overview        = 'Overview';
-$lang->codescan->ignoreDate      = 'Ignore Date';
 $lang->codescan->refresh         = 'Refresh Data';
 $lang->codescan->general         = 'General';
 $lang->codescan->default         = 'Default';
@@ -237,22 +233,13 @@ $lang->codescan->issueStatusList['solving'] = 'Solving';
 
 $lang->codescan->resolveIssue = 'Resolve';
 $lang->codescan->closeIssue   = 'Close';
-$lang->codescan->ignoreReason = 'Ignore Reason';
 $lang->codescan->closeReason  = 'Close Reason';
-
-$lang->codescan->ignoreDateList = array();
-$lang->codescan->ignoreDateList['1 week']  = '1 week';
-$lang->codescan->ignoreDateList['2 week']  = '2 week';
-$lang->codescan->ignoreDateList['1 month'] = '1 month';
-$lang->codescan->ignoreDateList['3 month'] = '3 month';
-$lang->codescan->ignoreDateList['6 month'] = 'half year';
-$lang->codescan->ignoreDateList['-1']      = 'forever';
 
 $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;
 $lang->codescan->featureBar['ruleset']  = array('all' => 'All') + $lang->codescan->statusList;
 $lang->codescan->featureBar['solution'] = array('all' => 'All') + $lang->codescan->statusList;
-$lang->codescan->featureBar['issue']    = array('all' => 'All', 'wait' => $lang->codescan->issueStatusList['wait'], 'solved' => $lang->codescan->issueStatusList['solved'], 'ignore' => $lang->codescan->issueStatusList['ignore'], 'closed' => $lang->codescan->issueStatusList['closed']);
+$lang->codescan->featureBar['issue']    = array('all' => 'All', 'wait' => $lang->codescan->issueStatusList['wait'], 'solved' => $lang->codescan->issueStatusList['solved'], 'closed' => $lang->codescan->issueStatusList['closed']);
 $lang->codescan->featureBar['plan']     = array('all' => 'All') + $lang->codescan->latestExecStatusList;
 unset($lang->codescan->featureBar['plan']['in_progress']);
 
@@ -261,7 +248,6 @@ $lang->codescan->notice->confirmEnable          = 'Are you sure to enable this r
 $lang->codescan->notice->confirmDisable         = 'Are you sure to disable this rule?';
 $lang->codescan->notice->confirmUnlink          = 'Are you sure to unlink this rule?';
 $lang->codescan->notice->confirmUnlinkSet       = 'Are you sure to unlink this ruleset?';
-$lang->codescan->notice->confirmActivateIssue   = 'Are you sure to activate this issue?';
 $lang->codescan->notice->confirmResolveIssue    = 'Are you sure to resolve this issue?';
 $lang->codescan->notice->changeStateFailed      = 'Change status failed';
 $lang->codescan->notice->enableSuccess          = 'Enable success';
@@ -303,7 +289,6 @@ $lang->codescan->notice->thresholdError         = 'Threshold must be between 0 a
 $lang->codescan->notice->keywordNote            = "Please enter the keyword of matching branch, multiple keywords separated by commas";
 $lang->codescan->notice->execFail               = 'Scan request submission failed, please try again';
 $lang->codescan->notice->execSuccess            = 'Scan request submission successful, please wait for queue scheduling to start scanning';
-$lang->codescan->notice->bugCreated             = 'Issue %s has been converted to Bug or status is not Wait and Todo , this operation has been filtered.';
 $lang->codescan->notice->statusDisable          = 'Issue %s status is not %s, this operation has been filtered.';
 $lang->codescan->notice->copiedSuccess          = 'Copy successful';
 $lang->codescan->notice->repoNotFound           = 'Repo not found';
