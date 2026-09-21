@@ -260,7 +260,6 @@ $config->codescan->issue->batchStatus = array(
     'close'   => array('wait', 'solved', 'ignore')
 );
 
-/* 问题列表可选的问题状态：忽略只能由插件（devops）产生，核心不提供该项，扩展侧往这里追加。 */
 $config->codescan->issue->filterStatusList = array('wait', 'solved', 'closed');
 
 $config->codescan->issue->batchBlockers = array();
