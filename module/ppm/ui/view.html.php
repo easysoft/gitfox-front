@@ -92,7 +92,7 @@ div
                     setClass('my-2 detail-header flex'),
                     set::style(array('justify-content' => 'space-between')),
                     div(setClass('mr-2'), span(html(sprintf($lang->ppm->MRHistory, zget($users, $ppm->createdBy), $ppm->createdDate, $ppm->sourceBranch, $commitPager->recTotal, $ppm->targetBranch)))),
-                    $showMergeIcon ? div(img(set::src($config->ppm->mergeImages[$defaultMergeType]))) : null
+                    $showMergeIcon ? div(set::style(array('width' => '180px')), img(set::src($config->ppm->mergeImages[$defaultMergeType]))) : null
                 ),
                 div
                 (
