@@ -1430,7 +1430,7 @@ class myModel extends model
             ->where('t2.`createdBy`')->eq($account)
             ->andWhere('t2.`deleted`')->eq('0')
             ->andWhere('t1.`deleted`')->eq('0')
-            ->andWhere('t1.`status`')->in('wait,todo,solving')
+            ->andWhere('t1.`status`')->in('wait')
             ->fetch('count');
 
         return array('createdReviews' => (int)$createdReviews, 'pendingIssues' => (int)$pendingIssues);
