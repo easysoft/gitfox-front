@@ -145,9 +145,9 @@ $config->ppm->actions->view = array();
 $config->ppm->actions->view['mainActions'] = array('review', 'edit', 'close', 'reopen');
 
 $config->ppm->issueStatusList = array();
-$config->ppm->issueStatusList['ai']     = array('wait', 'solved', 'ignore', 'closed', 'bug');
-$config->ppm->issueStatusList['scan']   = array('wait', 'solved', 'ignore', 'closed', 'bug');
-$config->ppm->issueStatusList['static'] = array('wait', 'solved', 'closed', 'bug');
+$config->ppm->issueStatusList['ai']     = array('wait', 'solved', 'ignore', 'closed');
+$config->ppm->issueStatusList['scan']   = array('wait', 'solved', 'ignore', 'closed');
+$config->ppm->issueStatusList['static'] = array('wait', 'solved', 'closed');
 
 $config->ppm->issueStatusMaps = array();
 $config->ppm->issueStatusMaps['ai']     = array('wait' => 'wait', 'solved' => 'solved', 'ignore' => 'ignore', 'closed' => 'closed');

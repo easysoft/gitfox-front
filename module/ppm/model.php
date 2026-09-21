@@ -1248,18 +1248,17 @@ class ppmModel extends model
         $commitList = array_column($this->getMRCommitsCached($repoID, $ppmID), 'sha');
         if(empty($commitList)) return array();
 
-        $bugStatus = $this->mapIssueStatus('static', $status);
-
-        $bugs = $this->dao->select('*, `entry`, concat("code") as source')->from(TABLE_BUG)
+        $query = $this->dao->select("*, `entry`, 'code' AS `source`")->from(TABLE_BUG)
             ->where('repo')->eq($repoID)
             ->andWhere('(v2')->in($commitList)
             ->orWhere('mr')->eq($ppmID)
             ->markRight()
-            ->andWhere('deleted')->eq(0)
-            ->beginIF($status == 'bug')->andWhere('issueKey')->ne('')->fi()
-            ->beginIF($status != 'bug' && $bugStatus != '')->andWhere('status')->eq($bugStatus)->fi()
-            ->page($pager)
-            ->fetchAll('id');
+            ->andWhere('deleted')->eq(0);
+
+        $query = $this->applyIssueStatusCondition($query, $status, 'static');
+        if($query === false) return array();
+
+        $bugs = $query->page($pager)->fetchAll('id');
 
         $this->loadModel('repo');
         foreach($bugs as $bug)
@@ -1267,6 +1266,27 @@ class ppmModel extends model
             $bug->file = $this->repo->decodePath($bug->entry);
         }
         return $bugs;
+    }
+
+    /**
+     * 给缺陷查询追加状态条件。
+     * Append the status condition to the bug query.
+     *
+     * 空状态表示「全部」，不加条件；无法识别的状态返回 false，由调用方直接返回空结果。
+     * 扩展侧的状态（如已转Bug）通过覆写本方法注册。
+     *
+     * @param  object $query
+     * @param  string $status
+     * @param  string $type
+     * @access protected
+     * @return object|false
+     */
+    protected function applyIssueStatusCondition(object $query, string $status, string $type): object|false
+    {
+        $bugStatus = $this->mapIssueStatus($type, $status);
+        if($status != '' && $bugStatus == '') return false;
+        if($bugStatus != '') $query->andWhere('status')->eq($bugStatus);
+        return $query;
     }
 
     /**
@@ -1300,7 +1320,7 @@ class ppmModel extends model
      * @access private
      * @return array
      */
-    private function getMRCommitsCached(int $repoID, int $ppmID): array
+    protected function getMRCommitsCached(int $repoID, int $ppmID): array
     {
         $cacheKey = "{$repoID}-{$ppmID}";
         if(!isset($this->mrCommitsCache[$cacheKey])) $this->mrCommitsCache[$cacheKey] = (array)$this->apiGetMRCommits($repoID, $ppmID);
@@ -1350,54 +1370,6 @@ class ppmModel extends model
         }
 
         return $issues;
-    }
-
-    /**
-     * 获取已转缺陷的扫描问题，供问题清单的「已转Bug」筛选用。
-     *
-     * 扫描问题与缺陷的关联关系落在本地：zt_bug.issueKey 存的就是 ops_scan_issues.id，
-     * 所以直接 SQL 关联查询，分页与总数都能算准，不必先拉一页问题再在本地过滤。
-     * 判据：问题状态为 closed，且缺陷表里存在 issueKey 等于该问题 id 的记录。
-     *
-     * @param  string $type   分类（ai|scan），决定扫描方法。
-     * @param  int    $repoID
-     * @param  int    $ppmID
-     * @param  object $pager
-     * @access public
-     * @return array
-     */
-    public function getTransferredIssues(string $type, int $repoID, int $ppmID, object $pager): array
-    {
-        $scanMethods = $type == 'ai' ? array('ai') : array('check', 'smell');
-
-        $issues = $this->dao->select('t1.*')
-            ->from(TABLE_SCANISSUE)->alias('t1')
-            ->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.`issueKey`')
-            ->where('t1.deleted')->eq(0)
-            ->andWhere('t1.`scanMethod`')->in($scanMethods)
-            ->andWhere('t1.`repoID`')->eq($repoID)
-            ->beginIF($ppmID > 0)->andWhere('t1.`ppmID`')->eq($ppmID)->fi()
-            ->andWhere('t2.deleted')->eq(0)
-            ->page($pager)
-            ->fetchAll('id');
-
-        if(empty($issues)) return array();
-
-        $codescan = $this->loadModel('codescan');
-
-        $result = array();
-        foreach($issues as $issue)
-        {
-            /* payload 可能为 NULL 或非法 JSON，统一兜成对象，避免下游 processIssueData 取属性时告警。 */
-            $payload = isset($issue->payload) && is_string($issue->payload) ? json_decode($issue->payload) : null;
-            $issue->payload = is_object($payload) ? $payload : new stdclass();
-
-            $issue = $codescan->processIssueData($issue);
-            if(empty($issue->file)) $issue->file = zget($issue, 'path', '');
-            $result[] = $issue;
-        }
-
-        return $result;
     }
 
     /**

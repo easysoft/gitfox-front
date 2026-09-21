@@ -272,11 +272,6 @@ class ppmModelTest extends ppmBaseTest
         return $this->invokeMethod('getIssueBadgeCount', array($type, $repoID, $ppmID));
     }
 
-    public function getTransferredIssuesTest(string $type, int $repoID, int $ppmID, object $pager)
-    {
-        return $this->invokeMethod('getTransferredIssues', array($type, $repoID, $ppmID, $pager));
-    }
-
     public function getBugsByCommitsTotalTest(int $repoID, int $ppmID)
     {
         return $this->invokeMethod('getBugsByCommitsTotal', array($repoID, $ppmID));

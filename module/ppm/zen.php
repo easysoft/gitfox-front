@@ -156,6 +156,24 @@ class ppmZen extends ppm
     }
 
     /**
+     * 按问题清单的状态取扫描问题列表。
+     * Get the scan issue list by the issue list status.
+     *
+     * 核心只认识自身定义的状态；扩展侧的状态（如已转Bug）由扩展覆写本方法接管。
+     *
+     * @param  string $status
+     * @param  int    $repoID
+     * @param  int    $ppmID
+     * @param  object $pager
+     * @access public
+     * @return array
+     */
+    public function getScanIssuesByStatus(string $status, int $repoID, int $ppmID, object $pager): array
+    {
+        return $this->ppm->getStaticScanIssues($repoID, $pager, $ppmID, $status);
+    }
+
+    /**
      * 解析创建合并检查结果。
      * Parse the create merge check result.
      *
