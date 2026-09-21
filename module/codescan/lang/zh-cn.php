@@ -231,9 +231,11 @@ $lang->codescan->issueStatusList['closed']  = '已关闭';
 $lang->codescan->issueStatusList['todo']    = '已确认';
 $lang->codescan->issueStatusList['solving'] = '待解决';
 
-$lang->codescan->resolveIssue = '解决';
-$lang->codescan->closeIssue   = '关闭';
-$lang->codescan->closeReason  = '关闭原因';
+$lang->codescan->resolveIssue     = '解决';
+$lang->codescan->closeIssue       = '关闭';
+$lang->codescan->closeIssueTitle  = '关闭扫描问题';
+$lang->codescan->closeIssueTitles = array();
+$lang->codescan->closeReason      = '关闭原因';
 
 $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;

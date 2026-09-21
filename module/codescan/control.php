@@ -1403,10 +1403,11 @@ class codescan extends control
      * Close scan issue.
      *
      * @param  int    $issueID
+     * @param  string $from
      * @access public
      * @return void
      */
-    public function closeIssue(int $issueID = 0)
+    public function closeIssue(int $issueID = 0, string $from = '')
     {
         if($this->server->request_method == 'POST')
         {
@@ -1423,7 +1424,7 @@ class codescan extends control
             $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
         }
 
-        $this->view->title = $this->lang->codescan->closeIssue;
+        $this->view->title = zget($this->lang->codescan->closeIssueTitles, $from, $this->lang->codescan->closeIssueTitle);
         $this->display();
     }
 

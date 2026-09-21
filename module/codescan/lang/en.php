@@ -231,9 +231,11 @@ $lang->codescan->issueStatusList['closed']  = 'Closed';
 $lang->codescan->issueStatusList['todo']    = 'Todo';
 $lang->codescan->issueStatusList['solving'] = 'Solving';
 
-$lang->codescan->resolveIssue = 'Resolve';
-$lang->codescan->closeIssue   = 'Close';
-$lang->codescan->closeReason  = 'Close Reason';
+$lang->codescan->resolveIssue     = 'Resolve';
+$lang->codescan->closeIssue       = 'Close';
+$lang->codescan->closeIssueTitle  = 'Close Scan Issue';
+$lang->codescan->closeIssueTitles = array();
+$lang->codescan->closeReason      = 'Close Reason';
 
 $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;

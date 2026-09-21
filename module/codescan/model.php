@@ -1044,8 +1044,6 @@ class codescanModel extends model
             $issue->bugID     = isset($bugList[$issue->id]) ? $bugList[$issue->id] : 0;
             $issue->createdAt = $issue->createdDate;
             if(!empty($issue->trigger)) $issue->triggerName = isset($issue->trigger->triggerName) ? $issue->trigger->triggerName : zget($this->lang->codescan->triggerTypeList, $issue->trigger->triggerType);
-            /* 只有处于忽略状态的问题才做到期恢复，否则激活后残留的 ignored 会让每次列表加载都重复触发一次状态变更。 */
-            if($issue->status == 'ignore' && !empty($issue->ignored) && $issue->ignored > 0 && $issue->ignored <= (time() * 1000)) $this->changeIssueState($issue->id, 'wait');
         }
 
         return $result;
