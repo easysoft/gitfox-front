@@ -227,12 +227,17 @@ $lang->codescan->operationList['branch_updated']  = 'Branch updated';
 $lang->codescan->operationList['tag_created']     = 'Tag created';
 
 $lang->codescan->issueStatusList = array();
-$lang->codescan->issueStatusList['wait']    = 'Wait';
+$lang->codescan->issueStatusList['wait']    = 'Active';
+$lang->codescan->issueStatusList['solved']  = 'Resolved';
+$lang->codescan->issueStatusList['ignore']  = 'Ignored';
+$lang->codescan->issueStatusList['closed']  = 'Closed';
 $lang->codescan->issueStatusList['todo']    = 'Todo';
 $lang->codescan->issueStatusList['solving'] = 'Solving';
-$lang->codescan->issueStatusList['solved']  = 'Solved';
-$lang->codescan->issueStatusList['ignore']  = 'Ignore';
-$lang->codescan->issueStatusList['closed']  = 'Closed';
+
+$lang->codescan->resolveIssue = 'Resolve';
+$lang->codescan->closeIssue   = 'Close';
+$lang->codescan->ignoreReason = 'Ignore Reason';
+$lang->codescan->closeReason  = 'Close Reason';
 
 $lang->codescan->ignoreDateList = array();
 $lang->codescan->ignoreDateList['1 week']  = '1 week';
@@ -246,7 +251,7 @@ $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;
 $lang->codescan->featureBar['ruleset']  = array('all' => 'All') + $lang->codescan->statusList;
 $lang->codescan->featureBar['solution'] = array('all' => 'All') + $lang->codescan->statusList;
-$lang->codescan->featureBar['issue']    = array('all' => 'All') + $lang->codescan->issueStatusList;
+$lang->codescan->featureBar['issue']    = array('all' => 'All', 'wait' => $lang->codescan->issueStatusList['wait'], 'solved' => $lang->codescan->issueStatusList['solved'], 'ignore' => $lang->codescan->issueStatusList['ignore'], 'closed' => $lang->codescan->issueStatusList['closed']);
 $lang->codescan->featureBar['plan']     = array('all' => 'All') + $lang->codescan->latestExecStatusList;
 unset($lang->codescan->featureBar['plan']['in_progress']);
 
@@ -256,6 +261,7 @@ $lang->codescan->notice->confirmDisable         = 'Are you sure to disable this 
 $lang->codescan->notice->confirmUnlink          = 'Are you sure to unlink this rule?';
 $lang->codescan->notice->confirmUnlinkSet       = 'Are you sure to unlink this ruleset?';
 $lang->codescan->notice->confirmActivateIssue   = 'Are you sure to activate this issue?';
+$lang->codescan->notice->confirmResolveIssue    = 'Are you sure to resolve this issue?';
 $lang->codescan->notice->changeStateFailed      = 'Change status failed';
 $lang->codescan->notice->enableSuccess          = 'Enable success';
 $lang->codescan->notice->disableSuccess         = 'Disable success';

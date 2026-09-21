@@ -54,19 +54,9 @@ $(document).off('click','.batch-btn').on('click', '.batch-btn', function()
     let   hasIssue  = false;
     checkedList.forEach((id) => {
         const rowData = dtable.$.getRowInfo(id).data;
-        if(isBugBtn && (rowData.bugID || !['wait', 'todo'].includes(rowData.status)))
-        {
-            filter.push('#' + id);
-        }
-        else if(type == 'active' && rowData.status != 'closed')
-        {
-            filter.push('#' + id);
-        }
-        else if(type == 'confirm' && rowData.status != 'wait')
-        {
-            filter.push('#' + id);
-        }
-        else if(type == 'ignore' && rowData.status != 'wait' && rowData.status != 'todo')
+        const status  = rowData.status;
+        const allowed = (window.batchStatus && window.batchStatus[type] ? window.batchStatus[type] : []).includes(status);
+        if(!allowed || (type == 'bug' && rowData.bugID))
         {
             filter.push('#' + id);
         }
@@ -82,7 +72,7 @@ $(document).off('click','.batch-btn').on('click', '.batch-btn', function()
 
     if(!hasIssue) return false;
 
-    isAjaxBtn ? $.ajaxSubmit({url, data: form}) : (type != 'ignore' ? loadPage(url, '#mainContainer') : loadModal(url));
+    isAjaxBtn ? $.ajaxSubmit({url, data: form}) : (['ignore', 'close'].includes(type) ? loadModal(url) : loadPage(url, '#mainContainer'));
     return true;
 });
 

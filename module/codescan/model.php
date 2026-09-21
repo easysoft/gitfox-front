@@ -65,10 +65,11 @@ class codescanModel extends model
         if($action == 'exec' && !in_array($this->app->rawMethod, array('plan', 'planview'))) return false;
         if($action == 'issue' && $this->app->rawMethod != 'task') return false;
 
-        if($action == 'bug')          return empty($codeScan->bugID) && $codeScan->status != 'closed';
-        if($action == 'confirmissue') return $codeScan->status == 'wait';
-        if($action == 'activeissue')  return $codeScan->status == 'closed';
-        if($action == 'ignoreissue')  return in_array($codeScan->status, array('wait', 'todo'));
+        if($action == 'bug')          return empty($codeScan->bugID) && $codeScan->status == 'wait';
+        if($action == 'resolveissue') return $codeScan->status == 'wait';
+        if($action == 'ignoreissue')  return $codeScan->status == 'wait';
+        if($action == 'closeissue')   return in_array($codeScan->status, array('wait', 'solved', 'ignore'));
+        if($action == 'activeissue')  return in_array($codeScan->status, array('solved', 'ignore'));
 
         if($action == 'resend') return $codeScan->status == 'failed';
 
@@ -977,7 +978,7 @@ class codescanModel extends model
      * @access public
      * @return void
      */
-    public function changeIssueState(int|array $issueIdList, string $status, string $solution = '', string $solutionDate = '', int $ignoreDate = 0): bool
+    public function changeIssueState(int|array $issueIdList, string $status, string $solution = '', string $solutionDate = '', int $ignoreDate = 0, string $comment = '', string $actionType = ''): bool
     {
         if(is_numeric($issueIdList)) $issueIdList = array($issueIdList);
         foreach($issueIdList as $index => $issueID) $issueIdList[$index] = (int)$issueID;
@@ -988,17 +989,21 @@ class codescanModel extends model
         if(!empty($solution))     $data->resolution = $solution;
         if(!empty($solutionDate)) $data->resolved   = $solutionDate;
         if(!empty($ignoreDate))   $data->ignored    = $ignoreDate == -1 ? -1 : $ignoreDate * 1000;
+        /* 激活回 wait 时清空上一次的解决方案，传空串即清空。 */
+        if($status == 'wait')     $data->resolution = '';
         $this->loadModel('gitfox')->request('/scan/issues/status', 'PUT', $data);
         if(dao::isError()) return false;
 
         $this->loadModel('action');
-        $status = !empty($ignoreDate) ? 'ignore' : $data->status;
+        $status     = !empty($ignoreDate) ? 'ignore' : $data->status;
+        /* 行为与状态不一致时（如转 Bug 落 closed）由调用方指定操作类型，保证操作历史可区分。 */
+        $actionType = $actionType ?: $status . 'ScanIssue';
         $repoPair = $this->loadModel('repo')->getRepoPairs();
         foreach($issueIdList as $issueID)
         {
             $issue = $this->getScanIssue($issueID, false);
             $extra = empty($issue) || empty($repoPair[$issue->repoID]) ? '' : "{$issue->title}|issueID={$issueID}&repoID={$repoPair[$issue->repoID]}";
-            $this->action->create('codescanissue', $issueID, $status . 'ScanIssue', '', $extra);
+            $this->action->create('codescanissue', $issueID, $actionType, $comment, $extra);
         }
 
         return true;
@@ -1042,7 +1047,8 @@ class codescanModel extends model
             $issue->bugID     = isset($bugList[$issue->id]) ? $bugList[$issue->id] : 0;
             $issue->createdAt = $issue->createdDate;
             if(!empty($issue->trigger)) $issue->triggerName = isset($issue->trigger->triggerName) ? $issue->trigger->triggerName : zget($this->lang->codescan->triggerTypeList, $issue->trigger->triggerType);
-            if(!empty($issue->ignored) && $issue->ignored > 0 && $issue->ignored <= (time() * 1000)) $this->changeIssueState($issue->id, 'wait');
+            /* 只有处于忽略状态的问题才做到期恢复，否则激活后残留的 ignored 会让每次列表加载都重复触发一次状态变更。 */
+            if($issue->status == 'ignore' && !empty($issue->ignored) && $issue->ignored > 0 && $issue->ignored <= (time() * 1000)) $this->changeIssueState($issue->id, 'wait');
         }
 
         return $result;

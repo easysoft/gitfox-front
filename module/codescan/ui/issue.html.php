@@ -57,6 +57,7 @@ jsVar('bugNotice',    $lang->codescan->notice->bugCreated);
 jsVar('statusNotice', $lang->codescan->notice->statusDisable);
 jsVar('statusList',   $lang->codescan->issueStatusList);
 jsVar('pageUrl',      inLink('issue', "repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type=%s&queryID=0&severity=%s&extras={$extras}"));
+jsVar('batchStatus',  $config->codescan->issue->batchStatus);
 
 unset($lang->codescan->severityList['all']);
 $severityList = explode(',', $severity);
