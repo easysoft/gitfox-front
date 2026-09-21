@@ -65,11 +65,8 @@ class codescanModel extends model
         if($action == 'exec' && !in_array($this->app->rawMethod, array('plan', 'planview'))) return false;
         if($action == 'issue' && $this->app->rawMethod != 'task') return false;
 
-        if($action == 'bug')          return empty($codeScan->bugID) && $codeScan->status == 'wait';
         if($action == 'resolveissue') return $codeScan->status == 'wait';
-        if($action == 'ignoreissue')  return $codeScan->status == 'wait';
         if($action == 'closeissue')   return in_array($codeScan->status, array('wait', 'solved', 'ignore'));
-        if($action == 'activeissue')  return in_array($codeScan->status, array('solved', 'ignore'));
 
         if($action == 'resend') return $codeScan->status == 'failed';
 

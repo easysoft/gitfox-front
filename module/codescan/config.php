@@ -241,36 +241,35 @@ $config->codescan->task->search['params']['finished'] = array('operator' => '>',
 
 $config->codescan->issue = new stdclass();
 
-$config->codescan->issue->actionMenu = array('resolveissue', 'ignoreissue', 'closeissue', 'activeissue');
+$config->codescan->issue->actionMenu = array('resolveissue', 'closeissue');
 
 $config->codescan->issue->actionList = array();
 $config->codescan->issue->actionList['resolveissue'] = array('icon' => 'ok', 'hint' => $lang->codescan->resolveIssue, 'url' => array('module' => 'codescan', 'method' => 'resolveIssue', 'params' => 'issueID={id}'), 'showText' => true, 'className' => 'ajax-submit', 'data-confirm' => $lang->codescan->notice->confirmResolveIssue);
-$config->codescan->issue->actionList['ignoreissue']  = array('icon' => 'eye-off', 'hint' => $lang->codescan->ignoreIssue, 'url' => array('module' => 'codescan', 'method' => 'ignoreIssue', 'params' => 'issueID={id}'), 'showText' => true, 'data-toggle' => 'modal', 'data-size' => 'sm');
 $config->codescan->issue->actionList['closeissue']   = array('icon' => 'cancel', 'hint' => $lang->codescan->closeIssue, 'url' => array('module' => 'codescan', 'method' => 'closeIssue', 'params' => 'issueID={id}'), 'showText' => true, 'data-toggle' => 'modal', 'data-size' => 'sm');
-$config->codescan->issue->actionList['activeissue']  = array('icon' => 'magic', 'hint' => $lang->codescan->activeIssue, 'url' => array('module' => 'codescan', 'method' => 'activeIssue', 'params' => 'issueID={id}'), 'showText' => true, 'className' => 'ajax-submit', 'data-confirm' => $lang->codescan->notice->confirmActivateIssue);
 
 $config->codescan->issue->batchMenu = array(
-    'wait'   => array('resolveissue', 'ignoreissue', 'closeissue'),
-    'solved' => array('activeissue', 'closeissue'),
-    'ignore' => array('activeissue', 'closeissue'),
+    'wait'   => array('resolveissue', 'closeissue'),
+    'solved' => array('closeissue'),
+    'ignore' => array('closeissue'),
     'closed' => array(),
-    'all'    => array('resolveissue', 'ignoreissue', 'closeissue', 'activeissue')
+    'all'    => array('resolveissue', 'closeissue')
 );
 
 $config->codescan->issue->batchStatus = array(
     'resolve' => array('wait'),
-    'ignore'  => array('wait'),
-    'close'   => array('wait', 'solved', 'ignore'),
-    'active'  => array('solved', 'ignore')
+    'close'   => array('wait', 'solved', 'ignore')
 );
+
+/* 问题列表可选的问题状态：忽略只能由插件（devops）产生，核心不提供该项，扩展侧往这里追加。 */
+$config->codescan->issue->filterStatusList = array('wait', 'solved', 'closed');
+
+$config->codescan->issue->batchBlockers = array();
 
 $config->codescan->issue->batchList = array();
 $config->codescan->issue->batchList['resolveissue'] = array('text' => $lang->codescan->resolveIssue, 'className' => 'btn batch-btn size-sm secondary ajax-btn', 'data-type' => 'resolve', 'data-url' => helper::createLink('codescan', 'resolveIssue'));
-$config->codescan->issue->batchList['ignoreissue']  = array('text' => $lang->codescan->ignoreIssue, 'className' => 'btn batch-btn size-sm secondary', 'data-type' => 'ignore', 'data-size' => 'sm', 'data-url' => helper::createLink('codescan', 'ignoreIssue'));
 $config->codescan->issue->batchList['closeissue']   = array('text' => $lang->codescan->closeIssue, 'className' => 'btn batch-btn size-sm secondary', 'data-type' => 'close', 'data-size' => 'sm', 'data-url' => helper::createLink('codescan', 'closeIssue'));
-$config->codescan->issue->batchList['activeissue']  = array('text' => $lang->codescan->activeIssue, 'className' => 'btn batch-btn size-sm secondary ajax-btn', 'data-type' => 'active', 'data-url' => helper::createLink('codescan', 'activeIssue'));
 
-$config->codescan->actions->issueview['mainActions']   = array('resolveissue', 'ignoreissue', 'closeissue', 'activeissue');
+$config->codescan->actions->issueview['mainActions']   = array('resolveissue', 'closeissue');
 $config->codescan->actions->issueview['suffixActions'] = array();
 
 $config->codescan->issue->search['module'] = 'codeScanIssue';
@@ -293,7 +292,7 @@ $config->codescan->issue->search['params']['file']         = array('operator' =>
 $config->codescan->issue->search['params']['rulePriority'] = array('operator' => '=', 'control' => 'select', 'values' => array_diff_key($lang->codescan->severityList, array_flip(array('all'))));
 $config->codescan->issue->search['params']['type']         = array('operator' => '=', 'control' => 'select', 'values' => $lang->codescan->typeList);
 $config->codescan->issue->search['params']['plugin']       = array('operator' => '=', 'control' => 'select', 'values' => array());
-$config->codescan->issue->search['params']['status']       = array('operator' => '=', 'control' => 'select', 'values' => $lang->codescan->issueStatusList);
+$config->codescan->issue->search['params']['status']       = array('operator' => '=', 'control' => 'select', 'values' => array_intersect_key($lang->codescan->issueStatusList, array_flip($config->codescan->issue->filterStatusList)));
 $config->codescan->issue->search['params']['createDate']   = array('operator' => '=', 'control' => 'date',   'values' => '');
 $config->codescan->issue->search['params']['plan']         = array('operator' => '=', 'control' => 'select', 'values' => array());
 $config->codescan->issue->search['params']['ruleID']       = array('operator' => '=', 'control' => 'input',  'values' => '');
