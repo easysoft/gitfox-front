@@ -428,13 +428,9 @@ class ppm extends control
         {
             $this->view->staticIssues = array();
         }
-        elseif($issueStatus == 'bug')
-        {
-            $this->view->staticIssues = $this->ppm->getTransferredIssues('scan', (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager);
-        }
         else
         {
-            $this->view->staticIssues = $this->ppm->getStaticScanIssues((int)$ppm->targetRepoID, $scanPager, (int)$ppm->id, $issueStatus);
+            $this->view->staticIssues = $this->ppmZen->getScanIssuesByStatus($issueStatus, (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager);
         }
         $this->view->staticIssueTotal = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
         $this->view->linkObjects      = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);

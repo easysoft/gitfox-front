@@ -1385,4 +1385,19 @@ class myModelTest extends baseTest
         }
     }
 
+    /**
+     * 测试获取我的评审统计。
+     * Test get my review statistics.
+     *
+     * @access public
+     * @return array
+     */
+    public function getMyReviewStatisticsTest(): array
+    {
+        $result = $this->instance->getMyReviewStatistics();
+        if(dao::isError()) return dao::getError();
+
+        return $result;
+    }
+
 }
