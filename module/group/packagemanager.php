@@ -2876,9 +2876,10 @@ $config->group->package->processScanIssues = new stdclass();
 $config->group->package->processScanIssues->order  = 2610;
 $config->group->package->processScanIssues->subset = 'codereview';
 $config->group->package->processScanIssues->privs  = array();
-$config->group->package->processScanIssues->privs['codescan-ignoreIssue']  = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 5,  'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-confirmIssue', 'codescan-activeIssue'));
-$config->group->package->processScanIssues->privs['codescan-confirmIssue'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 10, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-ignoreIssue', 'codescan-activeIssue'));
-$config->group->package->processScanIssues->privs['codescan-activeIssue']  = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 15, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-ignoreIssue', 'codescan-confirmIssue'));
+$config->group->package->processScanIssues->privs['codescan-ignoreIssue']  = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 5,  'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-resolveIssue', 'codescan-closeIssue', 'codescan-activeIssue'));
+$config->group->package->processScanIssues->privs['codescan-resolveIssue'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 10, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-ignoreIssue', 'codescan-closeIssue', 'codescan-activeIssue'));
+$config->group->package->processScanIssues->privs['codescan-closeIssue']   = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 12, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-ignoreIssue', 'codescan-resolveIssue', 'codescan-activeIssue'));
+$config->group->package->processScanIssues->privs['codescan-activeIssue']  = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 15, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-ignoreIssue', 'codescan-resolveIssue', 'codescan-closeIssue'));
 
 $config->group->package->editor = new stdclass();
 $config->group->package->editor->order  = 10;
