@@ -13923,6 +13923,61 @@ class upgradeModel extends model
     }
 
     /**
+     * 将 SSH 公钥迁移为凭证。
+     * Migrate ssh public keys to ops credentials.
+     *
+     * @access public
+     * @return bool
+     */
+    public function migrateOpsCredentials(): bool
+    {
+        if(!$this->dbh->tableExist('ops_public_keys')) return true;
+        if(!$this->dbh->tableExist(TABLE_CREDENTIAL)) return true;
+
+        $publicKeys = $this->dao->select('*')->from('`ops_public_keys`')->fetchAll('', false);
+
+        $usedIdentifiers = array();
+        $this->dao->begin();
+        foreach($publicKeys as $publicKey)
+        {
+            $identifier = $publicKey->identifier;
+            $usedIdentifiers[] = $identifier;
+            if(in_array($identifier, $usedIdentifiers)) $identifier = $identifier . '-' . $publicKey->id;
+
+            $name = $publicKey->identifier;
+
+            $credential = new stdclass();
+            $credential->id           = (int)$publicKey->id;
+            $credential->owner        = (string)$publicKey->account;
+            $credential->name         = $name;
+            $credential->identifier   = $identifier;
+            $credential->type         = 'ssh';
+            $credential->secret       = (string)$publicKey->content;
+            $credential->algorithm    = (string)$publicKey->type;
+            $credential->desc         = '';
+            $verifiedDate = trim((string)$publicKey->verifiedDate);
+            $verifiedDate = empty($verifiedDate) ? null : $verifiedDate;
+
+            $credential->verifiedDate = $verifiedDate;
+            $credential->createdBy    = $publicKey->createdBy;
+            $credential->createdDate  = $publicKey->createdDate;
+            $credential->editedBy     = $publicKey->editedBy;
+            $credential->editedDate   = $publicKey->editedDate;
+            $credential->deleted      = 0;
+            $this->dao->insert(TABLE_CREDENTIAL)->data($credential)->exec();
+
+            if(dao::isError())
+            {
+                $this->dao->rollBack();
+                return false;
+            }
+        }
+        $this->dao->commit();
+
+        return !dao::isError();
+    }
+
+    /**
      * 删除 company 字段
      * drop company field.
      *

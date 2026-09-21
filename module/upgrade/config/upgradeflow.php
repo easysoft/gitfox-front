@@ -122,6 +122,7 @@ $config->upgrade->execFlow['22_3']        = array('functions' => 'migrateDevOpsD
 $config->upgrade->execFlow['22_4']        = array('functions' => 'dropCompanyField');
 $config->upgrade->execFlow['22_5']        = array('functions' => 'processPIRiskData,repo-backfillGitFoxWebhookSecret,fixCronAndQueueTables');
 $config->upgrade->execFlow['22_6']        = array('functions' => 'modifyOtherDeliverable,upgradeDecisionDeliverableSnapshot,importBuildinWorkflow,updateFieldOptions', 'params' => array('importBuildinWorkflow' => array('all', 'story,task,requirement,epic,ticket,feedback'), 'updateFieldOptions' => array('22.6')));
+$config->upgrade->execFlow['22_7']        = array('functions' => 'migrateOpsCredentials');
 
 if(!empty($config->isINT))
 {
