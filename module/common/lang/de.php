@@ -504,6 +504,7 @@ $lang->scantask->common     = 'Scan Task';
 $lang->scanissue->common    = 'Scan Issue';
 $lang->scanOverview->common = 'Scan Overview';
 $lang->provider->common     = 'Service';
+$lang->variable->common     = 'Variable';
 
 $lang->admin->module      = 'Module';
 $lang->admin->system      = 'System';

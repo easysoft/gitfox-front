@@ -594,11 +594,13 @@ $lang->devops->homeMenu->configure['subMenu']->branchType = array('link' => "{$l
 $lang->devops->homeMenu->configure['subMenu']->rules      = array('link' => "{$lang->devops->rules}|repo|setrules|", 'subModule' => 'repo');
 $lang->devops->homeMenu->configure['subMenu']->provider   = array('link' => "{$lang->provider->common}|provider|browse|", 'alias' => 'create,edit');
 $lang->devops->homeMenu->configure['subMenu']->runner     = array('link' => "{$lang->runner->common}|runner|browse|");
+$lang->devops->homeMenu->configure['subMenu']->variable   = array('link' => "{$lang->variable->common}|variable|browse|");
 
 $lang->devops->homeMenu->configure['menuOrder'][5]  = 'branchType';
 $lang->devops->homeMenu->configure['menuOrder'][10] = 'rules';
 $lang->devops->homeMenu->configure['menuOrder'][15] = 'provider';
 $lang->devops->homeMenu->configure['menuOrder'][20] = 'runner';
+$lang->devops->homeMenu->configure['menuOrder'][25] = 'variable';
 
 /* The menu order $lang->devops->menuOrder[30] is a reserved position for 'artifactrepo'. */
 $lang->devops->menuOrder[5]   = 'space';
