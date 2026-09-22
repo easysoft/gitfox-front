@@ -39,4 +39,35 @@ class variable extends control
         $this->view->pager     = $pager;
         $this->display();
     }
+
+    /**
+     * 创建变量。
+     * Create variable.
+     *
+     * @param  string $type
+     * @access public
+     * @return void
+     */
+    public function create(string $type = 'plain')
+    {
+        if($_POST)
+        {
+            $formData = form::data($this->config->variable->form->create)
+                ->add('createdBy', $this->app->user->account)
+                ->skipSpecial('name')
+                ->get();
+            $this->variableZen->checkFormData($formData);
+            if(dao::isError()) return $this->sendError(dao::getError());
+
+            $id = $this->variable->create($formData);
+            if(dao::isError()) return $this->sendError(dao::getError());
+
+            if($id) $this->loadModel('action')->create('variable', $id, 'created');
+
+            return $this->sendSuccess(array('load' => $this->createLink('variable', 'browse')));
+        }
+        $this->view->title = $this->lang->variable->create;
+        $this->view->type  = $type;
+        $this->display();
+    }
 }
