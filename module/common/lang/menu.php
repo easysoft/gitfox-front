@@ -594,7 +594,7 @@ $lang->devops->homeMenu->configure['subMenu']->branchType = array('link' => "{$l
 $lang->devops->homeMenu->configure['subMenu']->rules      = array('link' => "{$lang->devops->rules}|repo|setrules|", 'subModule' => 'repo');
 $lang->devops->homeMenu->configure['subMenu']->provider   = array('link' => "{$lang->provider->common}|provider|browse|", 'alias' => 'create,edit');
 $lang->devops->homeMenu->configure['subMenu']->runner     = array('link' => "{$lang->runner->common}|runner|browse|");
-$lang->devops->homeMenu->configure['subMenu']->variable   = array('link' => "{$lang->variable->common}|variable|browse|");
+$lang->devops->homeMenu->configure['subMenu']->variable   = array('link' => "{$lang->variable->common}|variable|browse|", 'alias' => 'create,edit');
 
 $lang->devops->homeMenu->configure['menuOrder'][5]  = 'branchType';
 $lang->devops->homeMenu->configure['menuOrder'][10] = 'rules';

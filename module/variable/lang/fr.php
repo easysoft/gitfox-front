@@ -19,3 +19,8 @@ $lang->variable->typeList['cipher'] = 'Cipher';
 $lang->variable->notice = new stdclass();
 $lang->variable->notice->confirmDelete = 'Delete after the variable is used in the pipeline, whether to confirm the deletion?';
 $lang->variable->notice->emptyProvider = 'No variables yet.';
+
+$lang->variable->placeholder = new stdclass();
+$lang->variable->placeholder->name  = 'Only allow input Chinese, English, numbers, underscores, hyphens';
+$lang->variable->placeholder->key   = 'Only allow input English, numbers';
+$lang->variable->placeholder->value = 'Only allow input English, numbers, underscores, hyphens';

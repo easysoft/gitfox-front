@@ -13,7 +13,7 @@ namespace zin;
 $createItem = array
 (
     'text'     => $lang->variable->create,
-    'url'      => createLink('variable', 'create', 'type=GitLab'),
+    'url'      => createLink('variable', 'create'),
     'icon'     => 'plus',
     'data-app' => $app->tab,
     'class'    => 'primary'
