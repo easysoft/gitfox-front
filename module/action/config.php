@@ -89,6 +89,7 @@ $config->action->objectNameFields['projectchange'] = 'name';
 
 $config->action->objectNameFields['provider'] = 'name';
 $config->action->objectNameFields['runner']   = 'name';
+$config->action->objectNameFields['variable'] = 'name';
 
 $config->action->commonImgSize = 870;
 
@@ -105,7 +106,7 @@ $config->action->majorList['doc']       = array('releaseddoc');
 
 $config->action->needGetProjectType       = 'build,task,bug,case,testcase,caselib,testtask,testsuite,testreport,doc,issue,release,risk,design,opportunity,trainplan,gapanalysis,researchplan,researchreport,';
 $config->action->needGetRelateField       = ',branch,story,epic,requirement,productplan,release,task,build,bug,testcase,case,testtask,testreport,design,doc,doclib,issue,risk,opportunity,trainplan,gapanalysis,team,whitelist,researchplan,researchreport,meeting,kanbanlane,kanbancolumn,module,review,projectchange,nc,cm,ganttversion,';
-$config->action->noLinkModules            = ',doclib,module,webhook,gitlab,instance,gitea,gogs,sonarqube,pipeline,jenkins,kanban,kanbanspace,kanbancolumn,kanbanlane,kanbanregion,kanbancard,execution,project,traincategory,apistruct,program,product,user,entry,repo,pivot,scene,boardspace,auditplan,auditresult,productline,chapter,doc,caselib,space,review_flow,artifact,artifactasset,artifactdir,provider,';
+$config->action->noLinkModules            = ',doclib,module,webhook,gitlab,instance,gitea,gogs,sonarqube,pipeline,jenkins,kanban,kanbanspace,kanbancolumn,kanbanlane,kanbanregion,kanbancard,execution,project,traincategory,apistruct,program,product,user,entry,repo,pivot,scene,boardspace,auditplan,auditresult,productline,chapter,doc,caselib,space,review_flow,artifact,artifactasset,artifactdir,provider,variable';
 $config->action->ignoreObjectType4Dynamic = 'kanbanregion,kanbanlane,kanbancolumn';
 $config->action->ignoreActions4Dynamic    = 'disconnectxuanxuan,reconnectxuanxuan,loginxuanxuan,logoutxuanxuan,editppm,removeppm,syncdoingbyticket,syncdoingbystory,syncdoingbyuserstory,syncdoingbyepic,syncdoingbytask,syncdoingbybug,syncdoingbytodo,syncdoingbydemand,changedstorystage,adjusttasktowait';
 if(in_array($config->edition, array('open', 'biz'))) $config->action->ignoreObjectType4Dynamic .= ',reporttemplate';
