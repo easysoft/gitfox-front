@@ -70,4 +70,53 @@ class variable extends control
         $this->view->type  = $type;
         $this->display();
     }
+
+    /**
+     * 编辑变量。
+     * Edit variable.
+     *
+     * @param  int    $id
+     * @param  string $type
+     * @access public
+     * @return void
+     */
+    public function edit(int $id, string $type = '')
+    {
+        $variable = $this->variable->fetchById($id);
+        if($_POST)
+        {
+            $formData = form::data($this->config->variable->form->edit)
+                ->add('editedBy', $this->app->user->account)
+                ->skipSpecial('name')
+                ->get();
+            $this->variableZen->checkFormData($formData);
+            if(dao::isError()) return $this->sendError(dao::getError());
+
+            $result = $this->variable->update($id, $formData);
+            if(dao::isError()) return $this->sendError(dao::getError());
+
+            if($result) $this->loadModel('action')->create('variable', $id, 'edited');
+
+            return $this->sendSuccess(array('load' => $this->createLink('variable', 'browse')));
+        }
+        $this->view->title    = $this->lang->variable->edit;
+        $this->view->type     = $type ? $type : $variable->type;
+        $this->view->variable = $variable;
+        $this->display();
+    }
+
+    /**
+     * 删除变量。
+     * delete variable.
+     *
+     * @param  int $id
+     * @access public
+     * @return void
+     */
+    public function delete(int $id)
+    {
+        $this->variable->delete(TABLE_VARIABLE, $id);
+        if(dao::isError()) return $this->sendError(dao::getError());
+        return $this->sendSuccess(array('message' => $this->lang->deleteSuccess, 'load' => $this->createLink('variable', 'browse')));
+    }
 }
