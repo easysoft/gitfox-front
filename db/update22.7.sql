@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS `ops_variable` (
   `key` varchar(50) NOT NULL DEFAULT '' COMMENT '变量键',
   `value` text DEFAULT NULL COMMENT '变量值',
   `scope` varchar(30) NOT NULL DEFAULT 'system' COMMENT '变量作用域',
-  `type` varchar(30) NOT NULL DEFAULT 'ssh' COMMENT 'plaintext（明文）|ciphertext(密文)',
+  `type` varchar(30) NOT NULL DEFAULT 'plain' COMMENT 'plain（明文）|cipher(密文)',
   `desc` varchar(500) NOT NULL DEFAULT '' COMMENT '详情',
   `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '由谁创建',
   `createdDate` datetime DEFAULT NULL COMMENT '创建时间',
