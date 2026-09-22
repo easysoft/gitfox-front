@@ -18,3 +18,11 @@ CREATE TABLE IF NOT EXISTS `ops_variable` (
 ) ENGINE=InnoDB COMMENT='凭证表';
 CREATE UNIQUE INDEX `uk_spaceID_repoID_name` ON `ops_variable` (`spaceID`, `repoID`, `name`);
 CREATE UNIQUE INDEX `uk_key` ON `ops_variable` (`key`);
+
+REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
+(21, 'variable', 'browse'),
+(21, 'variable', 'create'),
+(21, 'variable', 'edit'),
+(21, 'variable', 'delete'),
+(22, 'variable', 'browse'),
+(23, 'variable', 'browse');

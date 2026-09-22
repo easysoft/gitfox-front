@@ -2296,6 +2296,17 @@ $lang->provider->methodOrder[10] = 'create';
 $lang->provider->methodOrder[15] = 'edit';
 $lang->provider->methodOrder[20] = 'delete';
 
+$lang->resource->variable = new stdclass();
+$lang->resource->variable->browse = 'browse';
+$lang->resource->variable->create = 'create';
+$lang->resource->variable->edit   = 'edit';
+$lang->resource->variable->delete = 'delete';
+
+$lang->variable->methodOrder[5]  = 'browse';
+$lang->variable->methodOrder[10] = 'create';
+$lang->variable->methodOrder[15] = 'edit';
+$lang->variable->methodOrder[20] = 'delete';
+
 $lang->resource->contact            = new stdclass();
 $lang->resource->programstakeholder = new stdclass();
 $lang->resource->researchplan       = new stdclass();

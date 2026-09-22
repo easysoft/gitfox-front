@@ -694,5 +694,7 @@ $lang->group->package->uploadArtifact        = 'Upload Artifact';
 $lang->group->package->deleteArtifact        = 'Delete Artifact';
 $lang->group->package->manageArtifact        = 'Manage Artifact';
 $lang->group->package->provider              = 'Service';
+$lang->group->package->browseVariable        = 'Browse Variables';
+$lang->group->package->manageVariable        = 'Manage Variables';
 
 include (dirname(__FILE__) . '/resource.php');

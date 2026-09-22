@@ -696,5 +696,7 @@ $lang->group->package->uploadArtifact        = '上传制品';
 $lang->group->package->deleteArtifact        = '删除制品';
 $lang->group->package->manageArtifact        = '维护制品';
 $lang->group->package->provider              = '服务';
+$lang->group->package->browseVariable        = '查看变量';
+$lang->group->package->manageVariable        = '管理变量';
 
 include (dirname(__FILE__) . '/resource.php');
