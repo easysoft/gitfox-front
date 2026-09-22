@@ -44,12 +44,40 @@ class variableModel extends model
 
         $this->dao->insert(TABLE_VARIABLE)->data($formData)
             ->batchCheck($this->config->variable->create->requiredFields, 'notempty')
-            ->check('name', 'unique', "`repoID` = $repoID and `spaceID` = $spaceID and `deleted` = 0")
+            ->check('name', 'unique', "`repoID` = $repoID and `spaceID` = $spaceID")
             ->check('key', 'unique')
             ->autoCheck()
             ->exec();
         if(dao::isError()) return false;
 
         return $this->dao->lastInsertID();
+    }
+
+    /**
+     * 修改一个变量。
+     * Update a variable.
+     *
+     * @param  int    $id
+     * @param  object $formData
+     * @access public
+     * @return bool
+     */
+    public function update(int $id, object $formData): bool
+    {
+        $variable = $this->fetchByID($id);
+        if(empty($variable)) return false;
+
+        $repoID  = $variable->repoID;
+        $spaceID = $variable->spaceID;
+
+        $this->dao->update(TABLE_VARIABLE)->data($formData)
+            ->batchCheck($this->config->variable->edit->requiredFields, 'notempty')
+            ->check('name', 'unique', "`repoID` = {$repoID} and `spaceID` = {$spaceID} and `id` != {$id}")
+            ->check('key', 'unique', "`id` != $id")
+            ->where('id')->eq($id)
+            ->autoCheck()
+            ->exec();
+
+        return !dao::isError();
     }
 }
