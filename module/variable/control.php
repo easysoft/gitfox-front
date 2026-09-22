@@ -104,4 +104,19 @@ class variable extends control
         $this->view->variable = $variable;
         $this->display();
     }
+
+    /**
+     * 删除变量。
+     * delete variable.
+     *
+     * @param  int $id
+     * @access public
+     * @return void
+     */
+    public function delete(int $id)
+    {
+        $this->variable->delete(TABLE_VARIABLE, $id);
+        if(dao::isError()) return $this->sendError(dao::getError());
+        return $this->sendSuccess(array('message' => $this->lang->deleteSuccess, 'load' => $this->createLink('variable', 'browse')));
+    }
 }
