@@ -13037,6 +13037,10 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'runner', 'create'),
 (21, 'runner', 'edit'),
 (21, 'runner', 'delete'),
+(21, 'variable', 'browse'),
+(21, 'variable', 'create'),
+(21, 'variable', 'edit'),
+(21, 'variable', 'delete'),
 (22, 'codescan', 'browse'),
 (22, 'codescan', 'issue'),
 (22, 'codescan', 'issueView'),
@@ -13084,6 +13088,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (22, 'artifact', 'browse'),
 (22, 'provider', 'browse'),
 (22, 'runner', 'browse'),
+(22, 'variable', 'browse'),
 (23, 'artifact', 'browse'),
 (23, 'artifact', 'createDir'),
 (23, 'artifact', 'deleteDir'),
@@ -13165,7 +13170,8 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (23, 'space', 'members'),
 (23, 'system', 'view'),
 (23, 'provider', 'browse'),
-(23, 'runner', 'browse');
+(23, 'runner', 'browse'),
+(23, 'variable', 'browse');
 
 REPLACE INTO `zt_grouppriv`(`module`, `method`,`group`)
 SELECT `module`, `method`, 14 FROM `zt_grouppriv` WHERE `group` = 1;
