@@ -391,6 +391,10 @@ $config->group->subset->pipeline = new stdclass();
 $config->group->subset->pipeline->order = 2350;
 $config->group->subset->pipeline->nav   = 'devops';
 
+$config->group->subset->variable = new stdclass();
+$config->group->subset->variable->order = 2355;
+$config->group->subset->variable->nav   = 'devops';
+
 $config->group->subset->codeScan = new stdclass();
 $config->group->subset->codeScan->order = 2420;
 $config->group->subset->codeScan->nav   = 'devops';
@@ -3025,6 +3029,20 @@ $config->group->package->managePipeline->privs['pipeline-create']  = array('edit
 $config->group->package->managePipeline->privs['pipeline-edit']    = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 10, 'depend' => array('pipeline-browse'), 'recommend' => array('pipeline-create', 'pipeline-arrange'));
 $config->group->package->managePipeline->privs['pipeline-arrange'] = array('edition' => 'open,biz,max,ipd',      'vision' => 'rnd', 'order' => 15, 'depend' => array('pipeline-browse'), 'recommend' => array('pipeline-create', 'pipeline-edit'));
 $config->group->package->managePipeline->privs['pipeline-delete']  = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 20, 'depend' => array('pipeline-browse'), 'recommend' => array('pipeline-create', 'pipeline-edit', 'pipeline-arrange'));
+
+$config->group->package->browseVariable = new stdclass();
+$config->group->package->browseVariable->order  = 5;
+$config->group->package->browseVariable->subset = 'variable';
+$config->group->package->browseVariable->privs  = array();
+$config->group->package->browseVariable->privs['variable-browse'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 5, 'depend' => array(), 'recommend' => array('variable-create', 'variable-edit', 'variable-delete'));
+
+$config->group->package->manageVariable = new stdclass();
+$config->group->package->manageVariable->order  = 15;
+$config->group->package->manageVariable->subset = 'variable';
+$config->group->package->manageVariable->privs  = array();
+$config->group->package->manageVariable->privs['variable-create'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 5,  'depend' => array('variable-browse'), 'recommend' => array('variable-edit', 'variable-delete'));
+$config->group->package->manageVariable->privs['variable-edit']   = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 10, 'depend' => array('variable-browse'), 'recommend' => array('variable-create', 'variable-delete'));
+$config->group->package->manageVariable->privs['variable-delete'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 15, 'depend' => array('variable-browse'), 'recommend' => array('variable-create', 'variable-edit'));
 
 $config->group->package->backup = new stdclass();
 $config->group->package->backup->order  = 5;
