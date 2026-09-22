@@ -28,4 +28,28 @@ class variableModel extends model
             ->page($pager)
             ->fetchAll('id');
     }
+
+    /**
+     * 创建一个变量。
+     * Create a variable.
+     *
+     * @param  object $formData
+     * @access public
+     * @return int
+     */
+    public function create(object $formData): int|false
+    {
+        $repoID  = zget($formData, 'repoID', 0);
+        $spaceID = zget($formData, 'spaceID', 0);
+
+        $this->dao->insert(TABLE_VARIABLE)->data($formData)
+            ->batchCheck($this->config->variable->create->requiredFields, 'notempty')
+            ->check('name', 'unique', "`repoID` = $repoID and `spaceID` = $spaceID and `deleted` = 0")
+            ->check('key', 'unique')
+            ->autoCheck()
+            ->exec();
+        if(dao::isError()) return false;
+
+        return $this->dao->lastInsertID();
+    }
 }
