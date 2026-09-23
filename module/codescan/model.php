@@ -1328,4 +1328,34 @@ class codescanModel extends model
         $this->gitfox->getResponse($result);
         return !dao::isError();
     }
+
+    /**
+     * 创建问题。
+     * Create issue.
+     *
+     * @param  object $formData
+     * @access public
+     * @return int
+     */
+    public function createIssue(object $formData): int
+    {
+        $this->dao->insert(TABLE_SCANISSUE)->data($formData)
+            ->autoCheck()
+            ->exec();
+
+        return $this->dao->lastInsertID();
+    }
+
+    /**
+     * 获取问题详情。
+     * Get issue detail.
+     *
+     * @param  int $issueID
+     * @access public
+     * @return object
+     */
+    public function getIssueByID(int $issueID): object
+    {
+        return $this->dao->select('*')->from(TABLE_SCANISSUE)->where('id')->eq($issueID)->fetch();
+    }
 }
