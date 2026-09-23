@@ -55,10 +55,33 @@ $staticCols['content']['name'] = 'title';
 if(hasPriv('codescan', 'issueview')) $staticCols['content']['link'] = array('module' => 'codescan', 'method' => 'issueview', 'params' => 'issueID={id}&repoID={repoID}');
 $staticRows = initTableData($staticRows, $staticCols, $this->loadModel('codescan'));
 
+$app->loadConfig('codescan');
+jsVar('window.batchStatus',   $config->codescan->issue->batchStatus);
+jsVar('window.batchBlockers', $config->codescan->issue->batchBlockers);
+
+$scanBatchToolbar = null;
+$buttons          = $config->codescan->issue->batchList;
+$items            = array();
+foreach(zget((array)$config->codescan->issue->batchMenu, $issueStatus, array()) as $action)
+{
+    if(empty($buttons[$action])) continue;
+
+    $button = $buttons[$action];
+    $priv   = zget($button, 'priv', array('codescan', $action));
+    if(!hasPriv($priv[0], $priv[1])) continue;
+
+    unset($button['priv']);
+    $items[] = $button;
+}
+if(!empty($items)) $scanBatchToolbar = array('items' => $items);
+
+$scanPaneStyle   = empty($scanTabItems['scan']['active'])   ? array('display' => 'none') : array();
+$manualPaneStyle = empty($scanTabItems['static']['active']) ? array('display' => 'none') : array();
+
 $staticPanel = div
 (
     setID('staticScanPane'),
-    setStyle(array('display' => 'none')),
+    setStyle($scanPaneStyle),
     $buildIssueStatusBar('scan'),
     dtable
     (
@@ -67,6 +90,8 @@ $staticPanel = div
         set::cols($staticCols),
         set::data($staticRows),
         set::responsive(true),
+        $scanBatchToolbar ? set::checkable(true) : null,
+        set::footToolbar($scanBatchToolbar),
         set::footPager(usePager('scanPager', '', array
         (
             'recPerPage'  => $scanPager->recPerPage,
@@ -79,6 +104,7 @@ $staticPanel = div
 $manualPanel = div
 (
     setID('staticBugs'),
+    setStyle($manualPaneStyle),
     $buildIssueStatusBar('static'),
     dtable
     (

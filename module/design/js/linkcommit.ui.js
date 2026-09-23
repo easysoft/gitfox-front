@@ -30,7 +30,7 @@ function loadCommit()
 
 $(document).off('click','.batch-btn').on('click', '.batch-btn', function()
 {
-    const dtable = zui.DTable.query($(this));
+    const dtable      = zui.DTable.query($(this));
     const checkedList = dtable.$.getChecks();
     if(!checkedList.length) return;
 

@@ -55,8 +55,8 @@ jsVar('codescanLang', $lang->codescan);
 jsVar('statusNotice', $lang->codescan->notice->statusDisable);
 jsVar('statusList',   $lang->codescan->issueStatusList);
 jsVar('pageUrl',      inLink('issue', "repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type=%s&queryID=0&severity=%s&extras={$extras}"));
-jsVar('batchStatus',  $config->codescan->issue->batchStatus);
-jsVar('batchBlockers', $config->codescan->issue->batchBlockers);
+jsVar('window.batchStatus',   $config->codescan->issue->batchStatus);
+jsVar('window.batchBlockers', $config->codescan->issue->batchBlockers);
 
 unset($lang->codescan->severityList['all']);
 $severityList = explode(',', $severity);
@@ -133,6 +133,26 @@ if($taskID && !$isInModal)
     );
 }
 
+/* 批量动作由配置驱动：核心提供解决/关闭，激活、忽略、转Bug 等由扩展追加，卸载扩展后核心动作仍可用。 */
+$batchToolbar = null;
+if(!$isInModal)
+{
+    $buttons = $config->codescan->issue->batchList;
+    $items   = array();
+    foreach(zget((array)$config->codescan->issue->batchMenu, $browseType, array()) as $action)
+    {
+        if(empty($buttons[$action])) continue;
+
+        $button = $buttons[$action];
+        $priv   = zget($button, 'priv', array('codescan', $action));
+        if(!hasPriv($priv[0], $priv[1])) continue;
+
+        unset($button['priv']);
+        $items[] = $button;
+    }
+    if(!empty($items)) $batchToolbar = array('items' => $items);
+}
+
 $table = dtable
 (
     setID('issueTable'),
@@ -142,6 +162,8 @@ $table = dtable
     set::sortLink(createLink('codescan', 'issue', $urlParams)),
     set::orderBy($orderBy),
     set::loadPartial(true),
+    $batchToolbar ? set::checkable(true) : null,
+    set::footToolbar($batchToolbar),
     $taskID ? set::extraHeight('+144') : null,
     set::onRenderCell(jsRaw('window.renderIssueCell')),
     set::footPager(usePager(array('linkCreator' => createLink('codescan', 'issue', "repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type={$browseType}&queryID={$queryID}&severity={$severity}&extras={$extras}&orderBy={$orderBy}&recPerPage={recPerPage}&page={page}")))),
