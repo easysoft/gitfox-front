@@ -94,3 +94,13 @@ $config->repo->form->addBug['severity']      = array('required' => false, 'type'
 $config->repo->form->addBug['openedDate']    = array('required' => false, 'type' => 'string', 'default' => $now);
 $config->repo->form->addBug['assignedDate']  = array('required' => false, 'type' => 'string', 'default' => $now);
 $config->repo->form->addBug['openedBuild']   = array('required' => false, 'type' => 'string', 'default' => 'trunk');
+
+$config->repo->form->addIssue = array();
+$config->repo->form->addIssue['ppmID']       = array('required' => false, 'type' => 'int', 'default' => 0);
+$config->repo->form->addIssue['path']        = array('required' => true,  'type' => 'string', 'default' => '', 'filter' => 'trim');
+$config->repo->form->addIssue['startLine']   = array('required' => true,  'type' => 'int', 'default' => 0);
+$config->repo->form->addIssue['endLine']     = array('required' => true,  'type' => 'int', 'default' => 0);
+$config->repo->form->addIssue['category']    = array('required' => false, 'type' => 'string', 'default' => '', 'filter' => 'trim');
+$config->repo->form->addIssue['severity']    = array('required' => false, 'type' => 'string', 'default' => '', 'filter' => 'trim');
+$config->repo->form->addIssue['content']     = array('required' => true, 'type' => 'string', 'default' => '', 'filter' => 'trim');
+$config->repo->form->addIssue['createdDate'] = array('required' => false, 'type' => 'string', 'default' => $now);

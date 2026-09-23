@@ -3126,4 +3126,47 @@ class repo extends control
         $toRevision   = helper::safe64Decode($toRevision);
         echo $this->loadModel('gitfox')->apiGetRepoDiffs($repoID, $fromRevision, $toRevision);
     }
+
+    /**
+     * 创建缺陷。
+     * Create issue.
+     *
+     * @param  int $repoID
+     * @access public
+     * @return void
+     */
+    public function addIssue(int $repoID)
+    {
+        if(!empty($_POST))
+        {
+            $formData = form::data($this->config->repo->form->addIssue)
+                ->add('repoID', $repoID)
+                ->add('createdBy', $this->app->user->account)
+                ->add('scanMethod', 'manual')
+                ->get();
+
+            $formData->title    = $this->repoZen->generateTitleFromSteps($formData->content); ;
+            $formData->issueKey = time();
+
+            $issueID = $this->loadModel('codescan')->createIssue($formData);
+            if(dao::isError()) return $this->send(array('result' => 'fail', 'message' => dao::getError()));
+
+            $ppmID       = zget($formData, 'ppmID', 0);
+            $actionExtra = '';
+            if(!empty($ppmID))
+            {
+                $link        = $this->createLink('ppm', "view", "ppmID={$ppmID}&type=files");
+                $location    = sprintf($this->lang->repo->ppmLocation, $ppmID);
+                $actionExtra = html::a($link, $location, '', "class='iframe'");
+            }
+            $this->loadModel('action')->create('repoIssue', $issueID, 'repoCreated', '', $actionExtra);
+
+            $issue = $this->codescan->getIssueByID($issueID);
+            $user  = $this->loadModel('user')->getListByAccounts(array($issue->createdBy), 'account');
+            $issue->user = zget($user, $issue->createdBy);
+            $this->sendSuccess(array('data' => $issue));
+        }
+
+        return $this->send(array('result' => 'success', 'data' => array()));
+    }
 }
