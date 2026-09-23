@@ -41,7 +41,7 @@ window.renderIssueCell = function (result, {col, row})
 
 $(document).off('click','.batch-btn').on('click', '.batch-btn', function()
 {
-    const dtable = zui.DTable.query($(this).target);
+    const dtable = zui.DTable.query($(this));
     const checkedList = dtable.$.getChecks();
     if(!checkedList.length) return;
 

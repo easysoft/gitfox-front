@@ -172,6 +172,55 @@ $(function()
     observer.observe($target[0], {attributes: true, attributeFilter: ['class']});
 });
 
+$(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
+{
+    const dtable = zui.DTable.query($(this));
+    const checkedList = dtable.$.getChecks();
+    if(!checkedList.length) return;
+
+    const form        = new FormData();
+    const filter      = [];
+    const url         = $(this).data('url');
+    const type        = $(this).data('type');
+    const isAjaxBtn   = $(this).hasClass('ajax-btn');
+    let   hasIssue    = false;
+    checkedList.forEach((id) => {
+        const rowData = dtable.$.getRowInfo(id).data;
+        const status  = rowData.status;
+        const allowed = (window.batchStatus && window.batchStatus[type] ? window.batchStatus[type] : []).includes(status);
+        const blocker = window.batchBlockers && window.batchBlockers[type] ? window.batchBlockers[type] : '';
+        if(!allowed || (blocker && rowData[blocker]))
+        {
+            filter.push('#' + id);
+        }
+        else
+        {
+            hasIssue = true;
+            form.append('issueIdList[]', id);
+        }
+    });
+
+    const issueIdList = form.getAll('issueIdList[]');
+    if(issueIdList.length > 0) $.cookie.set('issueIdList', issueIdList.join('|'));
+
+    if(!hasIssue) return false;
+
+    if(isAjaxBtn)
+    {
+        $.ajaxSubmit({url, data: form});
+        return true;
+    }
+
+    if(['ignore', 'close'].includes(type))
+    {
+        loadModal(url);
+        return false;
+    }
+
+    loadPage(url, '#mainContainer');
+    return true;
+});
+
 /**
  * 问题清单分类菜单切换：AI 评审问题 / 静态扫描问题 / 人工审查问题。
  * Switch between the issue list panels.
@@ -206,6 +255,17 @@ $(function()
         {
             var pane = document.querySelector(tar);
             if(pane) pane.style.display = '';
+        }
+
+        /* 分类切换只改 display，必须把当前分类写回 URL：
+           服务端是按 URL 里的 issueTab 决定哪个分类激活的，
+           不写回的话从问题详情返回（history.go(-1)）时会按旧值还原，落回上一个分类。 */
+        var tabKey = link.getAttribute('data-tab');
+        if(tabKey && window.history && history.replaceState && /[?&]m=/.test(location.search))
+        {
+            var search = location.search.replace(/([?&]issueTab=)[^&]*/, '$1' + tabKey);
+            if(search === location.search) search += '&issueTab=' + tabKey;
+            history.replaceState(null, '', location.pathname + search + location.hash);
         }
     }
 
