@@ -5,4 +5,5 @@ if($config->vision == 'gitfox')
     $config->admin->menuGroup['branchType'] = array('repobranchtype');
     $config->admin->menuGroup['service']    = array('provider');
     $config->admin->menuGroup['runner']     = array('runner');
+    $config->admin->menuGroup['variable']   = array('variable');
 }

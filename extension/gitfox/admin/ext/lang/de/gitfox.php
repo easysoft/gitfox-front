@@ -34,5 +34,17 @@ if($config->vision == 'gitfox')
     $lang->admin->menuList->runner['bg']    = 'primary';
     $lang->admin->menuList->runner['order'] = 85;
 
+    $lang->admin->menuList->variable['name']  = $lang->variable->common;
+    $lang->admin->menuList->variable['desc']  = 'Manage pipeline variables.';
+    $lang->admin->menuList->variable['link']  = 'variable|browse|';
+    $lang->admin->menuList->variable['icon']  = 'ver';
+    $lang->admin->menuList->variable['bg']    = 'primary';
+    $lang->admin->menuList->variable['order'] = 90;
+
+    $lang->admin->zentaoUsed = 'You are using Gitfox';
+    $lang->admin->zentaoInfo = 'Gitfox Information';
+
+    $lang->admin->officialAccount = 'Official Service Account';
+    $lang->admin->followUs        = 'Follow Us';
     $lang->admin->followUsContent = 'Stay updated on Gitfox news and access help and support at any time.';
 }
