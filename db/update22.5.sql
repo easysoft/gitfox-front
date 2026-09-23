@@ -16,8 +16,8 @@ ADD COLUMN `content` text DEFAULT NULL COMMENT '问题详细内容',
 ADD COLUMN `endLine` int unsigned NOT NULL DEFAULT 0 COMMENT '问题结束行',
 ADD COLUMN `oldCode` text DEFAULT NULL COMMENT '原代码片段',
 ADD COLUMN `newCode` text DEFAULT NULL COMMENT '建议代码片段',
-ADD COLUMN `category` varchar(30) NOT NULL DEFAULT 'other' COMMENT '问题类别（critical,high,medium,low）',
-ADD COLUMN `severity` varchar(30) NOT NULL DEFAULT '' COMMENT '严重程度（bug,security,performance,maintainability,test,style,documentation,other）',
+ADD COLUMN `category` varchar(30) NOT NULL DEFAULT 'other' COMMENT '问题类别（bug,security,performance,maintainability,test,style,documentation,other）',
+ADD COLUMN `severity` varchar(30) NOT NULL DEFAULT '' COMMENT '严重程度（critical,high,medium,low）',
 ADD COLUMN `createdBy` varchar(30) NOT NULL DEFAULT '' COMMENT '创建人',
 ADD COLUMN `editedBy` varchar(30) NOT NULL DEFAULT '' COMMENT '更新人';
 
