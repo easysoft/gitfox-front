@@ -1359,6 +1359,15 @@ class codescanModel extends model
         return $this->dao->select('*')->from(TABLE_SCANISSUE)->where('id')->eq($issueID)->fetch();
     }
 
+    /**
+     * 获取问题列表。
+     * Get issue list.
+     *
+     * @param  int $repoID
+     * @param  int $ppmID
+     * @access public
+     * @return array
+     */
     public function getIssues(int $repoID = 0, int $ppmID = 0): array
     {
         return $this->dao->select('*')->from(TABLE_SCANISSUE)
