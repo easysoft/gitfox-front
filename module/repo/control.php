@@ -3169,4 +3169,27 @@ class repo extends control
 
         return $this->send(array('result' => 'success', 'data' => array()));
     }
+
+    /**
+     * 获取问题列表。
+     * Ajax get issues.
+     *
+     * @param  int $repoID
+     * @param  int $ppmID
+     * @access public
+     * @return void
+     */
+    public function ajaxGetIssues(int $repoID = 0, int $ppmID = 0)
+    {
+        $issues = $this->loadModel('codescan')->getIssues($repoID, $ppmID);
+        $users  = empty($issues) ? array() : array_column($issues, 'createdBy');
+        $users  = $this->loadModel('user')->getListByAccounts($users, 'account');
+        foreach($issues as $issue)
+        {
+            if(empty($issue->createdBy) || !isset($users[$issue->createdBy])) continue;
+            $issue->user = zget($users, $issue->createdBy, array());
+        }
+
+        $this->send(array('result' => 'success', 'data' => array_values($issues)));
+    }
 }
