@@ -39,6 +39,8 @@ foreach($pipelines as $pipeline)
     if($pipeline->status != 'success') $checkPipeline = false;
     if(empty($pipeline->task))
     {
+        if(stripos((string)$pipeline->name, '_codereview') !== false) continue;
+
         $pipelineBox[] = section
         (
             div
