@@ -3184,12 +3184,20 @@ class repo extends control
         $issues = $this->loadModel('codescan')->getIssues($repoID, $ppmID);
         $users  = empty($issues) ? array() : array_column($issues, 'createdBy');
         $users  = $this->loadModel('user')->getListByAccounts($users, 'account');
+
+        $issueList = array();
         foreach($issues as $issue)
         {
-            if(empty($issue->createdBy) || !isset($users[$issue->createdBy])) continue;
-            $issue->user = zget($users, $issue->createdBy, array());
+            if(!in_array($issue->status, array('wait', 'solved'))) continue;
+            $issue->content = empty($issue->content) ? '' : htmlspecialchars_decode($issue->content);
+
+            if(!empty($issue->createdBy) && isset($users[$issue->createdBy]))
+            {
+                $issue->user = zget($users, $issue->createdBy, array());
+            }
+            $issueList[] = $issue;
         }
 
-        $this->send(array('result' => 'success', 'data' => array_values($issues)));
+        $this->send(array('result' => 'success', 'data' => $issueList));
     }
 }

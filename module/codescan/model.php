@@ -1375,6 +1375,6 @@ class codescanModel extends model
             ->beginIF($repoID)->andWhere('`repoID`')->eq($repoID)->fi()
             ->beginIF($ppmID)->andWhere('`ppmID`')->eq($ppmID)->fi()
             ->orderBy('id_desc')
-            ->fetchAll('id');
+            ->fetchAll('id', false);
     }
 }
