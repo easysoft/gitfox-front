@@ -14,7 +14,7 @@ unset($lang->codescan->typeList['all']);
 unset($lang->codescan->severityList['all']);
 
 $issueTypes = array();
-foreach($lang->codescan->typeList as $type => $typeName) $issueTypes[] = array('value' => $type, 'text' => $typeName, 'key' => $typeName);
+foreach($lang->codescan->typeList as $issueType => $typeName) $issueTypes[] = array('value' => $issueType, 'text' => $typeName, 'key' => $typeName);
 $severities = array();
 foreach($lang->codescan->severityList as $severityID => $severityName) $severities[] = array('value' => $severityID, 'text' => $severityName, 'key' => $severityName);
 
@@ -25,6 +25,7 @@ $domBox = div
         set::diffUrl($this->createLink('repo', 'ajaxGetDiffs', "repoID={$repoID}&fromVersion={$fromRevision}&toVersion={$toRevision}")),
         set::enableAnnotations(true),
         set::enableReview(true),
+        set::showAnnotations(true),
         set::product(0),
         set::module(''),
         set::issueTypes($issueTypes),

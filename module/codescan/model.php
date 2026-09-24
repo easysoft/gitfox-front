@@ -1358,4 +1358,14 @@ class codescanModel extends model
     {
         return $this->dao->select('*')->from(TABLE_SCANISSUE)->where('id')->eq($issueID)->fetch();
     }
+
+    public function getIssues(int $repoID = 0, int $ppmID = 0): array
+    {
+        return $this->dao->select('*')->from(TABLE_SCANISSUE)
+            ->where('deleted')->eq(0)
+            ->beginIF($repoID)->andWhere('`repoID`')->eq($repoID)->fi()
+            ->beginIF($ppmID)->andWhere('`ppmID`')->eq($ppmID)->fi()
+            ->orderBy('id_desc')
+            ->fetchAll('id');
+    }
 }
