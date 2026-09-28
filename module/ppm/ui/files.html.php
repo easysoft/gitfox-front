@@ -9,6 +9,9 @@ declare(strict_types=1);
  * @link        https://www.zentao.net
  */
 namespace zin;
+
+jsVar('ppm', $ppm);
+
 $app->loadLang('codescan');
 unset($lang->codescan->typeList['all']);
 unset($lang->codescan->severityList['all']);
@@ -17,6 +20,8 @@ $issueTypes = array();
 foreach($lang->codescan->typeList as $issueType => $typeName) $issueTypes[] = array('value' => $issueType, 'text' => $typeName, 'key' => $typeName);
 $severities = array();
 foreach($lang->codescan->severityList as $severityID => $severityName) $severities[] = array('value' => $severityID, 'text' => $severityName, 'key' => $severityName);
+$statusList = array();
+foreach($lang->codescan->issueStatusList as $status => $statusName) $statusList[] = array('value' => $status, 'text' => $statusName, 'key' => $statusName);
 
 $domBox = div
 (
@@ -30,10 +35,13 @@ $domBox = div
         set::module(''),
         set::issueTypes($issueTypes),
         set::severities($severities),
+        set::statusList($statusList),
         set::repoID($repoID),
         set::ppmID($ppm->id),
-        set::hight('calc(100vh - 286px)'),
+        set::height('calc(100vh - 286px)'),
         set::labels($lang->ppm->diffHub->labels),
         set::fileCollapseRules($config->devops->diffConfig),
+        set::resolveFileLink(jsRaw('fileDiff => window.resolveFileLink ? window.resolveFileLink(fileDiff) : undefined')),
+        set::resolveFileMenu(jsRaw('fileDiff => window.resolveFileMenu ? window.resolveFileMenu(fileDiff) : undefined'))
     )
 );

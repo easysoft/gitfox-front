@@ -259,6 +259,7 @@ $config->logonMethods[] = 'zai.ajaxgettoken';
 $config->logonMethods[] = 'zai.ajaxgetuseragent';
 $config->logonMethods[] = 'zai.ajaxsearchknowledges';
 $config->logonMethods[] = 'repo.import';
+$config->logonMethods[] = 'repo.addissue';
 
 /* Ajax 方法依赖的方法。The methods that Ajax methods depend on. */
 $config->ajaxDependencies['action.ajaxgetlist']                               = ['doc.templatelist', 'reporttemplate.browse', 'doc.edit', 'doc.view'];
@@ -565,3 +566,4 @@ $config->ajaxDependencies['pipeline.ajaxgetrepos']                            = 
 $config->ajaxDependencies['pipeline.ajaxgetrepoids']                          = 'pipeline.arrange';
 $config->ajaxDependencies['codescan.ajaxgetscanplans']                        = 'pipeline.arrange';
 $config->ajaxDependencies['repo.ajaxgetdiffs']                                = ['ppm.view', 'repo.diff'];
+$config->ajaxDependencies['repo.ajaxdownloadDiff']                            = ['ppm.view', 'repo.diff'];
