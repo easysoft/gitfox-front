@@ -1240,15 +1240,20 @@ class gitfoxModel extends model
      * @param  int $repoID
      * @param  string $from
      * @param  string $to
+     * @param  array $files
      * @access public
      * @return string
      */
-    public function apiGetRepoDiffs(int $repoID, string $from, string $to): string
+    public function apiGetRepoDiffs(int $repoID, string $from, string $to, array $files = array()): string
     {
         $apiRoot = $this->getApiRoot();
         $url     = sprintf($apiRoot->url, "/repos/{$repoID}/diff");
 
-        $result = common::http($url, array('range' => "{$from}...{$to}"), array(), $apiRoot->header, 'json');
+        $params = array();
+        $params['range'] = "{$from}...{$to}";
+        if(!empty($files)) $params['files'] = $files;
+
+        $result = common::http($url, $params, array(), $apiRoot->header, 'json');
         if(empty($result)) return '';
 
         return $result;
