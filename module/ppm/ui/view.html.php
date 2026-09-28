@@ -23,6 +23,7 @@ $oldRevision  = helper::safe64Encode($oldRevision);
 $newRevision  = helper::safe64Encode($newRevision);
 
 jsVar('mrID', $ppm->id);
+jsVar('ppmLang', $lang->ppm);
 jsVar('sseURL', "{$config->devops->gitfoxURL}:{$config->devops->gitfoxPort}/api/v2/spaces/{$repo->spaceID}/events");
 
 $encoding       = empty($encoding) ? '' : $encoding;

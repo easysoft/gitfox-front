@@ -279,3 +279,47 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
         if(defaultTab) defaultTab.click();
     }, 0);
 })();
+
+window.encodeParam = function(value)
+{
+    return btoa(encodeURIComponent(value)).replace(/\+/g, '_').replace(/\//g, '.');
+}
+
+/**
+ * 获取文件在代码库查看页面的链接。
+ * Resolve the link of the file in the repo view page.
+ *
+ * @param  object fileDiff
+ * @access public
+ * @return string
+ */
+window.resolveFileLink = function(fileDiff)
+{
+    var file      = encodeParam(fileDiff.name);
+    var sourceSHA = encodeParam(ppm.mergeBaseSHA ? ppm.mergeBaseSHA : ppm.targetBranch);
+
+    return $.createLink('repo', 'view', 'repoID=' + ppm.repoID + '&objectID=0&entry=' + file + '&revision=' + sourceSHA);
+}
+
+/**
+ * 获取文件在代码库查看页面的菜单。
+ * Resolve the menu of the file in the repo view page.
+ *
+ * @param  object fileDiff
+ * @access public
+ * @return array
+ */
+window.resolveFileMenu = function(fileDiff)
+{
+    var file      = encodeParam(fileDiff.name);
+    var sourceSHA = encodeParam(ppm.mergeBaseSHA ? ppm.mergeBaseSHA : ppm.targetBranch);
+    var targetSHA = encodeParam(ppm.sourceSHA ? ppm.sourceSHA : ppm.sourceBranch);
+
+    return [
+        {
+            text: ppmLang.downloadDiff,
+            icon: 'download',
+            url: $.createLink('repo', 'ajaxDownloadDiff', 'repoID=' + ppm.repoID + '&fromRevision=' + sourceSHA + '&toRevision=' + targetSHA + '&filePath=' + file),
+        },
+    ];
+}
