@@ -3122,8 +3122,8 @@ class repo extends control
     {
         if(empty($fromRevision) || empty($toRevision)) return '';
 
-        $fromRevision = helper::safe64Decode($fromRevision);
-        $toRevision   = helper::safe64Decode($toRevision);
+        $fromRevision = urldecode(helper::safe64Decode($fromRevision));
+        $toRevision   = urldecode(helper::safe64Decode($toRevision));
         echo $this->loadModel('gitfox')->apiGetRepoDiffs($repoID, $fromRevision, $toRevision);
     }
 
@@ -3163,7 +3163,8 @@ class repo extends control
 
             $issue = $this->codescan->getIssueByID($issueID);
             $user  = $this->loadModel('user')->getListByAccounts(array($issue->createdBy), 'account');
-            $issue->user = zget($user, $issue->createdBy);
+            $issue->user    = zget($user, $issue->createdBy);
+            $issue->content = empty($issue->content) ? '' : htmlspecialchars_decode($issue->content);
             $this->sendSuccess(array('data' => $issue));
         }
 
@@ -3199,5 +3200,31 @@ class repo extends control
         }
 
         $this->send(array('result' => 'success', 'data' => $issueList));
+    }
+
+    /**
+     * 下载diff.
+     * Download diff.
+     *
+     * @param  int $repoID
+     * @param  string $fromRevision
+     * @param  string $toRevision
+     * @param  string $filePath
+     * @access public
+     * @return void
+     */
+    public function ajaxDownloadDiff(int $repoID, string $fromRevision, string $toRevision, string $filePath = '')
+    {
+        $fromRevision = urldecode(helper::safe64Decode($fromRevision));
+        $toRevision   = urldecode(helper::safe64Decode($toRevision));
+        $filePath     = $this->repo->decodePath($filePath);
+        $files        = array(array('path' => $filePath));
+
+        $diffContent = $this->loadModel('gitfox')->apiGetRepoDiffs($repoID, $fromRevision, $toRevision, $files);
+
+        $fileName  = basename($filePath) . "--r$fromRevision--r$toRevision.patch";
+        $extension = strpos($fileName, '.') ? strrchr($fileName, '.') : '';
+        $extension = ltrim($extension, '.');
+        $this->fetch('file', 'sendDownHeader', array("fileName" => $fileName, "fileType" => $extension, "content" => $diffContent));
     }
 }
