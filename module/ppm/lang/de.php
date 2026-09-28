@@ -60,6 +60,7 @@ $lang->ppm->assignedTo        = 'Assigned To';
 $lang->ppm->space             = 'Space';
 $lang->ppm->allSpace          = 'All Space';
 $lang->ppm->allRepo           = 'All Repos';
+$lang->ppm->downloadDiff      = 'Download Diff';
 
 $lang->ppm->opinionPlaceholder = 'Enter Review Opinion';
 
