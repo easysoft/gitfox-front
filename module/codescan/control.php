@@ -1381,6 +1381,56 @@ class codescan extends control
     }
 
     /**
+     * 人工审查问题详情。
+     * Manual review issue view.
+     *
+     * @param  int $issueID
+     * @param  int $repoID
+     * @access public
+     * @return void
+     */
+    public function manualIssueView(int $issueID, int $repoID = 0)
+    {
+        $issue = $this->codescan->getIssueByID($issueID);
+        if(empty($issue)) return $this->sendError($this->lang->notFound, true);
+
+        $repoID = $repoID ?: (int)$issue->repoID;
+        if($repoID)
+        {
+            global $lang;
+            $lang->devops->menu->review['subModule'] .= ',codescan';
+            $lang->devops->menu->review['subMenu']->review['subModule'] .= ',codescan';
+            $lang->devops->menu->repoCodeScan['subModule'] = '';
+
+            $this->loadModel('ci')->setMenu($repoID);
+        }
+
+        $repo = $repoID ? $this->loadModel('repo')->fetchByID($repoID) : null;
+        if(!$repo) return $this->sendError($this->lang->codescan->notice->repoNotFound, true);
+
+        $issue = $this->codescan->processManualIssueData($issue, $repoID);
+        $ppm   = !empty($issue->ppmID) ? $this->loadModel('ppm')->fetchByID((int)$issue->ppmID) : null;
+
+        if(isset($this->config->codescan->manualIssue->dtable->fieldList['actions']['list']))
+        {
+            $this->config->codescan->actionList = $this->config->codescan->manualIssue->dtable->fieldList['actions']['list'];
+        }
+        elseif(isset($this->config->codescan->issue->actionList))
+        {
+            $this->config->codescan->actionList = $this->config->codescan->issue->actionList;
+        }
+
+        $this->view->title   = $this->lang->codescan->manualIssueView;
+        $this->view->issueID = $issueID;
+        $this->view->issue   = $issue;
+        $this->view->repoID  = $repoID;
+        $this->view->repo    = $repo;
+        $this->view->ppm     = $ppm;
+        $this->view->actions = $this->loadModel('action')->getList('scanissue', $issueID);
+        $this->display();
+    }
+
+    /**
      * 解决代码评审问题。
      * Resolve scan issue.
      *

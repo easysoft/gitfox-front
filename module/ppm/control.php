@@ -422,28 +422,40 @@ class ppm extends control
         $this->view->repoID           = $repo->id;
         $this->view->flow             = $flow;
         $this->view->commitLogs       = $this->ppm->apiGetMRCommits($ppm->targetRepoID, $ppm->id, $commitPager);
-        $this->view->bugs             = $this->ppm->getBugsByCommits($repo->id, $ppm->id, $bugPager, $type == 'bug' ? $issueStatus : '');
+        $bugIssueStatus               = in_array($issueStatus, array('all', 'converted')) ? '' : $issueStatus;
+        $this->view->bugs             = $this->ppm->getBugsByCommits($repo->id, $ppm->id, $bugPager, $type == 'bug' ? $bugIssueStatus : '');
         $this->view->bugsTotal        = $this->ppm->getBugsByCommitsTotal($repo->id, $ppm->id);
-        $this->view->staticIssues     = $type == 'bug' ? $this->ppmZen->getScanIssuesByStatus($issueStatus, (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager) : array();
-        $this->view->staticIssueTotal = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
-        $this->view->linkObjects      = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
-        $this->view->commitPager      = $commitPager;
-        $this->view->bugPager         = $bugPager;
-        $this->view->scanPager        = $scanPager;
-        $this->view->objectPager      = $objectPager;
-        $this->view->type             = $type;
-        $this->view->issueTab         = $issueTab;
-        $this->view->issueStatus      = $issueStatus;
-        $this->view->fromRevision     = helper::safe64Encode($fromRevision);
-        $this->view->toRevision       = helper::safe64Encode($toRevision);
-        $this->view->users            = $this->loadModel('user')->getPairs('noletter');
-        $this->view->oldRevision      = $ppm->targetBranch;
-        $this->view->newRevision      = $ppm->sourceBranch;
-        $this->view->defaultMergeType = $defaultMergeType;
-        $this->view->checkResult      = $this->ppmZen->getCheckResult($ppm, $reviewResult, $this->view->bugs, $defaultMergeType);
-        $this->view->param            = $param;
-        $this->view->rule             = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
-        $this->view->pipelines        = $this->ppm->getPipelinesByPPM($ppm);
+        if($type != 'bug')
+        {
+            $this->view->staticIssues = array();
+        }
+        else
+        {
+            $this->view->staticIssues = $this->ppmZen->getScanIssuesByStatus($issueStatus, (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager);
+        }
+        $this->view->staticIssueTotal  = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
+
+        $manualIssues = $this->loadModel('codescan')->getManualIssues($ppm->id, $repo->id, $bugPager, $type == 'bug' ? $issueStatus : '');
+        $this->view->manualIssues      = $type == 'bug' ? $manualIssues : array();
+        $this->view->manualIssuesTotal = $bugPager->recTotal;
+        $this->view->linkObjects       = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
+        $this->view->commitPager       = $commitPager;
+        $this->view->bugPager          = $bugPager;
+        $this->view->scanPager         = $scanPager;
+        $this->view->objectPager       = $objectPager;
+        $this->view->type              = $type;
+        $this->view->issueTab          = $issueTab;
+        $this->view->issueStatus       = $issueStatus;
+        $this->view->fromRevision      = helper::safe64Encode($fromRevision);
+        $this->view->toRevision        = helper::safe64Encode($toRevision);
+        $this->view->users             = $this->loadModel('user')->getPairs('noletter');
+        $this->view->oldRevision       = $ppm->targetBranch;
+        $this->view->newRevision       = $ppm->sourceBranch;
+        $this->view->defaultMergeType  = $defaultMergeType;
+        $this->view->checkResult       = $this->ppmZen->getCheckResult($ppm, $reviewResult, $this->view->bugs, $defaultMergeType);
+        $this->view->param             = $param;
+        $this->view->rule              = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
+        $this->view->pipelines         = $this->ppm->getPipelinesByPPM($ppm);
         $this->display();
     }
 

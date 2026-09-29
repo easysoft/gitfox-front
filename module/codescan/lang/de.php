@@ -126,6 +126,13 @@ $lang->codescan->keyword     = 'Comment keyword';
 $lang->codescan->keywords    = 'Keywords';
 $lang->codescan->pcs         = 'Pcs';
 $lang->codescan->file        = 'File';
+$lang->codescan->lineRange   = 'Line Range';
+
+$lang->codescan->manualIssueTitle      = 'Issue Title';
+$lang->codescan->manualIssueView       = 'Manual Review Issue';
+$lang->codescan->manualIssueLevel      = 'Issue Level';
+$lang->codescan->manualIssueType       = 'Issue Type';
+$lang->codescan->manualIssueConverted  = 'Converted to Bug';
 
 $lang->codescan->issueStatistics = 'Issue Statistics';
 $lang->codescan->monthAdded      = 'Month Added';

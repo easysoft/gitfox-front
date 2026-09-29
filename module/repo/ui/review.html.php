@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 /**
- * The link view file of mr module of ZenTaoPMS.
- * @copyright   Copyright 2009-2023 禅道软件（青岛）集团有限公司(ZenTao Software (Qingdao) Co., Ltd. www.zentao.net)
+ * The review view file of repo module of ZenTaoPMS.
+ * @copyright   Copyright 2009-2026 禅道软件（青岛）集团有限公司(ZenTao Software (Qingdao) Co., Ltd. www.zentao.net)
  * @license     ZPL(https://zpl.pub/page/zplv12.html) or AGPL(https://www.gnu.org/licenses/agpl-3.0.en.html)
  * @author      Zeng Gang<zenggang@easycorp.ltd>
- * @package     mr
+ * @package     repo
  * @link        https://www.zentao.net
  */
 namespace zin;
@@ -20,50 +20,37 @@ if(!$allRepo) dropmenu
 
 jsVar('appTab', $app->tab);
 
-foreach($bugs as $bug)
+$app->loadLang('codescan');
+$app->loadConfig('codescan');
+
+// 人工审查问题列表与代码评审问题清单共用列和行数据处理，保证两处口径一致。
+$manualCols = $config->codescan->manualIssue->dtable->fieldList;
+$manualRows = array();
+foreach((array)$manualIssues as $manualIssue)
 {
-    $bugRepo       = zget($repos, $bug->repo, $repo);
-    $bug->repoName = is_object($bugRepo) ? $bugRepo->name : '';
-
-    $v1 = $bug->v1;
-    $v2 = $bug->v2;
-
-    $bug->entry     = $this->repo->decodePath($bug->entry);
-    $bug->revisionA = strtr($v2, '*', '-');
-
-    $lines     = trim($bug->lines, ',');
-    $fileEntry = $this->repo->encodePath("{$bug->entry}#{$bug->lines}");
-    if(empty($v1))
-    {
-        $v2   = strtr($v2, '*', '-');
-        $revision  = $this->repo->getGitRevisionName($v2, (int)zget($historys, $v2));
-        $bug->link = $this->repo->createLink('view', "repoID={$bug->repo}&objectID={$objectID}&entry={$fileEntry}&revision=" . helper::safe64Encode($v2));
-    }
-    else
-    {
-        $revision  = substr($v1, 0, 10);
-        $revision .= ' : ';
-        $revision .= substr($v2, 0, 10);
-        $revision .= ' (' . zget($historys, $v1) . ' : ' . zget($historys, $v2) . ')';
-        if(strpos($v1, $v2) === 0 || strpos($v2, $v1) === 0) $v1 = $v2;
-        $bug->link = $this->repo->createLink('diff', "repoID={$bug->repo}&objectID={$objectID}&entry={$fileEntry}&oldRevision={$v1}&newRevision={$v2}");
-    }
+    $manualRows[] = $this->loadModel('codescan')->processManualIssueData($manualIssue, (int)$repoID);
 }
-if(hasPriv('bug', 'batchAssignTo'))
+$manualRows = initTableData($manualRows, $manualCols, $this->loadModel('codescan'));
+
+// 状态筛选与代码评审问题清单中的人工审查问题保持一致。
+$statusItems = array();
+$statusList = array
+(
+    'all'       => $lang->all,
+    'wait'      => zget($lang->codescan->issueStatusList, 'wait', 'wait'),
+    'solved'    => zget($lang->codescan->issueStatusList, 'solved', 'solved'),
+    'closed'    => zget($lang->codescan->issueStatusList, 'closed', 'closed'),
+    'converted' => $lang->codescan->manualIssueConverted
+);
+foreach($statusList as $status => $statusText)
 {
-    $pinyinItems     = common::convert2Pinyin($users);
-    $assignedToItems = array();
-    foreach($users as $key => $value)
-    {
-        if($key == 'closed') continue;
-        $key = base64_encode((string)$key); // 编码用户名中的特殊字符
-        $assignedToItems[] = array('text' => $value, 'keys' => zget($pinyinItems, $value, ''), 'innerClass' => 'batch-btn ajax-btn not-open-url', 'data-url' => helper::createLink('bug', 'batchAssignTo', "assignedTo=$key&productID=0&type=product"));
-    }
-    $footToolbar['items'][] = array('caret' => 'up', 'text' => $lang->bug->assignedTo, 'type' => 'dropdown', 'data-placement' => 'top-start', 'items' => $assignedToItems, 'data-menu' => array('searchBox' => true));
+    $statusItems[] = array
+    (
+        'text'   => $statusText,
+        'active' => $browseType === $status,
+        'url'    => createLink('repo', 'review', "repoID={$repoID}&browseType={$status}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1")
+    );
 }
-$bugs = initTableData($bugs, $config->repo->reviewDtable->fieldList);
-
-if($app->tab == 'project' || $app->tab == 'execution') $repoID = 0;
 
 /* 代码库筛选下拉。The repo filter dropdown. */
 $repoItems = array();
@@ -86,18 +73,15 @@ featureBar
             set::items($repoItems)
         )
     ),
-    set::current($browseType),
-    set::linkParams("repoID={$repoID}&browseType={key}&objectID={$objectID}")
+    set::items($statusItems)
 );
 
 dtable
 (
-    set::userMap($users),
-    set::cols($config->repo->reviewDtable->fieldList),
-    set::data($bugs),
-    set::sortLink(createLink('repo', 'review', "repoID=$repoID&browseType=$browseType&objectID={$objectID}&orderBy={name}_{sortType}&recTotal={$pager->recTotal}&recPerPage={$pager->recPerPage}&pageID={$pager->pageID}")),
-    set::orderBy($orderBy),
-    set::onRenderCell(jsRaw('window.renderRepobugList')),
-    hasPriv('bug', 'batchAssignTo') ? set::footToolbar($footToolbar) : null,
+    setID('manualIssueTable'),
+    set::customCols(false),
+    set::cols($manualCols),
+    set::data($manualRows),
+    set::responsive(true),
     set::footPager(usePager())
 );

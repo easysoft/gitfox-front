@@ -2638,50 +2638,37 @@ class repo extends control
         if($repoID) $repoID = $this->repo->saveState($repoID);
         $this->commonAction($repoID, (int)$objectID);
 
-        $firstOpen  = empty($browseType);
-        $browseType = strtolower($browseType ? $browseType : 'assigntome');
-        $this->app->loadLang('bug');
+        $browseType = strtolower($browseType ? $browseType : 'wait');
+        if(!in_array($browseType, array('all', 'wait', 'solved', 'closed', 'converted'))) $browseType = 'wait';
         $this->repoZen->setBackSession('list', true);
 
         /* Load pager. */
         $this->app->loadClass('pager', true);
         $pager = new pager($recTotal, $recPerPage, $pageID);
 
-        $bugs = $this->repo->getBugsByRepo($repoID, $browseType, $objectID, array(), $orderBy, $pager);
-        if($firstOpen && empty($bugs)) return $this->locate(inLink('review', "repoID={$repoID}&browseType=all"));
-
-        $repo = $this->repo->getById($repoID);
-        $revisions = array();
-        foreach($bugs as $bug)
-        {
-            $revisions[] = $bug->v2;
-            if(!empty($bug->v1)) $revisions[] = $bug->v1;
-        }
-        $this->view->historys = $this->dao->select('revision,commit')->from(TABLE_REPOHISTORY)->where('revision')->in($revisions)->beginIF($repoID)->andWhere('repo')->eq($repoID)->fi()->fetchPairs('revision', 'commit');
+        $manualIssues = $this->loadModel('codescan')->getManualIssues(0, $repoID, $pager, $browseType);
+        $repo         = $repoID ? $this->repo->getById($repoID) : null;
 
         if($this->app->tab == 'execution') $this->view->executionID = $objectID;
 
         $repoList  = $this->loadModel('repo')->getList($objectID);
         $repoPairs = array();
-        foreach($repoList as $repo)
+        foreach($repoList as $repoItem)
         {
-            $repoPairs[$repo->id] = $repo->name;
+            $repoPairs[$repoItem->id] = $repoItem->name;
         }
 
-        foreach($bugs as $bug) $bug->type = $bug->repoType ? $bug->repoType : $bug->type;
-
-        $this->view->allRepo    = $isAllRepo;
-        $this->view->repoPairs  = $repoPairs;
-        $this->view->repos      = $this->repo->getList($objectID);
-        $this->view->orderBy    = $orderBy;
-        $this->view->repoID     = $repoID;
-        $this->view->objectID   = $objectID;
-        $this->view->repo       = $repo;
-        $this->view->bugs       = $bugs;
-        $this->view->pager      = $pager;
-        $this->view->users      = $this->loadModel('user')->getPairs('noletter');
-        $this->view->title      = $this->lang->repo->review;
-        $this->view->browseType = $browseType;
+        $this->view->allRepo      = $isAllRepo;
+        $this->view->repoPairs    = $repoPairs;
+        $this->view->repos        = $this->repo->getList($objectID);
+        $this->view->orderBy      = $orderBy;
+        $this->view->repoID       = $repoID;
+        $this->view->objectID     = $objectID;
+        $this->view->repo         = $repo;
+        $this->view->manualIssues = $manualIssues;
+        $this->view->pager        = $pager;
+        $this->view->title        = $this->lang->repo->review;
+        $this->view->browseType   = $browseType;
         $this->display();
     }
 

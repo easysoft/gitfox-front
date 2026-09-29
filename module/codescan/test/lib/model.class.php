@@ -34,6 +34,71 @@ class codescanModelTest extends baseTest
     }
 
     /**
+     * Test processManualIssueData method.
+     *
+     * @param  object $issue
+     * @param  int    $repoID
+     * @access public
+     * @return object
+     */
+    public function processManualIssueDataTest(object $issue, int $repoID = 0): object
+    {
+        return $this->instance->processManualIssueData($issue, $repoID);
+    }
+
+    /**
+     * Test getIssueByID method.
+     *
+     * @param  int $issueID
+     * @access public
+     * @return object
+     */
+    public function getIssueByIDTest(int $issueID): object
+    {
+        return $this->instance->getIssueByID($issueID);
+    }
+
+    /**
+     * Test createIssue method.
+     *
+     * @param  object $formData
+     * @access public
+     * @return int
+     */
+    public function createIssueTest(object $formData): int
+    {
+        return $this->instance->createIssue($formData);
+    }
+
+    /**
+     * Test getIssues method.
+     *
+     * @param  int $repoID
+     * @param  int $ppmID
+     * @access public
+     * @return array
+     */
+    public function getIssuesTest(int $repoID = 0, int $ppmID = 0): array
+    {
+        return $this->instance->getIssues($repoID, $ppmID);
+    }
+
+    /**
+     * Test getManualIssues method.
+     *
+     * @param  int     $ppmID
+     * @param  int     $repoID
+     * @param  ?object $pager
+     * @param  string  $status
+     * @access public
+     * @return array
+     */
+    public function getManualIssuesTest(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
+    {
+        return $this->instance->getManualIssues($ppmID, $repoID, $pager, $status);
+    }
+
+    /**
      * Test getScanRulesets method.
      *
      * @param  array $params

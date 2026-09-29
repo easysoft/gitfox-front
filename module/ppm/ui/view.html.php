@@ -30,7 +30,7 @@ $encoding       = empty($encoding) ? '' : $encoding;
 $checkMessage   = zget($checkResult, 'message', '');
 $conflictFiles  = zget($checkResult, 'conflictFiles', array());
 $minReviewers   = empty($flow) ? 0 : $flow->definition->reviewFlow->approvals->minReviewers;
-$issueListTotal = (int)data('bugsTotal') + (int)data('aiIssueCount') + (int)data('staticIssueTotal');
+$issueListTotal = (int)data('manualIssuesTotal') + (int)data('aiIssueCount') + (int)data('staticIssueTotal');
 
 $basicItems = array();
 if($type != 'files')

@@ -46,6 +46,29 @@ class codescanModel extends model
     }
 
     /**
+     * 处理人工审查问题数据。
+     * Process manual review issue data.
+     *
+     * @param  object $issue
+     * @param  int    $repoID
+     * @access public
+     * @return object
+     */
+    public function processManualIssueData(object $issue, int $repoID = 0): object
+    {
+        $title = html_entity_decode((string)zget($issue, 'title', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $issue->title = trim(preg_replace('/\s+/u', ' ', strip_tags($title)));
+        $issue->content = html_entity_decode((string)zget($issue, 'content', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // 单行问题起止行号相同；起始行缺失时不展示行号。
+        if($issue->startLine > 0 && $issue->endLine < $issue->startLine) $issue->endLine = $issue->startLine;
+
+        $issue->lineRange = $issue->startLine > 0 ? "#{$issue->startLine}-#{$issue->endLine}" : '';
+
+        return $issue;
+    }
+
+    /**
      * 判断按钮是否可点击。
      * Judge an action is clickable or not.
      *
@@ -1357,6 +1380,35 @@ class codescanModel extends model
     public function getIssueByID(int $issueID): object
     {
         return $this->dao->select('*')->from(TABLE_SCANISSUE)->where('id')->eq($issueID)->fetch();
+    }
+
+    /**
+     * 获取人工审查问题列表（scanMethod=manual）。
+     * Get the manual review issue list.
+     *
+     * 问题优先按 ppmID 过滤，没有 ppmID 时才退回按 repoID 过滤；
+     * 状态取值与问题清单的标签一致（wait|solved|closed|converted）。
+     *
+     * @param  int     $ppmID
+     * @param  int     $repoID
+     * @param  ?object $pager
+     * @param  string  $status
+     * @access public
+     * @return array
+     */
+    public function getManualIssues(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
+    {
+        return $this->dao->select('t1.*')->from(TABLE_SCANISSUE)->alias('t1')
+            ->beginIF($status == 'converted')->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.`issueKey`')->fi()
+            ->where('t1.deleted')->eq(0)
+            ->andWhere('t1.scanMethod')->eq('manual')
+            ->beginIF($status == 'converted')->andWhere('t2.deleted')->eq(0)->fi()
+            ->beginIF($status != 'converted' && $status != '' && $status != 'all')->andWhere('t1.status')->eq($status)->fi()
+            ->beginIF($ppmID > 0)->andWhere('t1.ppmID')->eq($ppmID)->fi()
+            ->beginIF($ppmID < 1 && $repoID > 0)->andWhere('t1.repoID')->eq($repoID)->fi()
+            ->orderBy('t1.id_desc')
+            ->page($pager)
+            ->fetchAll('id', false);
     }
 
     /**
