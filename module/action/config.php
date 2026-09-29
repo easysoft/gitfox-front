@@ -87,9 +87,10 @@ $config->action->objectNameFields['baseline']     = 'title';
 $config->action->objectNameFields['ganttversion'] = 'title';
 $config->action->objectNameFields['projectchange'] = 'name';
 
-$config->action->objectNameFields['provider'] = 'name';
-$config->action->objectNameFields['runner']   = 'name';
-$config->action->objectNameFields['variable'] = 'name';
+$config->action->objectNameFields['provider']  = 'name';
+$config->action->objectNameFields['runner']    = 'name';
+$config->action->objectNameFields['variable']  = 'name';
+$config->action->objectNameFields['scanissue'] = 'title';
 
 $config->action->commonImgSize = 870;
 

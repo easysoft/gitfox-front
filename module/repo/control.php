@@ -3159,7 +3159,7 @@ class repo extends control
                 $location    = sprintf($this->lang->repo->ppmLocation, $ppmID);
                 $actionExtra = html::a($link, $location, '', "class='iframe'");
             }
-            $this->loadModel('action')->create('repoIssue', $issueID, 'repoCreated', '', $actionExtra);
+            $this->loadModel('action')->create('scanissue', $issueID, 'created', '', $actionExtra);
 
             $issue = $this->codescan->getIssueByID($issueID);
             $user  = $this->loadModel('user')->getListByAccounts(array($issue->createdBy), 'account');
