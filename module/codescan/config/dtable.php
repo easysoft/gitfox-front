@@ -595,3 +595,61 @@ $config->codescan->issue->dtable->fieldList['resolved']['type']     = 'datetime'
 $config->codescan->issue->dtable->fieldList['resolved']['show']     = false;
 $config->codescan->issue->dtable->fieldList['resolved']['sortType'] = false;
 $config->codescan->issue->dtable->fieldList['resolved']['required'] = false;
+
+$config->codescan->manualIssue = new stdclass();
+$config->codescan->manualIssue->dtable = new stdclass();
+$config->codescan->manualIssue->dtable->fieldList = array();
+
+$config->codescan->manualIssue->dtable->fieldList['id']['name']     = 'id';
+$config->codescan->manualIssue->dtable->fieldList['id']['title']    = $lang->idAB;
+$config->codescan->manualIssue->dtable->fieldList['id']['type']     = 'id';
+$config->codescan->manualIssue->dtable->fieldList['id']['width']    = 60;
+$config->codescan->manualIssue->dtable->fieldList['id']['sortType'] = false;
+
+$config->codescan->manualIssue->dtable->fieldList['title']['name']     = 'title';
+$config->codescan->manualIssue->dtable->fieldList['title']['title']    = $lang->codescan->manualIssueTitle;
+$config->codescan->manualIssue->dtable->fieldList['title']['type']     = 'shortTitle';
+$config->codescan->manualIssue->dtable->fieldList['title']['show']     = true;
+$config->codescan->manualIssue->dtable->fieldList['title']['required'] = true;
+$config->codescan->manualIssue->dtable->fieldList['title']['sortType'] = false;
+$config->codescan->manualIssue->dtable->fieldList['title']['link']     = array('module' => 'codescan', 'method' => 'manualissueview', 'params' => 'issueID={id}&repoID={repoID}');
+
+$config->codescan->manualIssue->dtable->fieldList['file']['name']     = 'file';
+$config->codescan->manualIssue->dtable->fieldList['file']['title']    = $lang->codescan->file;
+$config->codescan->manualIssue->dtable->fieldList['file']['type']     = 'text';
+$config->codescan->manualIssue->dtable->fieldList['file']['width']    = 250;
+$config->codescan->manualIssue->dtable->fieldList['file']['sortType'] = false;
+$config->codescan->manualIssue->dtable->fieldList['file']['hint']     = true;
+
+$config->codescan->manualIssue->dtable->fieldList['lineRange']['name']     = 'lineRange';
+$config->codescan->manualIssue->dtable->fieldList['lineRange']['title']    = $lang->codescan->lineRange;
+$config->codescan->manualIssue->dtable->fieldList['lineRange']['type']     = 'text';
+$config->codescan->manualIssue->dtable->fieldList['lineRange']['width']    = 90;
+$config->codescan->manualIssue->dtable->fieldList['lineRange']['sortType'] = false;
+
+$config->codescan->manualIssue->dtable->fieldList['priority']['name']     = 'priority';
+$config->codescan->manualIssue->dtable->fieldList['priority']['title']    = $lang->codescan->manualIssueLevel;
+$config->codescan->manualIssue->dtable->fieldList['priority']['width']    = 100;
+$config->codescan->manualIssue->dtable->fieldList['priority']['sortType'] = false;
+$config->codescan->manualIssue->dtable->fieldList['priority']['map']      = $lang->codescan->severityList;
+
+$config->codescan->manualIssue->dtable->fieldList['type']['name']     = 'type';
+$config->codescan->manualIssue->dtable->fieldList['type']['title']    = $lang->codescan->manualIssueType;
+$config->codescan->manualIssue->dtable->fieldList['type']['type']     = 'category';
+$config->codescan->manualIssue->dtable->fieldList['type']['width']    = 100;
+$config->codescan->manualIssue->dtable->fieldList['type']['sortType'] = false;
+$config->codescan->manualIssue->dtable->fieldList['type']['map']      = $lang->codescan->typeList;
+
+$config->codescan->manualIssue->dtable->fieldList['status']['name']      = 'status';
+$config->codescan->manualIssue->dtable->fieldList['status']['title']     = $lang->codescan->status;
+$config->codescan->manualIssue->dtable->fieldList['status']['type']      = 'status';
+$config->codescan->manualIssue->dtable->fieldList['status']['width']     = 120;
+$config->codescan->manualIssue->dtable->fieldList['status']['sortType']  = false;
+$config->codescan->manualIssue->dtable->fieldList['status']['statusMap'] = $lang->codescan->issueStatusList;
+
+$config->codescan->manualIssue->dtable->fieldList['actions']['name']  = 'actions';
+$config->codescan->manualIssue->dtable->fieldList['actions']['title'] = $lang->actions;
+$config->codescan->manualIssue->dtable->fieldList['actions']['type']  = 'actions';
+$config->codescan->manualIssue->dtable->fieldList['actions']['width'] = 120;
+$config->codescan->manualIssue->dtable->fieldList['actions']['menu']  = $config->codescan->issue->actionMenu;
+$config->codescan->manualIssue->dtable->fieldList['actions']['list']  = $config->codescan->issue->actionList;

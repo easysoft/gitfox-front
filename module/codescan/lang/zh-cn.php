@@ -126,6 +126,13 @@ $lang->codescan->keyword     = '注释包含关键字';
 $lang->codescan->keywords    = '关键字';
 $lang->codescan->pcs         = '个';
 $lang->codescan->file        = '所属文件';
+$lang->codescan->lineRange   = '行号范围';
+
+$lang->codescan->manualIssueTitle      = '问题标题';
+$lang->codescan->manualIssueView       = '人工审查问题详情';
+$lang->codescan->manualIssueLevel      = '问题等级';
+$lang->codescan->manualIssueType       = '问题类型';
+$lang->codescan->manualIssueConverted  = '已转Bug';
 
 $lang->codescan->issueStatistics = '问题统计';
 $lang->codescan->monthAdded      = '本月新增';

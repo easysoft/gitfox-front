@@ -12,7 +12,7 @@ namespace zin;
 
 $aiIssueCount     = (int)data('aiIssueCount');
 $scanIssueCount   = (int)data('staticIssueTotal');
-$manualIssueCount = (int)data('bugsTotal');
+$manualIssueCount = (int)data('manualIssuesTotal');
 
 $issueStatus = (string)data('issueStatus');
 
@@ -55,6 +55,7 @@ $staticCols['content']['name'] = 'title';
 if(hasPriv('codescan', 'issueview')) $staticCols['content']['link'] = array('module' => 'codescan', 'method' => 'issueview', 'params' => 'issueID={id}&repoID={repoID}');
 $staticRows = initTableData($staticRows, $staticCols, $this->loadModel('codescan'));
 
+$app->loadLang('codescan');
 $app->loadConfig('codescan');
 jsVar('window.batchStatus',   $config->codescan->issue->batchStatus);
 jsVar('window.batchBlockers', $config->codescan->issue->batchBlockers);
@@ -77,6 +78,15 @@ if(!empty($items)) $scanBatchToolbar = array('items' => $items);
 
 $scanPaneStyle   = empty($scanTabItems['scan']['active'])   ? array('display' => 'none') : array();
 $manualPaneStyle = empty($scanTabItems['static']['active']) ? array('display' => 'none') : array();
+
+// 人工审查问题改读问题表（scanMethod=manual）
+$manualRows = array();
+foreach((array)$manualIssues as $manualIssue)
+{
+    $manualRows[] = $this->loadModel('codescan')->processManualIssueData($manualIssue, (int)$ppm->targetRepoID);
+}
+$manualCols = $config->codescan->manualIssue->dtable->fieldList;
+$manualRows = initTableData($manualRows, $manualCols, $this->loadModel('codescan'));
 
 $staticPanel = div
 (
@@ -109,8 +119,10 @@ $manualPanel = div
     dtable
     (
         set::id('bugs'),
-        set::cols($config->ppm->bug->dtable->fieldList),
-        set::data(array_values($bugs)),
+        set::customCols(false),
+        set::cols($manualCols),
+        set::data($manualRows),
+        set::responsive(true),
         set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static&issueStatus={$issueStatus}")), null, '', 'static'))
     )
 );

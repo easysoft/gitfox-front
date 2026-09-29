@@ -34,6 +34,47 @@ class codescanModelTest extends baseTest
     }
 
     /**
+     * Test processManualIssueData method.
+     *
+     * @param  object $issue
+     * @param  int    $repoID
+     * @access public
+     * @return object
+     */
+    public function processManualIssueDataTest(object $issue, int $repoID = 0): object
+    {
+        return $this->instance->processManualIssueData($issue, $repoID);
+    }
+
+    /**
+     * Test getManualIssues method.
+     *
+     * @param  int     $ppmID
+     * @param  int     $repoID
+     * @param  ?object $pager
+     * @param  string  $status
+     * @access public
+     * @return array
+     */
+    public function getManualIssuesTest(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
+    {
+        return $this->instance->getManualIssues($ppmID, $repoID, $pager, $status);
+    }
+
+    /**
+     * Test getManualIssuesTotal method.
+     *
+     * @param  int $ppmID
+     * @param  int $repoID
+     * @access public
+     * @return int
+     */
+    public function getManualIssuesTotalTest(int $ppmID, int $repoID = 0): int
+    {
+        return $this->instance->getManualIssuesTotal($ppmID, $repoID);
+    }
+
+    /**
      * Test getScanRulesets method.
      *
      * @param  array $params

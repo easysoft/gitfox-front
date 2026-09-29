@@ -46,6 +46,46 @@ class codescanModel extends model
     }
 
     /**
+     * 处理人工审查问题数据。
+     * Process manual review issue data.
+     *
+     * @param  object $issue
+     * @param  int    $repoID
+     * @access public
+     * @return object
+     */
+    public function processManualIssueData(object $issue, int $repoID = 0): object
+    {
+        if(isset($issue->payload) && is_string($issue->payload))
+        {
+            $payload = json_decode($issue->payload);
+            $issue->payload = is_object($payload) ? $payload : new stdclass();
+        }
+        elseif(empty($issue->payload))
+        {
+            $issue->payload = new stdclass();
+        }
+
+        $issue         = $this->processIssueData($issue);
+        $issue->repoID = (int)zget($issue, 'repoID', 0) ?: $repoID;
+
+        if(empty($issue->type))     $issue->type     = zget($issue, 'category', '');
+        if(empty($issue->priority)) $issue->priority = zget($issue, 'severity', '');
+
+        $title = html_entity_decode((string)zget($issue, 'title', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $title = trim(preg_replace('/\s+/u', ' ', strip_tags($title)));
+        $issue->title   = $title;
+        $issue->content = html_entity_decode((string)zget($issue, 'content', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // 单行问题起止行号相同；起始行缺失时不展示行号。
+        if($issue->startLine > 0 && $issue->endLine < $issue->startLine) $issue->endLine = $issue->startLine;
+
+        $issue->lineRange = $issue->startLine > 0 ? "#{$issue->startLine}-#{$issue->endLine}" : '';
+
+        return $issue;
+    }
+
+    /**
      * 判断按钮是否可点击。
      * Judge an action is clickable or not.
      *
@@ -1357,6 +1397,98 @@ class codescanModel extends model
     public function getIssueByID(int $issueID): object
     {
         return $this->dao->select('*')->from(TABLE_SCANISSUE)->where('id')->eq($issueID)->fetch();
+    }
+
+    /**
+     * 获取人工审查问题详情。
+     * Get manual review issue detail.
+     *
+     * @param  int $issueID
+     * @access public
+     * @return object|bool
+     */
+    public function getManualIssueByID(int $issueID): object|bool
+    {
+        return $this->dao->select('*')->from(TABLE_SCANISSUE)
+            ->where('id')->eq($issueID)
+            ->andWhere('scanMethod')->eq('manual')
+            ->andWhere('deleted')->eq(0)
+            ->fetch();
+    }
+
+    /**
+     * 构造人工审查问题查询。
+     * Build the manual review issue query.
+     *
+     * @param  int    $ppmID
+     * @param  int    $repoID
+     * @param  string $status
+     * @param  bool   $count
+     * @access private
+     * @return object|false
+     */
+    private function buildManualIssueQuery(int $ppmID, int $repoID = 0, string $status = '', bool $count = false): object|false
+    {
+        $status = strtolower(trim($status));
+        if(!in_array($status, array('', 'all', 'wait', 'todo', 'solving', 'solved', 'ignore', 'closed', 'converted'))) return false;
+
+        $fields = $count ? 'COUNT(DISTINCT t1.id) AS `count`' : 't1.*';
+        $query  = $this->dao->select($fields)->from(TABLE_SCANISSUE)->alias('t1');
+        if($status == 'converted') $query->innerJoin(TABLE_BUG)->alias('t2')->on('t1.`id` = t2.`issueKey`');
+
+        $query->where('t1.deleted')->eq(0)
+            ->andWhere('t1.scanMethod')->eq('manual');
+
+        if($ppmID > 0)      $query->andWhere('t1.ppmID')->eq($ppmID);
+        elseif($repoID > 0) $query->andWhere('t1.repoID')->eq($repoID);
+
+        if($status != '' && $status != 'all')
+        {
+            if($status == 'converted') $query->andWhere('t2.deleted')->eq(0);
+            else                       $query->andWhere('t1.status')->eq($status);
+        }
+
+        if(!$count) $query->orderBy('t1.id_desc');
+
+        return $query;
+    }
+
+    /**
+     * 获取人工审查问题列表。
+     * Get manual review issue list.
+     *
+     * @param  int     $ppmID
+     * @param  int     $repoID
+     * @param  ?object $pager
+     * @param  string  $status
+     * @access public
+     * @return array
+     */
+    public function getManualIssues(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
+    {
+        $query = $this->buildManualIssueQuery($ppmID, $repoID, $status);
+        if($query === false) return array();
+
+        if(!empty($pager)) $query->page($pager);
+
+        return $query->fetchAll('id', false);
+    }
+
+    /**
+     * 获取人工审查问题总数。
+     * Get manual review issue total.
+     *
+     * @param  int $ppmID
+     * @param  int $repoID
+     * @access public
+     * @return int
+     */
+    public function getManualIssuesTotal(int $ppmID, int $repoID = 0): int
+    {
+        $query = $this->buildManualIssueQuery($ppmID, $repoID, '', true);
+        if($query === false) return 0;
+
+        return (int)$query->fetch('count');
     }
 
     /**

@@ -1021,9 +1021,9 @@ class repoZen extends repo
     {
         if(trim($steps) === '') return '';
 
-        $text = preg_replace(array('#<br\s*/?>#i', '#</(p|div|li|tr|table|h[1-6])>#i'), "\n", $steps);
+        $text = html_entity_decode($steps, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace(array('#<br\s*/?>#i', '#</(p|div|li|tr|table|h[1-6])>#i'), "\n", $text);
         $text = strip_tags((string)$text);
-        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = str_replace(array("\xc2\xa0", "\r"), ' ', $text);
 
         $title = '';
