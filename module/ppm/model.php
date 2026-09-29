@@ -1313,38 +1313,6 @@ class ppmModel extends model
     }
 
     /**
-     * 获取人工评审问题列表（scanMethod=manual），供问题清单的「人工审查问题」面板使用。
-     * Get the manual review issue list for the issue list panel.
-     *
-     * 问题优先按 ppmID 过滤；没有 ppmID 时才退回按 repoID 过滤。
-     *
-     * @param  int     $ppmID
-     * @param  int     $repoID
-     * @param  ?object $pager
-     * @param  string  $status 问题清单的状态（wait|solved|closed），空表示不筛选。
-     * @access public
-     * @return array
-     */
-    public function getManualIssues(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
-    {
-        return $this->loadModel('codescan')->getManualIssues($ppmID, $repoID, $pager, $status);
-    }
-
-    /**
-     * 获取人工评审问题总数，供问题清单的计数使用。
-     * Get the total count of manual review issues.
-     *
-     * @param  int $ppmID
-     * @param  int $repoID
-     * @access public
-     * @return int
-     */
-    public function getManualIssuesTotal(int $ppmID, int $repoID = 0): int
-    {
-        return $this->loadModel('codescan')->getManualIssuesTotal($ppmID, $repoID);
-    }
-
-    /**
      * 同一请求内复用合并请求的提交列表，避免列表与计数各拉取一次。
      *
      * @param  int $repoID

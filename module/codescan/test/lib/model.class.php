@@ -51,9 +51,9 @@ class codescanModelTest extends baseTest
      *
      * @param  int $issueID
      * @access public
-     * @return object|bool
+     * @return object
      */
-    public function getIssueByIDTest(int $issueID): object|bool
+    public function getIssueByIDTest(int $issueID): object
     {
         return $this->instance->getIssueByID($issueID);
     }
@@ -84,18 +84,6 @@ class codescanModelTest extends baseTest
     }
 
     /**
-     * Test getManualIssueByID method.
-     *
-     * @param  int $issueID
-     * @access public
-     * @return object|bool
-     */
-    public function getManualIssueByIDTest(int $issueID): object|bool
-    {
-        return $this->instance->getManualIssueByID($issueID);
-    }
-
-    /**
      * Test getManualIssues method.
      *
      * @param  int     $ppmID
@@ -121,21 +109,6 @@ class codescanModelTest extends baseTest
     public function getManualIssuesTotalTest(int $ppmID, int $repoID = 0): int
     {
         return $this->instance->getManualIssuesTotal($ppmID, $repoID);
-    }
-
-    /**
-     * Test buildManualIssueQuery method.
-     *
-     * @param  int    $ppmID
-     * @param  int    $repoID
-     * @param  string $status
-     * @param  bool   $count
-     * @access public
-     * @return object|false
-     */
-    public function buildManualIssueQueryTest(int $ppmID, int $repoID = 0, string $status = '', bool $count = false): object|false
-    {
-        return $this->invokeArgs('buildManualIssueQuery', array($ppmID, $repoID, $status, $count));
     }
 
     /**

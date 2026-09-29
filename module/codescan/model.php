@@ -1400,62 +1400,11 @@ class codescanModel extends model
     }
 
     /**
-     * 获取人工审查问题详情。
-     * Get manual review issue detail.
+     * 获取人工审查问题列表（scanMethod=manual）。
+     * Get the manual review issue list.
      *
-     * @param  int $issueID
-     * @access public
-     * @return object|bool
-     */
-    public function getManualIssueByID(int $issueID): object|bool
-    {
-        return $this->dao->select('*')->from(TABLE_SCANISSUE)
-            ->where('id')->eq($issueID)
-            ->andWhere('scanMethod')->eq('manual')
-            ->andWhere('deleted')->eq(0)
-            ->fetch();
-    }
-
-    /**
-     * 构造人工审查问题查询。
-     * Build the manual review issue query.
-     *
-     * @param  int    $ppmID
-     * @param  int    $repoID
-     * @param  string $status
-     * @param  bool   $count
-     * @access private
-     * @return object|false
-     */
-    private function buildManualIssueQuery(int $ppmID, int $repoID = 0, string $status = '', bool $count = false): object|false
-    {
-        $status = strtolower(trim($status));
-        if(!in_array($status, array('', 'all', 'wait', 'todo', 'solving', 'solved', 'ignore', 'closed', 'converted'))) return false;
-
-        $fields = $count ? 'COUNT(DISTINCT t1.id) AS `count`' : 't1.*';
-        $query  = $this->dao->select($fields)->from(TABLE_SCANISSUE)->alias('t1');
-        if($status == 'converted') $query->innerJoin(TABLE_BUG)->alias('t2')->on('t1.`id` = t2.`issueKey`');
-
-        $query->where('t1.deleted')->eq(0)
-            ->andWhere('t1.scanMethod')->eq('manual');
-
-        if($ppmID > 0)      $query->andWhere('t1.ppmID')->eq($ppmID);
-        elseif($repoID > 0) $query->andWhere('t1.repoID')->eq($repoID);
-
-        if($status != '' && $status != 'all')
-        {
-            if($status == 'converted') $query->andWhere('t2.deleted')->eq(0);
-            else                       $query->andWhere('t1.status')->eq($status);
-        }
-
-        if(!$count) $query->orderBy('t1.id_desc');
-
-        return $query;
-    }
-
-    /**
-     * 获取人工审查问题列表。
-     * Get manual review issue list.
+     * 问题优先按 ppmID 过滤，没有 ppmID 时才退回按 repoID 过滤；
+     * 状态取值与问题清单的标签一致（wait|solved|closed|converted）。
      *
      * @param  int     $ppmID
      * @param  int     $repoID
@@ -1466,8 +1415,17 @@ class codescanModel extends model
      */
     public function getManualIssues(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
     {
-        $query = $this->buildManualIssueQuery($ppmID, $repoID, $status);
-        if($query === false) return array();
+        /* 已转Bug 落在缺陷表，与扫描问题的口径一致，按 issueKey 关联缺陷。 */
+        $query = $this->dao->select('t1.*')->from(TABLE_SCANISSUE)->alias('t1');
+        if($status == 'converted') $query->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.`issueKey`');
+
+        $query->where('t1.deleted')->eq(0)
+            ->andWhere('t1.scanMethod')->eq('manual')
+            ->beginIF($status == 'converted')->andWhere('t2.deleted')->eq(0)->fi()
+            ->beginIF($status != 'converted' && $status != '' && $status != 'all')->andWhere('t1.status')->eq($status)->fi()
+            ->beginIF($ppmID > 0)->andWhere('t1.ppmID')->eq($ppmID)->fi()
+            ->beginIF($ppmID < 1 && $repoID > 0)->andWhere('t1.repoID')->eq($repoID)->fi()
+            ->orderBy('t1.id_desc');
 
         if(!empty($pager)) $query->page($pager);
 
@@ -1475,8 +1433,8 @@ class codescanModel extends model
     }
 
     /**
-     * 获取人工审查问题总数。
-     * Get manual review issue total.
+     * 获取人工审查问题总数（不区分状态，供问题清单的计数使用）。
+     * Get the total count of manual review issues.
      *
      * @param  int $ppmID
      * @param  int $repoID
@@ -1485,10 +1443,12 @@ class codescanModel extends model
      */
     public function getManualIssuesTotal(int $ppmID, int $repoID = 0): int
     {
-        $query = $this->buildManualIssueQuery($ppmID, $repoID, '', true);
-        if($query === false) return 0;
-
-        return (int)$query->fetch('count');
+        return (int)$this->dao->select('COUNT(*) AS `count`')->from(TABLE_SCANISSUE)->alias('t1')
+            ->where('t1.deleted')->eq(0)
+            ->andWhere('t1.scanMethod')->eq('manual')
+            ->beginIF($ppmID > 0)->andWhere('t1.ppmID')->eq($ppmID)->fi()
+            ->beginIF($ppmID < 1 && $repoID > 0)->andWhere('t1.repoID')->eq($repoID)->fi()
+            ->fetch('count');
     }
 
     /**

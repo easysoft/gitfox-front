@@ -1391,7 +1391,7 @@ class codescan extends control
      */
     public function manualIssueView(int $issueID, int $repoID = 0)
     {
-        $issue = $this->codescan->getManualIssueByID($issueID);
+        $issue = $this->codescan->getIssueByID($issueID);
         if(empty($issue)) return $this->sendError($this->lang->notFound, true);
 
         /* 详情页侧栏要展示所属评审请求，加载 ppm 语言包；该语言包会把 rawModule 重置为 ppm，这里恢复当前模块，避免导航高亮错位。 */

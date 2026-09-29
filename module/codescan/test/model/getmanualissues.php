@@ -17,6 +17,7 @@ cid=0
 - 非法状态返回空 @0
 - 合并请求字段存在时优先按合并请求过滤 @4
 - 合并请求为 0 时回退按代码库过滤 @1
+- 已转Bug 的问题按缺陷关联过滤 @1
 
 */
 
@@ -42,6 +43,8 @@ if($hasPPMID)
 }
 if($hasContent) $issues[0]['content'] = '&lt;p&gt;人工问题正文&lt;/p&gt;';
 foreach($issues as $issue) $tester->dao->insert(TABLE_SCANISSUE)->data((object)$issue)->exec();
+
+$tester->dao->insert(TABLE_BUG)->data((object)array('id' => 1, 'product' => 1, 'issueKey' => '2', 'deleted' => 0))->exec();
 
 su('admin');
 $test = new codescanModelTest();
@@ -69,3 +72,5 @@ if($hasPPMID)
     r($test->getManualIssuesTotalTest(5, 24))                && p() && e('4');
     r(count($test->getManualIssuesTest(0, 99, null, 'all'))) && p() && e('1');
 }
+
+r(count($test->getManualIssuesTest(0, 24, null, 'converted'))) && p() && e('1');
