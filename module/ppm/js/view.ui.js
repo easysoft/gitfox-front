@@ -257,22 +257,19 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
             if(pane) pane.style.display = '';
         }
 
-        /* 分类切换只改 display，必须把当前分类写回 URL：
-           服务端是按 URL 里的 issueTab 决定哪个分类激活的，
-           不写回的话从问题详情返回（history.go(-1)）时会按旧值还原，落回上一个分类。 */
         var tabKey = link.getAttribute('data-tab');
         if(tabKey && window.history && history.replaceState && /[?&]m=/.test(location.search))
         {
-            var search = location.search.replace(/([?&]issueTab=)[^&]*/, '$1' + tabKey);
-            if(search === location.search) search += '&issueTab=' + tabKey;
-            history.replaceState(null, '', location.pathname + search + location.hash);
+            var url = new URL(location.href);
+            url.searchParams.set('issueTab', tabKey);
+            var next = url.pathname + url.search + url.hash;
+            if(next !== location.pathname + location.search + location.hash) history.replaceState(null, '', next);
         }
     }
 
     document.removeEventListener('click', switchScanTab);
     document.addEventListener('click', switchScanTab);
 
-    /* 初始化：优先展示服务端标记为 active 的分类（翻页后还原），没有则选第一个。 */
     setTimeout(function()
     {
         var defaultTab = document.querySelector('#scanTabs a.active') || document.querySelector('#scanTabs a');
