@@ -22,21 +22,15 @@ cid=0
 global $tester;
 
 $tester->dao->query('TRUNCATE TABLE ' . TABLE_SCANISSUE);
-$hasPPMID = (bool)$tester->dao->query('SHOW COLUMNS FROM ' . TABLE_SCANISSUE . " LIKE 'ppmID'")->fetch();
 
 $issues = array(
-    array('id' => 1, 'issueKey' => 'total-1', 'repoID' => 24, 'scanMethod' => 'manual', 'status' => 'wait',   'deleted' => 0),
-    array('id' => 2, 'issueKey' => 'total-2', 'repoID' => 24, 'scanMethod' => 'manual', 'status' => 'solved', 'deleted' => 0),
-    array('id' => 3, 'issueKey' => 'total-3', 'repoID' => 24, 'scanMethod' => 'manual', 'status' => 'closed', 'deleted' => 0),
-    array('id' => 4, 'issueKey' => 'total-4', 'repoID' => 24, 'scanMethod' => 'manual', 'status' => 'wait',   'deleted' => 0),
-    array('id' => 5, 'issueKey' => 'total-5', 'repoID' => 24, 'scanMethod' => 'check',  'status' => 'wait',   'deleted' => 0),
-    array('id' => 6, 'issueKey' => 'total-6', 'repoID' => 99, 'scanMethod' => 'manual', 'status' => 'closed', 'deleted' => 0)
+    array('id' => 1, 'issueKey' => 'total-1', 'repoID' => 24, 'ppmID' => 5, 'scanMethod' => 'manual', 'status' => 'wait',   'deleted' => 0),
+    array('id' => 2, 'issueKey' => 'total-2', 'repoID' => 24, 'ppmID' => 5, 'scanMethod' => 'manual', 'status' => 'solved', 'deleted' => 0),
+    array('id' => 3, 'issueKey' => 'total-3', 'repoID' => 24, 'ppmID' => 5, 'scanMethod' => 'manual', 'status' => 'closed', 'deleted' => 0),
+    array('id' => 4, 'issueKey' => 'total-4', 'repoID' => 24, 'ppmID' => 0, 'scanMethod' => 'manual', 'status' => 'wait',   'deleted' => 0),
+    array('id' => 5, 'issueKey' => 'total-5', 'repoID' => 24, 'ppmID' => 8, 'scanMethod' => 'check',  'status' => 'wait',   'deleted' => 0),
+    array('id' => 6, 'issueKey' => 'total-6', 'repoID' => 99, 'ppmID' => 5, 'scanMethod' => 'manual', 'status' => 'closed', 'deleted' => 0)
 );
-if($hasPPMID)
-{
-    $ppmIDs = array(1 => 5, 2 => 5, 3 => 5, 4 => 0, 5 => 8, 6 => 5);
-    foreach($issues as $index => $issue) $issues[$index]['ppmID'] = $ppmIDs[$issue['id']];
-}
 foreach($issues as $issue) $tester->dao->insert(TABLE_SCANISSUE)->data((object)$issue)->exec();
 
 su('admin');
@@ -47,9 +41,5 @@ r($test->getManualIssuesTotalTest(0, 100)) && p() && e('0');
 r($test->getManualIssuesTotalTest(0, 0)) && p() && e('5');
 r($test->getManualIssuesTotalTest(0, 99)) && p() && e('1');
 r($test->getManualIssuesTotalTest(0, 98)) && p() && e('0');
-
-if($hasPPMID)
-{
-    r($test->getManualIssuesTotalTest(5, 24)) && p() && e('4');
-    r($test->getManualIssuesTotalTest(8, 24)) && p() && e('0');
-}
+r($test->getManualIssuesTotalTest(5, 24)) && p() && e('4');
+r($test->getManualIssuesTotalTest(8, 24)) && p() && e('0');
