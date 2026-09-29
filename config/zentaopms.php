@@ -622,6 +622,7 @@ $config->objectTables['repobranchtype'] = TABLE_BRANCHTYPE;
 $config->objectTables['provider']       = TABLE_PROVIDER;
 $config->objectTables['runner']         = TABLE_RUNNER;
 $config->objectTables['variable']       = TABLE_VARIABLE;
+$config->objectTables['scanissue']      = TABLE_SCANISSUE;
 
 $config->newFeatures      = array('introduction', 'tutorial', 'youngBlueTheme', 'visions', 'aiPrompts', 'promptDesign', 'promptExec');
 $config->disabledFeatures = '';

@@ -219,6 +219,7 @@ $lang->action->objectTypes['compile']          = '流水线执行记录';
 $lang->action->objectTypes['gitfoxbranch']     = '代码分支';
 $lang->action->objectTypes['provider']         = '服务';
 $lang->action->objectTypes['variable']         = '变量';
+$lang->action->objectTypes['scanissue']        = '问题';
 
 /* 用来描述操作历史记录。*/
 $lang->action->desc = new stdclass();

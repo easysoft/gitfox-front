@@ -219,6 +219,7 @@ $lang->action->objectTypes['compile']          = 'Pipeline Execution Record';
 $lang->action->objectTypes['gitfoxbranch']     = 'Repo Branch';
 $lang->action->objectTypes['provider']         = 'Provider';
 $lang->action->objectTypes['variable']         = 'Variable';
+$lang->action->objectTypes['scanissue']        = 'Issue';
 
 /* Used to describe operation history. */
 $lang->action->desc = new stdclass();
