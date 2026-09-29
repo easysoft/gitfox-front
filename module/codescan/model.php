@@ -56,25 +56,8 @@ class codescanModel extends model
      */
     public function processManualIssueData(object $issue, int $repoID = 0): object
     {
-        if(isset($issue->payload) && is_string($issue->payload))
-        {
-            $payload = json_decode($issue->payload);
-            $issue->payload = is_object($payload) ? $payload : new stdclass();
-        }
-        elseif(empty($issue->payload))
-        {
-            $issue->payload = new stdclass();
-        }
-
-        $issue         = $this->processIssueData($issue);
-        $issue->repoID = (int)zget($issue, 'repoID', 0) ?: $repoID;
-
-        if(empty($issue->type))     $issue->type     = zget($issue, 'category', '');
-        if(empty($issue->priority)) $issue->priority = zget($issue, 'severity', '');
-
         $title = html_entity_decode((string)zget($issue, 'title', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        $title = trim(preg_replace('/\s+/u', ' ', strip_tags($title)));
-        $issue->title   = $title;
+        $issue->title = trim(preg_replace('/\s+/u', ' ', strip_tags($title)));
         $issue->content = html_entity_decode((string)zget($issue, 'content', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // 单行问题起止行号相同；起始行缺失时不展示行号。
@@ -1415,40 +1398,17 @@ class codescanModel extends model
      */
     public function getManualIssues(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = ''): array
     {
-        /* 已转Bug 落在缺陷表，与扫描问题的口径一致，按 issueKey 关联缺陷。 */
-        $query = $this->dao->select('t1.*')->from(TABLE_SCANISSUE)->alias('t1');
-        if($status == 'converted') $query->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.`issueKey`');
-
-        $query->where('t1.deleted')->eq(0)
+        return $this->dao->select('t1.*')->from(TABLE_SCANISSUE)->alias('t1')
+            ->beginIF($status == 'converted')->innerJoin(TABLE_BUG)->alias('t2')->on('t1.id = t2.`issueKey`')->fi()
+            ->where('t1.deleted')->eq(0)
             ->andWhere('t1.scanMethod')->eq('manual')
             ->beginIF($status == 'converted')->andWhere('t2.deleted')->eq(0)->fi()
             ->beginIF($status != 'converted' && $status != '' && $status != 'all')->andWhere('t1.status')->eq($status)->fi()
             ->beginIF($ppmID > 0)->andWhere('t1.ppmID')->eq($ppmID)->fi()
             ->beginIF($ppmID < 1 && $repoID > 0)->andWhere('t1.repoID')->eq($repoID)->fi()
-            ->orderBy('t1.id_desc');
-
-        if(!empty($pager)) $query->page($pager);
-
-        return $query->fetchAll('id', false);
-    }
-
-    /**
-     * 获取人工审查问题总数（不区分状态，供问题清单的计数使用）。
-     * Get the total count of manual review issues.
-     *
-     * @param  int $ppmID
-     * @param  int $repoID
-     * @access public
-     * @return int
-     */
-    public function getManualIssuesTotal(int $ppmID, int $repoID = 0): int
-    {
-        return (int)$this->dao->select('COUNT(*) AS `count`')->from(TABLE_SCANISSUE)->alias('t1')
-            ->where('t1.deleted')->eq(0)
-            ->andWhere('t1.scanMethod')->eq('manual')
-            ->beginIF($ppmID > 0)->andWhere('t1.ppmID')->eq($ppmID)->fi()
-            ->beginIF($ppmID < 1 && $repoID > 0)->andWhere('t1.repoID')->eq($repoID)->fi()
-            ->fetch('count');
+            ->orderBy('t1.id_desc')
+            ->page($pager)
+            ->fetchAll('id', false);
     }
 
     /**

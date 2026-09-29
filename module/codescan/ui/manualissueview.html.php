@@ -24,10 +24,10 @@ if(!empty($repoID) && !$isInModal) dropmenu
 $app->loadConfig('codescan');
 
 $manualCols  = $config->codescan->manualIssue->dtable->fieldList;
-$typeName    = zget(zget($manualCols['type'], 'map', array()), $issue->type, $issue->type);
-$levelName   = zget(zget($manualCols['priority'], 'map', array()), $issue->priority, $issue->priority);
+$typeName    = zget(zget($manualCols['type'], 'map', array()), $issue->category, $issue->category);
+$levelName   = zget(zget($manualCols['priority'], 'map', array()), $issue->severity, $issue->severity);
 $statusName  = zget($lang->codescan->issueStatusList, $issue->status, $issue->status);
-$levelColor  = zget(array('critical' => 'danger-pale', 'high' => 'danger-pale', 'medium' => 'warning-pale', 'low' => 'primary-pale'), $issue->priority, 'gray-500-pale');
+$levelColor  = zget(array('critical' => 'danger-pale', 'high' => 'danger-pale', 'medium' => 'warning-pale', 'low' => 'primary-pale'), $issue->severity, 'gray-500-pale');
 $statusColor = in_array($issue->status, array('ignore', 'closed')) ? 'gray-500-pale' : 'primary-pale';
 
 detailHeader
@@ -68,7 +68,7 @@ div
             div
             (
                 h4(setClass('font-bold mb-2'), $lang->codescan->issueLocation),
-                div(setClass('text'), "{$issue->file} {$issue->lineRange}")
+                div(setClass('text'), "{$issue->path} {$issue->lineRange}")
             ),
             div
             (

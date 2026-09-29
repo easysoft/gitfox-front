@@ -12,8 +12,8 @@ cid=0
 - 分页查询返回第一页 1 条 @1
 - 分页 total 正确 @4
 - 按状态过滤人工问题 @2
-- 非人工问题不计入 @5
 - 正文保留数据库中的原始内容 @&lt;p&gt;人工问题正文&lt;/p&gt;
+- 非人工问题不计入总数 @5
 - 非法状态返回空 @0
 - 合并请求字段存在时优先按合并请求过滤 @4
 - 合并请求为 0 时回退按代码库过滤 @1
@@ -55,14 +55,23 @@ r($pager->recTotal) && p() && e('4');
 $repoList = $test->getManualIssuesTest(0, 24, null, 'wait');
 r(count($repoList)) && p() && e('2');
 
-r($test->getManualIssuesTotalTest(0, 0)) && p() && e('5');
 $contentIssue = zget($repoList, 1, new stdclass());
 r($contentIssue->content) && p() && e('&lt;p&gt;人工问题正文&lt;/p&gt;');
+
+/* 总数由列表的 page($pager) 算出，不再单独查 count。 */
+$totalPager = new pager(0, 20, 1, 'total');
+
+$test->getManualIssuesTest(0, 0, $totalPager, 'all');
+r($totalPager->recTotal) && p() && e('5');
 
 $unknown = $test->getManualIssuesTest(0, 24, null, 'unknown');
 r(count($unknown)) && p() && e('0');
 
-r($test->getManualIssuesTotalTest(5, 24))                && p() && e('4');
-r(count($test->getManualIssuesTest(0, 99, null, 'all'))) && p() && e('1');
+$test->getManualIssuesTest(5, 24, $totalPager, 'all');
+r($totalPager->recTotal) && p() && e('4');
 
-r(count($test->getManualIssuesTest(0, 24, null, 'converted'))) && p() && e('1');
+$test->getManualIssuesTest(0, 99, $totalPager, 'all');
+r($totalPager->recTotal) && p() && e('1');
+
+$test->getManualIssuesTest(0, 24, $totalPager, 'converted');
+r($totalPager->recTotal) && p() && e('1');

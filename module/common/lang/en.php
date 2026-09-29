@@ -507,6 +507,7 @@ $lang->scanissue->common    = 'Scan Issue';
 $lang->scanOverview->common = 'Scan Overview';
 $lang->provider->common     = 'Service';
 $lang->variable->common     = 'Variable';
+$lang->codescan->common     = 'Code Scan';
 
 $lang->admin->module      = 'Feature Settings';
 $lang->admin->system      = 'System';

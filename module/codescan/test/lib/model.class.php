@@ -99,19 +99,6 @@ class codescanModelTest extends baseTest
     }
 
     /**
-     * Test getManualIssuesTotal method.
-     *
-     * @param  int $ppmID
-     * @param  int $repoID
-     * @access public
-     * @return int
-     */
-    public function getManualIssuesTotalTest(int $ppmID, int $repoID = 0): int
-    {
-        return $this->instance->getManualIssuesTotal($ppmID, $repoID);
-    }
-
-    /**
      * Test getScanRulesets method.
      *
      * @param  array $params

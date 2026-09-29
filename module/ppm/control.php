@@ -434,8 +434,10 @@ class ppm extends control
             $this->view->staticIssues = $this->ppmZen->getScanIssuesByStatus($issueStatus, (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager);
         }
         $this->view->staticIssueTotal  = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
-        $this->view->manualIssues      = $type == 'bug' ? $this->loadModel('codescan')->getManualIssues($ppm->id, $repo->id, $bugPager, $issueStatus) : array();
-        $this->view->manualIssuesTotal = $this->loadModel('codescan')->getManualIssuesTotal($ppm->id, $repo->id);
+
+        $manualIssues = $this->loadModel('codescan')->getManualIssues($ppm->id, $repo->id, $bugPager, $type == 'bug' ? $issueStatus : '');
+        $this->view->manualIssues      = $type == 'bug' ? $manualIssues : array();
+        $this->view->manualIssuesTotal = $bugPager->recTotal;
         $this->view->linkObjects       = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
         $this->view->commitPager       = $commitPager;
         $this->view->bugPager          = $bugPager;

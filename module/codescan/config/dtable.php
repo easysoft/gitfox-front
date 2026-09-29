@@ -614,7 +614,7 @@ $config->codescan->manualIssue->dtable->fieldList['title']['required'] = true;
 $config->codescan->manualIssue->dtable->fieldList['title']['sortType'] = false;
 $config->codescan->manualIssue->dtable->fieldList['title']['link']     = array('module' => 'codescan', 'method' => 'manualissueview', 'params' => 'issueID={id}&repoID={repoID}');
 
-$config->codescan->manualIssue->dtable->fieldList['file']['name']     = 'file';
+$config->codescan->manualIssue->dtable->fieldList['file']['name']     = 'path';
 $config->codescan->manualIssue->dtable->fieldList['file']['title']    = $lang->codescan->file;
 $config->codescan->manualIssue->dtable->fieldList['file']['type']     = 'text';
 $config->codescan->manualIssue->dtable->fieldList['file']['width']    = 250;
@@ -627,13 +627,13 @@ $config->codescan->manualIssue->dtable->fieldList['lineRange']['type']     = 'te
 $config->codescan->manualIssue->dtable->fieldList['lineRange']['width']    = 90;
 $config->codescan->manualIssue->dtable->fieldList['lineRange']['sortType'] = false;
 
-$config->codescan->manualIssue->dtable->fieldList['priority']['name']     = 'priority';
+$config->codescan->manualIssue->dtable->fieldList['priority']['name']     = 'severity';
 $config->codescan->manualIssue->dtable->fieldList['priority']['title']    = $lang->codescan->manualIssueLevel;
 $config->codescan->manualIssue->dtable->fieldList['priority']['width']    = 100;
 $config->codescan->manualIssue->dtable->fieldList['priority']['sortType'] = false;
 $config->codescan->manualIssue->dtable->fieldList['priority']['map']      = $lang->codescan->severityList;
 
-$config->codescan->manualIssue->dtable->fieldList['type']['name']     = 'type';
+$config->codescan->manualIssue->dtable->fieldList['type']['name']     = 'category';
 $config->codescan->manualIssue->dtable->fieldList['type']['title']    = $lang->codescan->manualIssueType;
 $config->codescan->manualIssue->dtable->fieldList['type']['type']     = 'category';
 $config->codescan->manualIssue->dtable->fieldList['type']['width']    = 100;

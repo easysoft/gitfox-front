@@ -184,6 +184,7 @@ $lang->scanissue      = new stdclass();
 $lang->scanOverview   = new stdclass();
 $lang->provider       = new stdclass();
 $lang->variable       = new stdclass();
+$lang->codescan       = new stdclass();
 
 /* Common action icons. */
 $lang->icons['todo']      = 'check';
