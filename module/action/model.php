@@ -1510,6 +1510,11 @@ class actionModel extends model
             foreach($spaceList as $space) $objectNames['space'][$space->id] = $space->name;
         }
 
+        if(!empty($objectNames['scanissue']))
+        {
+            foreach($objectNames['scanissue'] as $scanissueID => $scanissue) $objectNames['scanissue'][$scanissueID] = strip_tags($scanissue);
+        }
+
         $objectNames['user'][0] = 'guest';    // Add guest account.
 
         return array($objectNames, $relatedProjects, $requirements, $epics);
