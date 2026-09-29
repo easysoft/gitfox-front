@@ -12,8 +12,10 @@ cid=0
 - 按代码库统计人工问题总数 @4
 - 代码库没有人工问题时为 0 @0
 - 非人工问题不计入 @5
-- 全部代码库统计人工问题总数 @5
-- 合并请求字段存在时按合并请求统计 @3
+- 另一个代码库的人工问题单独统计 @1
+- 不存在的代码库返回 0 @0
+- 合并请求字段存在时优先按合并请求统计 @4
+- 合并请求下没有人工问题时为 0 @0
 
 */
 
@@ -43,9 +45,11 @@ $test = new codescanModelTest();
 r($test->getManualIssuesTotalTest(0, 24)) && p() && e('4');
 r($test->getManualIssuesTotalTest(0, 100)) && p() && e('0');
 r($test->getManualIssuesTotalTest(0, 0)) && p() && e('5');
+r($test->getManualIssuesTotalTest(0, 99)) && p() && e('1');
+r($test->getManualIssuesTotalTest(0, 98)) && p() && e('0');
 
 if($hasPPMID)
 {
-    r($test->getManualIssuesTotalTest(5, 24)) && p() && e('3');
+    r($test->getManualIssuesTotalTest(5, 24)) && p() && e('4');
     r($test->getManualIssuesTotalTest(8, 24)) && p() && e('0');
 }

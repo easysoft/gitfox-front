@@ -287,6 +287,16 @@ class ppmModelTest extends ppmBaseTest
         return $this->invokeMethod('mapIssueStatus', array($type, $status));
     }
 
+    public function getManualIssuesTest(int $ppmID, int $repoID = 0, ?object $pager = null, string $status = '')
+    {
+        return $this->invokeMethod('getManualIssues', array($ppmID, $repoID, $pager, $status));
+    }
+
+    public function getManualIssuesTotalTest(int $ppmID, int $repoID = 0)
+    {
+        return $this->invokeMethod('getManualIssuesTotal', array($ppmID, $repoID));
+    }
+
     public function applyIssueStatusConditionTest(object $query, string $status, string $type)
     {
         return $this->invokeMethod('applyIssueStatusCondition', array($query, $status, $type));

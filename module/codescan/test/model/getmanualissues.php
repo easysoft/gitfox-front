@@ -9,11 +9,14 @@ title=测试 codescanModel->getManualIssues();
 timeout=0
 cid=0
 
-- 按代码库过滤全部人工问题 @4
-- 按状态过滤人工问题 @2
+- 分页查询返回第一页 1 条 @1
 - 分页 total 正确 @4
+- 按状态过滤人工问题 @2
 - 非人工问题不计入 @5
-- 合并请求字段存在时按合并请求过滤 @3
+- 正文保留数据库中的原始内容 @&lt;p&gt;人工问题正文&lt;/p&gt;
+- 非法状态返回空 @0
+- 合并请求字段存在时优先按合并请求过滤 @4
+- 合并请求为 0 时回退按代码库过滤 @1
 
 */
 
@@ -61,4 +64,8 @@ if($hasContent)
 $unknown = $test->getManualIssuesTest(0, 24, null, 'unknown');
 r(count($unknown)) && p() && e('0');
 
-if($hasPPMID) r($test->getManualIssuesTotalTest(5, 24)) && p() && e('3');
+if($hasPPMID)
+{
+    r($test->getManualIssuesTotalTest(5, 24))                && p() && e('4');
+    r(count($test->getManualIssuesTest(0, 99, null, 'all'))) && p() && e('1');
+}

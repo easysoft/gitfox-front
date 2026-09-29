@@ -47,6 +47,55 @@ class codescanModelTest extends baseTest
     }
 
     /**
+     * Test getIssueByID method.
+     *
+     * @param  int $issueID
+     * @access public
+     * @return object|bool
+     */
+    public function getIssueByIDTest(int $issueID): object|bool
+    {
+        return $this->instance->getIssueByID($issueID);
+    }
+
+    /**
+     * Test createIssue method.
+     *
+     * @param  object $formData
+     * @access public
+     * @return int
+     */
+    public function createIssueTest(object $formData): int
+    {
+        return $this->instance->createIssue($formData);
+    }
+
+    /**
+     * Test getIssues method.
+     *
+     * @param  int $repoID
+     * @param  int $ppmID
+     * @access public
+     * @return array
+     */
+    public function getIssuesTest(int $repoID = 0, int $ppmID = 0): array
+    {
+        return $this->instance->getIssues($repoID, $ppmID);
+    }
+
+    /**
+     * Test getManualIssueByID method.
+     *
+     * @param  int $issueID
+     * @access public
+     * @return object|bool
+     */
+    public function getManualIssueByIDTest(int $issueID): object|bool
+    {
+        return $this->instance->getManualIssueByID($issueID);
+    }
+
+    /**
      * Test getManualIssues method.
      *
      * @param  int     $ppmID
@@ -72,6 +121,21 @@ class codescanModelTest extends baseTest
     public function getManualIssuesTotalTest(int $ppmID, int $repoID = 0): int
     {
         return $this->instance->getManualIssuesTotal($ppmID, $repoID);
+    }
+
+    /**
+     * Test buildManualIssueQuery method.
+     *
+     * @param  int    $ppmID
+     * @param  int    $repoID
+     * @param  string $status
+     * @param  bool   $count
+     * @access public
+     * @return object|false
+     */
+    public function buildManualIssueQueryTest(int $ppmID, int $repoID = 0, string $status = '', bool $count = false): object|false
+    {
+        return $this->invokeArgs('buildManualIssueQuery', array($ppmID, $repoID, $status, $count));
     }
 
     /**
