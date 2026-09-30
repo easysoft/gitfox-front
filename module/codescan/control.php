@@ -1482,23 +1482,22 @@ class codescan extends control
      * 解决人工审查问题。
      * Resolve manual review issue.
      *
+     * 与代码评审问题共用同一套解决逻辑，独立成方法仅为使用独立权限。
+     *
      * @param  int    $issueID
      * @access public
      * @return void
      */
     public function resolveManualIssue(int $issueID = 0)
     {
-        if(empty($issueID) && $this->post->issueIdList) $issueID = $this->post->issueIdList;
-
-        $result = $this->codescan->changeIssueState($issueID, 'solved', '', helper::now());
-        if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
-
-        $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
+        $this->resolveIssue($issueID);
     }
 
     /**
      * 关闭人工审查问题。
      * Close manual review issue.
+     *
+     * 关闭逻辑与代码评审问题一致，独立成方法仅为使用独立权限。
      *
      * @param  int    $issueID
      * @param  string $from
@@ -1509,17 +1508,8 @@ class codescan extends control
     {
         if($this->server->request_method == 'POST')
         {
-            if(empty($issueID) && !empty($_COOKIE['issueIdList'])) $issueID = explode('|', $_COOKIE['issueIdList']);
-            if(empty($issueID) && $this->post->issueIdList) $issueID = $this->post->issueIdList;
-
-            /* 关闭必须填写原因，原因记入操作历史。 */
-            $reason = trim((string)$this->post->reason);
-            if($reason === '') $this->sendError(array('reason' => sprintf($this->lang->error->notempty, $this->lang->codescan->closeReason)));
-
-            $result = $this->codescan->changeIssueState($issueID, 'closed', '', '', 0, $reason);
-            if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
-
-            $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
+            $this->closeIssue($issueID, $from);
+            return;
         }
 
         $this->view->title = $from == 'manual' ? $this->lang->codescan->closeManualIssue : $this->lang->codescan->closeIssueTitle;
