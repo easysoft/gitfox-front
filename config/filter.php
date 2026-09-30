@@ -216,6 +216,7 @@ $filter->gitlab->webhook                 = new stdclass();
 $filter->gitlab->importissue             = new stdclass();
 $filter->ppm->diff                       = new stdclass();
 $filter->ppm->browse                     = new stdclass();
+$filter->ppm->view                       = new stdclass();
 $filter->ci->checkCompileStatus          = new stdclass();
 $filter->execution->export               = new stdclass();
 $filter->tree->browse                    = new stdclass();
@@ -572,6 +573,8 @@ $filter->ppm->diff->cookie['arrange']   = 'reg::word';
 
 $filter->ppm->browse->get['mode']  = 'string';
 $filter->ppm->browse->get['param'] = 'string';
+
+$filter->ppm->view->cookie['issueTab'] = 'reg::word';
 
 $filter->ci->checkCompileStatus->get['gitlabOnly'] = 'string';
 

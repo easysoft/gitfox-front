@@ -1023,11 +1023,14 @@ class codescanModel extends model
         /* 行为与状态不一致时（如转 Bug 落 closed）由调用方指定操作类型，保证操作历史可区分。 */
         $actionType = $actionType ?: $status . 'ScanIssue';
         $repoPair = $this->loadModel('repo')->getRepoPairs();
+        /* 人工审查问题的操作历史与创建时保持一致，使用 scanissue 对象类型。 */
+        $manualIssues = $this->dao->select('id')->from(TABLE_SCANISSUE)->where('id')->in($issueIdList)->andWhere('scanMethod')->eq('manual')->fetchPairs('id', 'id');
         foreach($issueIdList as $issueID)
         {
             $issue = $this->getScanIssue($issueID, false);
             $extra = empty($issue) || empty($repoPair[$issue->repoID]) ? '' : "{$issue->title}|issueID={$issueID}&repoID={$repoPair[$issue->repoID]}";
-            $this->action->create('codescanissue', $issueID, $actionType, $comment, $extra);
+            $objectType = isset($manualIssues[$issueID]) ? 'scanissue' : 'codescanissue';
+            $this->action->create($objectType, $issueID, $actionType, $comment, $extra);
         }
 
         return true;

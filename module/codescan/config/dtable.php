@@ -670,5 +670,5 @@ $config->codescan->manualIssue->batchStatus['close']   = array('wait', 'solved')
 $config->codescan->manualIssue->batchBlockers = array();
 
 $config->codescan->manualIssue->batchList = array();
-$config->codescan->manualIssue->batchList['resolveissue'] = array('text' => $lang->codescan->resolveIssue, 'className' => 'btn batch-btn size-sm secondary ajax-btn', 'data-type' => 'resolve', 'data-url' => helper::createLink('codescan', 'resolveManualIssue'), 'priv' => array('codescan', 'resolveManualIssue'));
+$config->codescan->manualIssue->batchList['resolveissue'] = array('text' => $lang->codescan->resolveIssue, 'className' => 'btn batch-btn size-sm secondary ajax-btn', 'data-type' => 'resolve', 'data-confirm' => $lang->codescan->notice->confirmResolveIssue, 'data-url' => helper::createLink('codescan', 'resolveManualIssue'), 'priv' => array('codescan', 'resolveManualIssue'));
 $config->codescan->manualIssue->batchList['closeissue']   = array('text' => $lang->codescan->closeIssue, 'className' => 'btn batch-btn size-sm secondary', 'data-type' => 'close', 'data-size' => 'sm', 'data-url' => helper::createLink('codescan', 'closeManualIssue'), 'priv' => array('codescan', 'closeManualIssue'));
