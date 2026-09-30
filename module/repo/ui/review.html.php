@@ -19,9 +19,31 @@ if(!$allRepo) dropmenu
 );
 
 jsVar('appTab', $app->tab);
+jsVar('window.batchStatus',   $config->codescan->manualIssue->batchStatus);
+jsVar('window.batchBlockers', $config->codescan->manualIssue->batchBlockers);
 
 $app->loadLang('codescan');
 $app->loadConfig('codescan');
+
+$batchButtons = $config->codescan->manualIssue->batchList;
+if(isset($batchButtons['bug']))
+{
+    $batchProductID = empty($repo->product) ? 0 : (int)explode(',', (string)$repo->product)[0];
+    $batchButtons['bug']['data-url'] = createLink('bug', 'batchCreate', "productID={$batchProductID}&branch=0&executionID=0&moduleID=0&extra=from=codescan,fromServerID={$repoID},repoID={$repoID}");
+}
+$footToolbar = array('items' => array());
+foreach(zget((array)$config->codescan->manualIssue->batchMenu, $browseType, array()) as $action)
+{
+    if(empty($batchButtons[$action])) continue;
+
+    $button = $batchButtons[$action];
+    $priv   = zget($button, 'priv', array('codescan', $action));
+    if(!hasPriv($priv[0], $priv[1])) continue;
+
+    unset($button['priv']);
+    $footToolbar['items'][] = $button;
+}
+if(empty($footToolbar['items'])) $footToolbar = null;
 
 // 人工审查问题列表与代码评审问题清单共用列和行数据处理，保证两处口径一致。
 $manualCols = $config->codescan->manualIssue->dtable->fieldList;
@@ -82,8 +104,10 @@ dtable
 (
     setID('manualIssueTable'),
     set::customCols(false),
+    $footToolbar ? set::checkable(true) : null,
     set::cols($manualCols),
     set::data($manualRows),
     set::responsive(true),
+    set::footToolbar($footToolbar),
     set::footPager(usePager())
 );
