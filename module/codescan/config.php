@@ -271,6 +271,9 @@ $config->codescan->issue->batchList['closeissue']   = array('text' => $lang->cod
 $config->codescan->actions->issueview['mainActions']   = array('resolveissue', 'closeissue');
 $config->codescan->actions->issueview['suffixActions'] = array();
 
+$config->codescan->actions->manualissueview['mainActions']   = array('resolveissue', 'closeissue');
+$config->codescan->actions->manualissueview['suffixActions'] = array();
+
 $config->codescan->issue->search['module'] = 'codeScanIssue';
 $config->codescan->issue->search['fields']['issueID']      = $lang->idAB;
 $config->codescan->issue->search['fields']['title']        = $lang->codescan->title;

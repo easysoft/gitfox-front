@@ -1646,6 +1646,10 @@ $lang->resource->codescan->issueView    = 'issueView';
 $lang->resource->codescan->resolveIssue = 'resolveIssue';
 $lang->resource->codescan->closeIssue   = 'closeIssue';
 
+$lang->resource->codescan->manualIssueView    = 'manualIssueView';
+$lang->resource->codescan->resolveManualIssue = 'resolveManualIssue';
+$lang->resource->codescan->closeManualIssue   = 'closeManualIssue';
+
 $lang->resource->runner = new stdclass();
 $lang->resource->runner->browse      = 'browse';
 $lang->resource->runner->create      = 'create';

@@ -653,3 +653,22 @@ $config->codescan->manualIssue->dtable->fieldList['actions']['type']  = 'actions
 $config->codescan->manualIssue->dtable->fieldList['actions']['width'] = 120;
 $config->codescan->manualIssue->dtable->fieldList['actions']['menu']  = $config->codescan->issue->actionMenu;
 $config->codescan->manualIssue->dtable->fieldList['actions']['list']  = $config->codescan->issue->actionList;
+
+$config->codescan->manualIssue->dtable->fieldList['actions']['list']['resolveissue']['url']['method'] = 'resolveManualIssue';
+$config->codescan->manualIssue->dtable->fieldList['actions']['list']['closeissue']['url']['method']   = 'closeManualIssue';
+
+$config->codescan->manualIssue->batchMenu = array();
+$config->codescan->manualIssue->batchMenu['wait']   = array('resolveissue', 'closeissue');
+$config->codescan->manualIssue->batchMenu['solved'] = array('closeissue');
+$config->codescan->manualIssue->batchMenu['closed'] = array();
+$config->codescan->manualIssue->batchMenu['all']    = array('resolveissue', 'closeissue');
+
+$config->codescan->manualIssue->batchStatus = array();
+$config->codescan->manualIssue->batchStatus['resolve'] = array('wait');
+$config->codescan->manualIssue->batchStatus['close']   = array('wait', 'solved');
+
+$config->codescan->manualIssue->batchBlockers = array();
+
+$config->codescan->manualIssue->batchList = array();
+$config->codescan->manualIssue->batchList['resolveissue'] = array('text' => $lang->codescan->resolveIssue, 'className' => 'btn batch-btn size-sm secondary ajax-btn', 'data-type' => 'resolve', 'data-url' => helper::createLink('codescan', 'resolveManualIssue'), 'priv' => array('codescan', 'resolveManualIssue'));
+$config->codescan->manualIssue->batchList['closeissue']   = array('text' => $lang->codescan->closeIssue, 'className' => 'btn batch-btn size-sm secondary', 'data-type' => 'close', 'data-size' => 'sm', 'data-url' => helper::createLink('codescan', 'closeManualIssue'), 'priv' => array('codescan', 'closeManualIssue'));

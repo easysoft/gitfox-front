@@ -26,3 +26,13 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) VALUES
 (21, 'variable', 'delete'),
 (22, 'variable', 'browse'),
 (23, 'variable', 'browse');
+
+-- 具备“处理问题”权限包（resolveIssue/closeIssue/ignoreIssue/activeIssue）中任一权限的分组，默认获得人工审查问题的处理权限。
+REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) SELECT DISTINCT `group`, 'codescan', 'resolveManualIssue' FROM `zt_grouppriv` WHERE `module` = 'codescan' AND `method` IN ('resolveIssue', 'closeIssue', 'ignoreIssue', 'activeIssue');
+REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) SELECT DISTINCT `group`, 'codescan', 'closeManualIssue' FROM `zt_grouppriv` WHERE `module` = 'codescan' AND `method` IN ('resolveIssue', 'closeIssue', 'ignoreIssue', 'activeIssue');
+
+-- 具备代码评审问题详情权限的分组，默认获得人工审查问题详情入口。
+REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) SELECT DISTINCT `group`, 'codescan', 'manualIssueView' FROM `zt_grouppriv` WHERE `module` = 'codescan' AND `method` = 'issueView';
+
+-- DevOps 开发者默认拥有解决人工审查问题的权限。
+REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) SELECT `id`, 'codescan', 'resolveManualIssue' FROM `zt_group` WHERE `role` = 'DEVOPSUSER';

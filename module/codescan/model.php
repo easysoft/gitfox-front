@@ -91,6 +91,10 @@ class codescanModel extends model
         if($action == 'resolveissue') return $codeScan->status == 'wait';
         if($action == 'closeissue')   return in_array($codeScan->status, array('wait', 'solved', 'ignore'));
 
+        // 人工审查问题的独立动作与 AI 评审问题保持相同的状态判断。
+        if($action == 'resolvemanualissue') return $codeScan->status == 'wait';
+        if($action == 'closemanualissue')   return in_array($codeScan->status, array('wait', 'solved'));
+
         if($action == 'resend') return $codeScan->status == 'failed';
 
         return true;
