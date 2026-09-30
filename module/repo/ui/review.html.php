@@ -48,6 +48,8 @@ foreach($statusList as $status => $statusText)
     (
         'text'   => $statusText,
         'active' => $browseType === $status,
+        'badge'  => $browseType === $status && $pager->recTotal != '' ? array('text' => $pager->recTotal, 'class' => 'size-sm canvas ring-0 rounded-md') : null,
+        'props'  => array('data-id' => $status, 'data-load' => 'table', 'title' => $statusText),
         'url'    => createLink('repo', 'review', "repoID={$repoID}&browseType={$status}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1")
     );
 }

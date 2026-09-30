@@ -16,10 +16,12 @@ $manualIssueCount = (int)data('manualIssuesTotal');
 
 $issueStatus = (string)data('issueStatus');
 
-$buildIssueStatusBar = function(string $tabKey) use ($ppm, $lang, $config, $issueStatus)
+$buildIssueStatusBar = function(string $tabKey, string $listKey = '') use ($ppm, $lang, $config, $issueStatus)
 {
+    $listKey = $listKey ?: $tabKey;
+
     $items = array();
-    foreach(zget($config->ppm->issueStatusList, $tabKey, array()) as $statusKey)
+    foreach(zget($config->ppm->issueStatusList, $listKey, array()) as $statusKey)
     {
         $items[] = array
         (
@@ -115,7 +117,8 @@ $manualPanel = div
 (
     setID('staticBugs'),
     setStyle($manualPaneStyle),
-    $buildIssueStatusBar('static'),
+    /* 人工审查问题面板：tab key 沿用历史的 static，状态列表用 manual。 */
+    $buildIssueStatusBar('static', 'manual'),
     dtable
     (
         set::id('bugs'),
