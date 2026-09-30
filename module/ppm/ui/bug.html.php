@@ -39,6 +39,8 @@ if(!empty($lang->ppm->staticScanIssueList))   $scanTabItems['scan']   = array('t
 if(!empty($lang->ppm->manualReviewIssueList)) $scanTabItems['static'] = array('text' => "{$lang->ppm->manualReviewIssueList} ({$manualIssueCount})", 'url' => 'javascript:;', 'props' => array('data-tab' => 'static', 'data-target' => '#staticBugs'));
 
 $currentIssueTab = (string)(data('issueTab') ?: zget($_GET, 'issueTab', ''));
+if($currentIssueTab === '') $currentIssueTab = (string)$this->cookie->issueTab;
+if(!isset($scanTabItems[$currentIssueTab])) $currentIssueTab = '';
 $isFirst = true;
 foreach($scanTabItems as $tabKey => $tabItem)
 {

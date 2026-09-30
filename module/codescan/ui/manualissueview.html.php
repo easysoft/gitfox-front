@@ -111,9 +111,9 @@ div
         (
             setClass('mt-4 border-0 canvas'),
             setStyle(array('box-shadow' => 'var(--shadow-none)')),
-            set::objectType('codescanissue'),
+            set::objectType('scanissue'),
             set::objectID($issueID),
-            set::commentUrl(createLink('action', 'comment', array('objectType' => 'codescanissue', 'objectID' => $issueID)))
+            set::commentUrl(createLink('action', 'comment', array('objectType' => 'scanissue', 'objectID' => $issueID)))
         )
     )
 );

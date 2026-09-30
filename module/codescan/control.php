@@ -1479,6 +1479,44 @@ class codescan extends control
     }
 
     /**
+     * 解决人工审查问题。
+     * Resolve manual review issue.
+     *
+     * 与代码评审问题共用同一套解决逻辑，独立成方法仅为使用独立权限。
+     *
+     * @param  int    $issueID
+     * @access public
+     * @return void
+     */
+    public function resolveManualIssue(int $issueID = 0)
+    {
+        $this->resolveIssue($issueID);
+    }
+
+    /**
+     * 关闭人工审查问题。
+     * Close manual review issue.
+     *
+     * 关闭逻辑与代码评审问题一致，独立成方法仅为使用独立权限。
+     *
+     * @param  int    $issueID
+     * @param  string $from
+     * @access public
+     * @return void
+     */
+    public function closeManualIssue(int $issueID = 0, string $from = '')
+    {
+        if($this->server->request_method == 'POST')
+        {
+            $this->closeIssue($issueID, $from);
+            return;
+        }
+
+        $this->view->title = $from == 'manual' ? $this->lang->codescan->closeManualIssue : $this->lang->codescan->closeIssueTitle;
+        $this->display('codescan', 'closeissue');
+    }
+
+    /**
      * 刷新概况数据。
      * Refresh overview data.
      *

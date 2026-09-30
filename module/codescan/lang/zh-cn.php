@@ -244,6 +244,9 @@ $lang->codescan->closeIssueTitle  = '关闭扫描问题';
 $lang->codescan->closeIssueTitles = array();
 $lang->codescan->closeReason      = '关闭原因';
 
+$lang->codescan->resolveManualIssue = '解决人工审查问题';
+$lang->codescan->closeManualIssue   = '关闭人工审查问题';
+
 $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;
 $lang->codescan->featureBar['ruleset']  = array('all' => '全部') + $lang->codescan->statusList;

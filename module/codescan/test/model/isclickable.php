@@ -17,6 +17,10 @@ cid=0
 - 执行test模块的isClickableTest方法，参数是$cs8, 'resolveissue'  @0
 - 执行test模块的isClickableTest方法，参数是$cs11, 'closeissue'  @1
 - 执行test模块的isClickableTest方法，参数是$cs12, 'closeissue'  @0
+- 执行test模块的isClickableTest方法，参数是$cs13, 'resolvemanualissue'  @1
+- 执行test模块的isClickableTest方法，参数是$cs14, 'resolvemanualissue'  @0
+- 执行test模块的isClickableTest方法，参数是$cs15, 'closemanualissue'  @1
+- 执行test模块的isClickableTest方法，参数是$cs16, 'closemanualissue'  @0
 
 */
 
@@ -46,3 +50,15 @@ r($test->isClickableTest($cs11, 'closeissue')) && p() && e('1');
 
 $cs12 = new stdclass(); $cs12->status = 'closed';
 r($test->isClickableTest($cs12, 'closeissue')) && p() && e('0');
+
+$cs13 = new stdclass(); $cs13->status = 'wait';
+r($test->isClickableTest($cs13, 'resolvemanualissue')) && p() && e('1');
+
+$cs14 = new stdclass(); $cs14->status = 'solved';
+r($test->isClickableTest($cs14, 'resolvemanualissue')) && p() && e('0');
+
+$cs15 = new stdclass(); $cs15->status = 'solved';
+r($test->isClickableTest($cs15, 'closemanualissue')) && p() && e('1');
+
+$cs16 = new stdclass(); $cs16->status = 'closed';
+r($test->isClickableTest($cs16, 'closemanualissue')) && p() && e('0');

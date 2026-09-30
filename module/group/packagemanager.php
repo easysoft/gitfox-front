@@ -2866,6 +2866,7 @@ $config->group->package->browseCodeIssue->privs  = array();
 $config->group->package->browseCodeIssue->privs['repo-review']     = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 0, 'depend' => array('repo-diff'), 'recommend' => array('repo-addBug', 'repo-editBug'));
 $config->group->package->browseCodeIssue->privs['codescan-issue']     = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 10, 'depend' => array('repo-maintain'), 'recommend' => array());
 $config->group->package->browseCodeIssue->privs['codescan-issueView'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 15, 'depend' => array('codescan-issue'), 'recommend' => array());
+$config->group->package->browseCodeIssue->privs['codescan-manualIssueView'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 17, 'depend' => array('repo-review'), 'recommend' => array());
 $config->group->package->browseCodeIssue->privs['repo-addComment'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 20, 'depend' => array('repo-diff'), 'recommend' => array('repo-addBug', 'repo-editBug', 'repo-editComment', 'repo-review'));
 
 $config->group->package->reviewCodeIssue = new stdclass();
@@ -2882,6 +2883,8 @@ $config->group->package->processScanIssues->subset = 'codereview';
 $config->group->package->processScanIssues->privs  = array();
 $config->group->package->processScanIssues->privs['codescan-resolveIssue'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 10, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-closeIssue'));
 $config->group->package->processScanIssues->privs['codescan-closeIssue']   = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 12, 'depend' => array('codescan-issue'), 'recommend' => array('codescan-issueView', 'codescan-resolveIssue'));
+$config->group->package->processScanIssues->privs['codescan-resolveManualIssue'] = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 22, 'depend' => array('repo-review'), 'recommend' => array('codescan-manualIssueView', 'codescan-closeManualIssue'));
+$config->group->package->processScanIssues->privs['codescan-closeManualIssue']   = array('edition' => 'open,biz,max,ipd', 'vision' => 'rnd', 'order' => 25, 'depend' => array('repo-review'), 'recommend' => array('codescan-manualIssueView', 'codescan-resolveManualIssue'));
 
 $config->group->package->editor = new stdclass();
 $config->group->package->editor->order  = 10;

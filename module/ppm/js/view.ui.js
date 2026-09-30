@@ -207,9 +207,16 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
 
     if(isAjaxBtn)
     {
-        $.ajaxSubmit({url, data: form});
+        /* 与单行按钮一致：先确认再提交，确认成功后清空勾选。 */
+        $.ajaxSubmit({url, data: form, confirm: $(this).data('confirm')}).then(([result]) =>
+        {
+            if(result && result.result === 'success') dtable.$.toggleCheckRows(false);
+        });
         return true;
     }
+
+    /* 关闭/忽略打开原因表单弹窗，转 Bug 跳到缺陷创建页，都会离开列表，直接清空勾选。 */
+    dtable.$.toggleCheckRows(false);
 
     if(['ignore', 'close'].includes(type))
     {
@@ -258,6 +265,9 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
         }
 
         var tabKey = link.getAttribute('data-tab');
+        /* 记录当前分类，返回或刷新后仍停留在同一分类。 */
+        if(tabKey) $.cookie.set('issueTab', tabKey, {expires: config.cookieLife, path: config.webRoot});
+
         if(tabKey && window.history && history.replaceState && /[?&]m=/.test(location.search))
         {
             var url = new URL(location.href);

@@ -244,6 +244,9 @@ $lang->codescan->closeIssueTitle  = 'Close Scan Issue';
 $lang->codescan->closeIssueTitles = array();
 $lang->codescan->closeReason      = 'Close Reason';
 
+$lang->codescan->resolveManualIssue = 'Resolve Manual Review Issue';
+$lang->codescan->closeManualIssue   = 'Close Manual Review Issue';
+
 $lang->codescan->featureBar = array();
 $lang->codescan->featureBar['browse']   = $lang->codescan->typeList;
 $lang->codescan->featureBar['ruleset']  = array('all' => 'All') + $lang->codescan->statusList;
