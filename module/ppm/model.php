@@ -1379,7 +1379,7 @@ class ppmModel extends model
      * 也就是 issueStatusMaps 里登记过的状态；todo/solving 等无标签的状态不计入。
      * 扫描问题在本地 ops_scan_issues 表里与接口同源，所以直接查表，不必按状态打多次接口。
      *
-     * @param  string $type   分类（ai|scan）
+     * @param  string $type   分类（ai|scan|manual）
      * @param  int    $repoID
      * @param  int    $ppmID
      * @access public
@@ -1387,7 +1387,7 @@ class ppmModel extends model
      */
     public function getIssueBadgeCount(string $type, int $repoID, int $ppmID): int
     {
-        $scanMethods = $type == 'ai' ? array('ai') : array('check', 'smell');
+        $scanMethods = zget(array('ai' => array('ai'), 'manual' => array('manual')), $type, array('check', 'smell'));
         $statusList  = array_keys(zget($this->config->ppm->issueStatusMaps, $type, array()));
         if(empty($statusList)) return 0;
 

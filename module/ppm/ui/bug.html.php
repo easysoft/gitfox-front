@@ -16,10 +16,12 @@ $manualIssueCount = (int)data('manualIssuesTotal');
 
 $issueStatus = (string)data('issueStatus');
 
-$buildIssueStatusBar = function(string $tabKey) use ($ppm, $lang, $config, $issueStatus)
+$buildIssueStatusBar = function(string $tabKey, string $listKey = '') use ($ppm, $lang, $config, $issueStatus)
 {
+    $listKey = $listKey ?: $tabKey;
+
     $items = array();
-    foreach(zget($config->ppm->issueStatusList, $tabKey, array()) as $statusKey)
+    foreach(zget($config->ppm->issueStatusList, $listKey, array()) as $statusKey)
     {
         $items[] = array
         (
@@ -76,6 +78,29 @@ foreach(zget((array)$config->codescan->issue->batchMenu, $issueStatus, array()) 
 }
 if(!empty($items)) $scanBatchToolbar = array('items' => $items);
 
+$manualBatchToolbar = null;
+$manualButtons      = $config->codescan->manualIssue->batchList;
+if(isset($manualButtons['bug']))
+{
+    $manualRepoID   = (int)$ppm->targetRepoID;
+    $manualRepo     = $manualRepoID ? $this->loadModel('repo')->getByID($manualRepoID) : null;
+    $manualProduct  = empty($manualRepo->product) ? 0 : (int)explode(',', (string)$manualRepo->product)[0];
+    $manualButtons['bug']['data-url'] = createLink('bug', 'batchCreate', "productID={$manualProduct}&branch=0&executionID=0&moduleID=0&extra=from=codescan,fromServerID={$manualRepoID},repoID={$manualRepoID}");
+}
+$manualItems = array();
+foreach(zget((array)$config->codescan->manualIssue->batchMenu, $issueStatus, array()) as $action)
+{
+    if(empty($manualButtons[$action])) continue;
+
+    $button = $manualButtons[$action];
+    $priv   = zget($button, 'priv', array('codescan', $action));
+    if(!hasPriv($priv[0], $priv[1])) continue;
+
+    unset($button['priv']);
+    $manualItems[] = $button;
+}
+if(!empty($manualItems)) $manualBatchToolbar = array('items' => $manualItems);
+
 $scanPaneStyle   = empty($scanTabItems['scan']['active'])   ? array('display' => 'none') : array();
 $manualPaneStyle = empty($scanTabItems['static']['active']) ? array('display' => 'none') : array();
 
@@ -115,14 +140,17 @@ $manualPanel = div
 (
     setID('staticBugs'),
     setStyle($manualPaneStyle),
-    $buildIssueStatusBar('static'),
+    /* 人工审查问题面板：tab key 沿用历史的 static，状态列表用 manual。 */
+    $buildIssueStatusBar('static', 'manual'),
     dtable
     (
         set::id('bugs'),
         set::customCols(false),
+        $manualBatchToolbar ? set::checkable(true) : null,
         set::cols($manualCols),
         set::data($manualRows),
         set::responsive(true),
+        set::footToolbar($manualBatchToolbar),
         set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static&issueStatus={$issueStatus}")), null, '', 'static'))
     )
 );
