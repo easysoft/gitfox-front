@@ -3209,7 +3209,7 @@ class repo extends control
 
         $diffContent = $this->loadModel('gitfox')->apiGetRepoDiffs($repoID, $fromRevision, $toRevision, $files);
 
-        $fileName  = basename($filePath) . "--r$fromRevision--r$toRevision.patch";
+        $fileName  = substr($fromRevision, 0, 7) . ".." . substr($toRevision, 0, 7) . ".patch";
         $extension = strpos($fileName, '.') ? strrchr($fileName, '.') : '';
         $extension = ltrim($extension, '.');
         $this->fetch('file', 'sendDownHeader', array("fileName" => $fileName, "fileType" => $extension, "content" => $diffContent));
