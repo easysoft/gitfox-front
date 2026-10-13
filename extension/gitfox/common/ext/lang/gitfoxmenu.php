@@ -8,7 +8,7 @@ $lang->navIcons['repo']     = "<i class='icon icon-code'></i>";
 $lang->navIcons['ppm']      = "<i class='icon icon-review'></i>";
 $lang->navIcons['codescan'] = "<i class='icon icon-test'></i>";
 $lang->navIcons['issue']    = "<i class='icon icon-issue'></i>";
-$lang->navIcons['pipeline'] = "<i class='icon icon-waterfall'></i>";
+$lang->navIcons['pipeline'] = "<i class='icon icon-pipeline'></i>";
 $lang->navIcons['artifact'] = "<i class='icon icon-package'></i>";
 $lang->navIcons['admin']    = "<i class='icon icon-backend'></i>";
 
@@ -19,7 +19,7 @@ $lang->navIconNames['repo']     = 'code';
 $lang->navIconNames['ppm']      = 'review';
 $lang->navIconNames['codescan'] = 'test';
 $lang->navIconNames['issue']    = 'issue';
-$lang->navIconNames['pipeline'] = 'waterfall';
+$lang->navIconNames['pipeline'] = 'pipeline';
 $lang->navIconNames['artifact'] = 'package';
 $lang->navIconNames['admin']    = 'backend';
 
@@ -57,7 +57,8 @@ $lang->dashboard = isset($lang->dashboard->common) ? $lang->dashboard->common : 
 /* 地盘菜单。 */
 $lang->my->menu = new stdclass();
 $lang->my->menu->index   = array('link' => "$lang->dashboard|my|index");
-$lang->my->menu->work    = array('link' => "{$lang->my->work}|my|work|mode=task");
+/* 独立版本待处理功能未开发完成，暂时隐藏。 */
+//$lang->my->menu->work    = array('link' => "{$lang->my->work}|my|work|mode=task");
 $lang->my->menu->audit   = array('link' => "{$lang->review->common}|my|audit|browseType=all&param=&orderBy=time_desc", 'subModule' => 'review');
 $lang->my->menu->dynamic = array('link' => "$lang->dynamic|my|dynamic|");
 $lang->my->menu->ssh     = array('link' => "{$lang->ssh->common}|my|ssh|");
@@ -65,7 +66,7 @@ $lang->my->menu->ssh     = array('link' => "{$lang->ssh->common}|my|ssh|");
 /* 地盘菜单顺序。 */
 $lang->my->menuOrder     = array();
 $lang->my->menuOrder[5]  = 'index';
-$lang->my->menuOrder[10] = 'work';
+//$lang->my->menuOrder[10] = 'work';
 $lang->my->menuOrder[15] = 'audit';
 $lang->my->menuOrder[20] = 'dynamic';
 $lang->my->menuOrder[25] = 'ssh';

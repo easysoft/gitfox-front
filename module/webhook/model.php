@@ -124,7 +124,7 @@ class webhookModel extends model
                 $object->$field = '';
             }
 
-            $log->action    = $this->webhookTao->getActionText($data, $action, $object, $users);
+            $log->action    = $this->webhookTao->getActionText($data, $action, $object->$field, $users);
             $log->actionURL = $this->getViewLink($action->objectType, $action->objectID);
             $log->module    = $action->objectType;
             $log->moduleID  = $action->objectID;
@@ -436,7 +436,7 @@ class webhookModel extends model
 
         if($objectType == 'aitask' && in_array($actionType, array('finished', 'failed')))
         {
-            $text  = $this->loadModel('aitask')->getNotificationText($object, $objectID, $actionType, 'markdown', '', $viewLink, $host);
+            $text  = $this->loadModel('aitask')->getNotificationText($object, $action->objectID, $actionType, 'markdown', '', $viewLink, $host);
             $title = $text;
         }
         else

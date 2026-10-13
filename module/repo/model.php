@@ -98,11 +98,18 @@ class repoModel extends model
 
         $repoMenu = $isGitfox ? $this->lang->repo->menu : $this->lang->devops->menu;
 
-        /* 镜像代码库屏蔽"扫描(repoCodeScan)"、"代码问题(review)"与"设置(settings)"三个一级菜单。 */
         if($repo && !empty($repo->mirror))
         {
-            unset($repoMenu->repoCodeScan);
-            unset($repoMenu->review);
+            if($isGitfox)
+            {
+                unset($repoMenu->codescan);
+                unset($repoMenu->issue);
+            }
+            else
+            {
+                unset($repoMenu->repoCodeScan);
+                unset($repoMenu->review);
+            }
             unset($repoMenu->settings);
         }
 
@@ -3604,10 +3611,18 @@ class repoModel extends model
             {
                 $path = parse_url($provider->url);
                 if(empty($path)) return false;
-                $params->provider->host     = $path['scheme'] . '://' . $path['host'];
+                $params->provider->host = $path['scheme'] . '://' . $path['host'];
+                if(isset($path['port'])) $params->provider->host .= ':' . $path['port'];
                 $params->provider->password = $formData->password;
                 $params->provider->username = $formData->account;
-                $params->provider->slug     = $formData->slug ? $path['path'] . '/' . ltrim($formData->slug, '/') : $path['path'];
+                if(isset($path['path']))
+                {
+                    $params->provider->slug = $formData->slug ? $path['path'] . '/' . ltrim($formData->slug, '/') : $path['path'];
+                }
+                else
+                {
+                    $params->provider->slug = $formData->slug;
+                }
             }
         }
         else

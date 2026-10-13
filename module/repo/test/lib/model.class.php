@@ -173,6 +173,46 @@ class repoModelTest extends baseTest
     }
 
     /**
+     * Test setMenu method's mirror branch with gitfox(独立版) menu keys.
+     * Returns "codescan:{0|1}|issue:{0|1}|settings:{0|1}" where 1 = menu still present, 0 = unset.
+     *
+     * @param  int $repoID
+     * @access public
+     * @return string
+     */
+    public function setMenuGitfoxMirrorCheckTest(int $repoID)
+    {
+        global $app, $lang;
+
+        $oldVision = $app->config->vision;
+        $oldTab    = $app->tab;
+        $oldMenu   = isset($lang->repo) && isset($lang->repo->menu) ? $lang->repo->menu : null;
+
+        $app->config->vision = 'gitfox';
+        if(!isset($lang->repo)) $lang->repo = new stdclass();
+        $lang->repo->menu = new stdclass();
+        $lang->repo->menu->codescan = array('link' => 'codescan');
+        $lang->repo->menu->issue    = array('link' => 'issue');
+        $lang->repo->menu->settings = array('link' => 'settings');
+
+        $repos = $this->instance->dao->select('id')->from(TABLE_REPO)->fetchPairs('id');
+        ob_start();
+        $this->instance->setMenu($repos, $repoID);
+        ob_end_clean();
+
+        $codescan = isset($lang->repo->menu->codescan) ? 1 : 0;
+        $issue    = isset($lang->repo->menu->issue)    ? 1 : 0;
+        $settings = isset($lang->repo->menu->settings) ? 1 : 0;
+
+        $app->config->vision = $oldVision;
+        $app->tab            = $oldTab;
+        if($oldMenu === null) unset($lang->repo->menu);
+        else                  $lang->repo->menu = $oldMenu;
+
+        return "codescan:{$codescan}|issue:{$issue}|settings:{$settings}";
+    }
+
+    /**
      * Test getListByCondition method.
      *
      * @param  string      $repoQuery
@@ -2902,6 +2942,51 @@ SQL);
         if(dao::isError()) return '0';
 
         return count($result) . '';
+    }
+
+    /**
+     * Test getProductRepos method.
+     *
+     * @access public
+     * @return mixed
+     */
+    public function getProductReposTest()
+    {
+        $result = $this->instance->getProductRepos();
+        if(dao::isError()) return dao::getError();
+
+        return $result;
+    }
+
+    /**
+     * Test the repo count of one product returned by getProductRepos.
+     *
+     * @param  int $productID
+     * @access public
+     * @return int|array
+     */
+    public function getProductReposProductCountTest(int $productID)
+    {
+        $repos = $this->getProductReposTest();
+        if(!is_array($repos)) return $repos;
+
+        return isset($repos[$productID]) ? count($repos[$productID]) : 0;
+    }
+
+    /**
+     * Test the repo name of one product returned by getProductRepos.
+     *
+     * @param  int $productID
+     * @param  int $repoID
+     * @access public
+     * @return string|array
+     */
+    public function getProductReposProductRepoNameTest(int $productID, int $repoID)
+    {
+        $repos = $this->getProductReposTest();
+        if(!is_array($repos)) return $repos;
+
+        return isset($repos[$productID][$repoID]) ? $repos[$productID][$repoID]->name : 'none';
     }
 
     /**
