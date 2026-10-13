@@ -612,6 +612,44 @@ class my extends control
     }
 
     /**
+     * 指派给我的问题列表。
+     * The issues assigned to me.
+     *
+     * @param  string $browseType
+     * @param  int    $param
+     * @param  string $orderBy
+     * @param  int    $recTotal
+     * @param  int    $recPerPage
+     * @param  int    $pageID
+     * @access public
+     * @return void
+     */
+    public function assignedIssue(string $browseType = 'all', int $param = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    {
+        if(!in_array($browseType, array('all', 'wait', 'solved', 'closed'))) $browseType = 'all';
+
+        $this->app->loadLang('block');
+        $this->app->loadLang('codescan');
+        $this->app->loadConfig('codescan');
+
+        /* Load pager. */
+        $this->app->loadClass('pager', true);
+        if($this->app->getViewType() == 'mhtml') $recPerPage = 10;
+        $pager = pager::init($recTotal, $recPerPage, $pageID);
+
+        $title = isset($this->lang->my->assignedIssue) ? $this->lang->my->assignedIssue : $this->lang->my->work;
+
+        $this->view->title      = $this->lang->my->work . $this->lang->hyphen . $title;
+        $this->view->issues     = $this->my->getAssignedIssueList($pager, $browseType);
+        $this->view->browseType = $browseType;
+        $this->view->orderBy    = $orderBy;
+        $this->view->pager      = $pager;
+        $this->view->mode       = 'assignedissue';
+        $this->view->param      = $param;
+        $this->display();
+    }
+
+    /**
      * 测试单列表。
      * My test task.
      *
