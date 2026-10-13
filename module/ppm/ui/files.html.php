@@ -30,7 +30,7 @@ $domBox = div
         set::diffUrl($this->createLink('repo', 'ajaxGetDiffs', "repoID={$repoID}&fromVersion={$fromRevision}&toVersion={$toRevision}")),
         set::enableReview(true),
         set::showAnnotations(true),
-        set::enableAnnotations($config->edition != 'gitfox'),
+        set::enableAnnotations(true),
         set::product(0),
         set::module(''),
         set::issueTypes($issueTypes),

@@ -1417,6 +1417,23 @@ class myModelTest extends baseTest
     }
 
     /**
+     * 测试获取指派给我的问题列表。
+     * Test get the issues assigned to me.
+     *
+     * @param  ?object $pager
+     * @param  string  $status
+     * @access public
+     * @return array
+     */
+    public function getAssignedIssueListTest(?object $pager = null, string $status = 'all'): array
+    {
+        $issues = $this->instance->getAssignedIssueList($pager, $status);
+        if(dao::isError()) return dao::getError();
+
+        return $issues;
+    }
+
+    /**
      * Test get audit object opened by method.
      *
      * @param  object $object

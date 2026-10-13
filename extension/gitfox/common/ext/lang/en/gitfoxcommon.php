@@ -32,4 +32,9 @@ $lang->devops->website      = "https://www.gitfox.net";
 
 $lang->visionList['gitfox'] = 'GitFox Interface';
 
+/* Tabs of the work page in my module. */
+$lang->my->assignedIssue = 'Issues Assigned to Me';
+
+$lang->my->featureBar['work']['assignedissue']['assignedissue'] = $lang->my->assignedIssue;
+
 include dirname(dirname(__FILE__)) . DS . 'gitfoxmenu.php';

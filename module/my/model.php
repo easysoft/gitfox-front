@@ -1459,6 +1459,29 @@ class myModel extends model
     }
 
     /**
+     * 获取指派给我的问题列表。
+     * Get the issues assigned to me.
+     *
+     * @param  ?object $pager
+     * @param  string  $status
+     * @access public
+     * @return array
+     */
+    public function getAssignedIssueList(?object $pager = null, string $status = 'all'): array
+    {
+        return $this->dao->select('t1.*')->from(TABLE_SCANISSUE)->alias('t1')
+            ->leftJoin(TABLE_PPM)->alias('t2')->on('t1.`ppmID` = t2.`id`')
+            ->where('t1.`deleted`')->eq(0)
+            ->andWhere('t1.`scanMethod`')->eq('manual')
+            ->andWhere('t2.`deleted`')->eq(0)
+            ->andWhere('t2.`createdBy`')->eq($this->app->user->account)
+            ->beginIF(in_array($status, array('wait', 'solved', 'closed')))->andWhere('t1.`status`')->eq($status)->fi()
+            ->orderBy('t1.`id` desc')
+            ->page($pager)
+            ->fetchAll('id', false);
+    }
+
+    /**
      * 获取待评审的审批。
      * Get reviewing approvals.
      *

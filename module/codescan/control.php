@@ -1408,6 +1408,14 @@ class codescan extends control
         $repo = $repoID ? $this->loadModel('repo')->fetchByID($repoID) : null;
         if(!$repo) return $this->sendError($this->lang->codescan->notice->repoNotFound, true);
 
+        /* GitFox 独立版本：人工审查问题在代码库的“问题”菜单下查看。 */
+        if($this->config->edition == 'gitfox' || $this->config->vision == 'gitfox')
+        {
+            global $lang;
+            $lang->repo->menu->issue['subMenu']->review['subModule'] .= ',codescan';
+            $this->app->tab = 'repo';
+        }
+
         $issue = $this->codescan->processManualIssueData($issue, $repoID);
         $ppm   = !empty($issue->ppmID) ? $this->loadModel('ppm')->fetchByID((int)$issue->ppmID) : null;
 
