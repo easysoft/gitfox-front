@@ -244,8 +244,8 @@ $config->codescan->issue = new stdclass();
 $config->codescan->issue->actionMenu = array('resolveissue', 'closeissue');
 
 $config->codescan->issue->actionList = array();
-$config->codescan->issue->actionList['resolveissue'] = array('icon' => 'ok', 'hint' => $lang->codescan->resolveIssue, 'url' => array('module' => 'codescan', 'method' => 'resolveIssue', 'params' => 'issueID={id}'), 'showText' => true, 'className' => 'ajax-submit', 'data-confirm' => $lang->codescan->notice->confirmResolveIssue);
-$config->codescan->issue->actionList['closeissue']   = array('icon' => 'cancel', 'hint' => $lang->codescan->closeIssue, 'url' => array('module' => 'codescan', 'method' => 'closeIssue', 'params' => 'issueID={id}'), 'showText' => true, 'data-toggle' => 'modal', 'data-size' => 'sm');
+$config->codescan->issue->actionList['resolveissue'] = array('icon' => 'checked', 'hint' => $lang->codescan->resolveIssue, 'url' => array('module' => 'codescan', 'method' => 'resolveIssue', 'params' => 'issueID={id}'), 'showText' => true, 'className' => 'ajax-submit', 'data-confirm' => $lang->codescan->notice->confirmResolveIssue);
+$config->codescan->issue->actionList['closeissue']   = array('icon' => 'off', 'hint' => $lang->codescan->closeIssue, 'url' => array('module' => 'codescan', 'method' => 'closeIssue', 'params' => 'issueID={id}'), 'showText' => true, 'data-toggle' => 'modal', 'data-size' => 'sm');
 
 $config->codescan->issue->batchMenu = array(
     'wait'   => array('resolveissue', 'closeissue'),
