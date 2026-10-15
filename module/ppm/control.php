@@ -61,7 +61,7 @@ class ppm extends control
      * @access public
      * @return void
      */
-    public function browse(int $repoID = 0, string $mode = 'status', string $param = 'opened', int $objectID = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1, int $spaceID = 0)
+    public function browse(int $repoID = 0, string $mode = 'status', string $param = 'opened', int $objectID = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1, int $spaceID = 0, int $allRepo = 0)
     {
         $serverHeath = $this->loadModel('gitfox')->checkHealth();
         if(!$serverHeath) return $this->locate($this->createLink('gitfox', "installGitFox"));
@@ -101,7 +101,7 @@ class ppm extends control
         if(empty($repoList)) $this->locate($this->repo->createLink('createRepo'));
 
         $accessibleRepos = $this->repo->getRepoPairs();
-        $browseAllRepos  = $this->config->vision == 'gitfox' && $this->app->tab == 'ppm';
+        $browseAllRepos  = ($this->config->vision == 'gitfox' && $this->app->tab == 'ppm') || $allRepo || commonModel::isDevopsHomeMenuPage();
         if(!$browseAllRepos)
         {
             if(!$repoID) $repoID = key($repoList);
@@ -135,7 +135,7 @@ class ppm extends control
         $ppmList       = $this->ppm->getList($mode, $param, $orderBy, array(), $repoID, 0, $pager, $spaceID, $repoIDList);
         $canEdit       = common::hasPriv($this->app->rawModule, 'edit');
         $reviewResults = $this->ppm->getReviewResults(array_keys($ppmList), $repoID);
-        $spaces = $this->config->vision == 'gitfox' ? $this->loadModel('space')->getPairs($this->app->user->admin ? '' : $this->app->user->account) : array();
+        $spaces = ($this->config->vision == 'gitfox' || $browseAllRepos) ? $this->loadModel('space')->getPairs($this->app->user->admin ? '' : $this->app->user->account) : array();
 
         /* 镜像代码库也加入筛选下拉框，选中后在页面上展示镜像提示。 */
         $spaceRepos = array();
@@ -169,6 +169,8 @@ class ppm extends control
         $this->view->spaceRepos = $spaceRepos;
         $this->view->spaces     = $spaces;
         $this->view->spaceID    = $spaceID;
+        $this->view->browseAllRepos = $browseAllRepos;
+        $this->view->allRepo    = $allRepo;
         $this->display();
     }
 

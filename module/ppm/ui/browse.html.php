@@ -10,46 +10,49 @@ declare(strict_types=1);
  */
 namespace zin;
 
+$browseAllRepos = isset($browseAllRepos) ? $browseAllRepos : false;
+
 jsVar('repoID', $repoID);
 
-dropmenu(set::objectID($repo->id), set::text($repo->name), set::tab('repo'));
+if(!($browseAllRepos && $app->tab == 'devops')) dropmenu(set::objectID($repo->id), set::text($repo->name), set::tab('repo'));
 if(isset($config->ppm->dtable->fieldList['repo'])) $config->ppm->dtable->fieldList['repo']['map'] = $repos;
 
 $ppms = initTableData($ppmList, $config->ppm->dtable->fieldList, $this->ppm);
 
 $filterParams = "mode={$mode}&param={$param}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage={$pager->recPerPage}&pageID=1";
+$allRepoParam = '&allRepo=' . ($browseAllRepos ? 1 : 0);
 
 $spaceItems = array();
-$spaceItems[] = array('text' => $lang->ppm->allSpace, 'url' => createLink('ppm', 'browse', "repoID=0&{$filterParams}"));
+$spaceItems[] = array('text' => $lang->ppm->allSpace, 'url' => createLink('ppm', 'browse', "repoID=0&{$filterParams}&spaceID=0{$allRepoParam}"));
 foreach($spaces as $id => $spaceName)
 {
-    $spaceItems[] = array('text' => $spaceName, 'url' => createLink('ppm', 'browse', "repoID=0&{$filterParams}&spaceID={$id}"));
+    $spaceItems[] = array('text' => $spaceName, 'url' => createLink('ppm', 'browse', "repoID=0&{$filterParams}&spaceID={$id}{$allRepoParam}"));
 }
 
 $repoItems = array();
-$repoItems[] = array('text' => $lang->ppm->allRepo, 'url' => createLink('ppm', 'browse', "repoID=0&{$filterParams}&spaceID={$spaceID}"));
+$repoItems[] = array('text' => $lang->ppm->allRepo, 'url' => createLink('ppm', 'browse', "repoID=0&{$filterParams}&spaceID={$spaceID}{$allRepoParam}"));
 foreach($spaceRepos as $id => $repoName)
 {
-    $repoItems[] = array('text' => $repoName, 'url' => createLink('ppm', 'browse', "repoID={$id}&{$filterParams}&spaceID={$spaceID}"));
+    $repoItems[] = array('text' => $repoName, 'url' => createLink('ppm', 'browse', "repoID={$id}&{$filterParams}&spaceID={$spaceID}{$allRepoParam}"));
 }
 
 featureBar
 (
-    $app->tab != 'ppm' ? null : to::before
+    !$browseAllRepos ? null : to::before
     (
         dropdown
         (
             to('trigger', btn(zget($spaces, $spaceID, $lang->ppm->allSpace), setID('spaceDropdown'), setClass('ghost text-ellipsis text-left'))),
             set::items($spaceItems)
         ),
-        $config->vision == 'gitfox' ? dropdown
+        dropdown
         (
             to('trigger', btn(zget($spaceRepos, $repoID, $lang->ppm->allRepo), setID('repoDropdown'), setClass('ghost text-ellipsis text-left'))),
             set::items($repoItems)
-        ) : null
+        )
     ),
     set::current($mode != 'status' ? $mode : $param),
-    set::linkParams("repoID={$repoID}&mode=status&param={key}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage={$pager->recPerPage}&pageID=1&spaceID={$spaceID}")
+    set::linkParams("repoID={$repoID}&mode=status&param={key}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage={$pager->recPerPage}&pageID=1&spaceID={$spaceID}{$allRepoParam}")
 );
 
 $linkParams   = in_array($app->tab, array('devops', 'repo')) ? "repoID={$repo->id}" : '';
