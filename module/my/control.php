@@ -1909,13 +1909,20 @@ class my extends control
      */
     public function createSSH()
     {
+        if($this->app->apiVersion == 'v2' && $this->app->action != 'post')
+        {
+            header('Allow: POST');
+            http_response_code(405);
+            return $this->sendError('Method not allowed.');
+        }
+
         if($_POST)
         {
             $formData = form::data($this->config->my->form->createSSH)->get();
             $this->myZen->checkSSH($formData);
             if(dao::isError()) return $this->sendError(dao::getError());
 
-            $this->my->createSSH($formData);
+            $result = $this->my->createSSH($formData);
             if(dao::isError())
             {
                 $error = dao::getError();
@@ -1927,6 +1934,8 @@ class my extends control
                 return $this->sendError($error);
             }
 
+            if($result === false) return $this->sendError($this->lang->error->httpServerError);
+            if($this->app->apiVersion == 'v2') return $this->sendSuccess();
             return $this->sendSuccess(array('load' => true));
         }
 

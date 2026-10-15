@@ -247,6 +247,7 @@ if($config->inContainer || $config->inQuickon)
 $config->devops = new stdclass();
 $config->devops->gitfoxURL     = 'http://localhost';
 $config->devops->gitfoxPort    = 3000;
+$config->devops->gitfoxEdition = 'community';
 $config->devops->gitfoxVersion = '4.3';
 $config->devops->diffConfig    = array('longLineCharThreshold' => 500);
 
