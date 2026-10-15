@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS `ops_variable` (
   `editedDate` datetime DEFAULT NULL COMMENT '编辑时间',
   `deleted` tinyint unsigned NOT NULL DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB COMMENT='凭证表';
+) ENGINE=InnoDB COMMENT='变量表';
 CREATE UNIQUE INDEX `uk_spaceID_repoID_name` ON `ops_variable` (`spaceID`, `repoID`, `name`);
 CREATE UNIQUE INDEX `uk_key` ON `ops_variable` (`key`);
 
