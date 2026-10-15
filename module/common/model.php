@@ -2339,8 +2339,45 @@ eof;
             }
         }
 
-        /* If objectID is set, cannot use homeMenu. */
-        unset($lang->$moduleName->homeMenu);
+        if(!static::isDevopsHomeMenuPage()) unset($lang->$moduleName->homeMenu);
+    }
+
+    /**
+     * 判断当前页面是否为 DevOps 应用二级菜单的页面。
+     * Check whether the current page belongs to the DevOps app homeMenu.
+     *
+     * @static
+     * @access public
+     * @return bool
+     */
+    public static function isDevopsHomeMenuPage(): bool
+    {
+        global $app, $lang;
+
+        if($app->tab != 'devops' or !isset($lang->devops->homeMenu)) return false;
+
+        $currentModule = strtolower((string)$app->rawModule);
+        $currentMethod = strtolower((string)$app->rawMethod);
+        if(!empty($app->params['repoID']) && empty($app->params['allRepo'])) return false;
+
+        foreach($lang->devops->homeMenu as $menu)
+        {
+            if(!is_array($menu) || empty($menu['link'])) continue;
+
+            list($label, $module, $method) = explode('|', $menu['link']);
+            if(strtolower($module) == $currentModule && strtolower($method) == $currentMethod) return true;
+
+            if(empty($menu['subMenu'])) continue;
+            foreach($menu['subMenu'] as $subMenu)
+            {
+                if(empty($subMenu['link'])) continue;
+
+                list($subLabel, $subModule, $subMethod) = explode('|', $subMenu['link']);
+                if(strtolower($subModule) == $currentModule && strtolower($subMethod) == $currentMethod) return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -4014,6 +4051,13 @@ EOF;
         $module = $this->app->getModuleName();
         $method = $this->app->getMethodName();
         $params = $this->app->params;
+
+        /* DevOps 应用二级菜单的列表（含按代码库/空间筛选）使用全局权限，不切换到空间权限。 */
+        if(empty($spaceID) && static::isDevopsHomeMenuPage())
+        {
+            $this->session->set('devopsSpace', 0);
+            return;
+        }
 
         if(empty($spaceID) && !empty($params['space']))   $spaceID = $params['space'];
         if(empty($spaceID) && !empty($params['spaceID'])) $spaceID = $params['spaceID'];

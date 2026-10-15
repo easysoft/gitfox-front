@@ -387,6 +387,7 @@ $lang->devops->execution        = '执行历史';
 $lang->artifact->common         = '制品库';
 $lang->ssh->common              = 'SSH密钥';
 $lang->codeReview->common       = '代码评审';
+$lang->ppm->common              = '评审请求';
 $lang->runner->common           = 'Runner';
 $lang->repobranchrule->common   = '分支规则';
 
@@ -493,6 +494,7 @@ $lang->devops->scanPlan     = '扫描计划';
 $lang->devops->scanTask     = '扫描任务';
 $lang->devops->reviewIssue  = '人工审查问题';
 $lang->devops->scanIssue    = '静态扫描问题';
+$lang->devops->issue        = '问题';
 $lang->devops->ruleSet      = '规则设置';
 $lang->devops->system       = '应用';
 $lang->systemManage->common = '应用';

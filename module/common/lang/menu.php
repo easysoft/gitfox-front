@@ -532,18 +532,27 @@ $lang->qa->menu->automation['subMenu']->zanode      = array('link' => "{$lang->z
 $lang->devops->homeMenu = new stdclass();
 $lang->devops->homeMenu->space    = array('link' => "{$lang->space->common}|space|browse", 'alias' => 'create,edit', 'exclude' => 'space-view');
 $lang->devops->homeMenu->repos    = array('link' => "{$lang->devops->repo}|repo|maintain", 'alias' => 'create,edit,import,createrepo,binduser', 'exclude' => 'repo-setrules');
+$lang->devops->homeMenu->ppmList  = array('link' => "{$lang->ppm->common}|ppm|browse|", 'alias' => 'view,edit,create');
+$lang->devops->homeMenu->codescan = array('link' => "{$lang->devops->codescan}|codescan|task", 'subModule' => 'codescan', 'exclude' => 'codescan-issue,codescan-issueview');
+$lang->devops->homeMenu->issue    = array('link' => "{$lang->devops->issue}|repo|review|", 'subModule' => 'bug,codescan', 'exclude' => 'codescan-task,codescan-taskview,codescan-tasklog,codescan-plan,codescan-planview,codescan-solution,codescan-solutionview,codescan-ruleset,codescan-rulesetview,codescan-browse');
 $lang->devops->homeMenu->pipeline = array('link' => "{$lang->pipeline->common}|pipeline|browse|spaceID=%s&repoID=0&type=space", 'subModule' => 'pipeline');
 $lang->devops->homeMenu->artifact = array('link' => "{$lang->artifact->common}|artifact|browse|spaceID=%s&repoID=0&type=space", 'subModule' => 'artifact');
-$lang->devops->homeMenu->codescan = array('link' => "{$lang->devops->codescan}|codescan|task", 'subModule' => 'codescan');
 $lang->devops->homeMenu->system   = array('link' => "{$lang->devops->system}|repo|browsesystem", 'subModule' => 'system', 'exclude' => 'system-dashboard,system-dblist,system-domainview,system-ossview');
 
-$lang->devops->homeMenu->configure = array('link' => "{$lang->devops->configure}|repobranchtype|browse|", 'subModule' => 'system,store,instance,repo,gitlab,gitea,gogs,gitfox,jenkins,sonarqube,repobranchtype,provider,runner,variable', 'exclude' => 'repo-maintain,repo-browsesystem,system-view,repo-create,repo-createrepo,repo-import,repo-edit,repo-binduser');
+$lang->devops->homeMenu->configure = array('link' => "{$lang->devops->configure}|repobranchtype|browse|", 'subModule' => 'system,store,instance,repo,gitlab,gitea,gogs,gitfox,jenkins,sonarqube,repobranchtype,provider,runner,variable', 'exclude' => 'repo-maintain,repo-browsesystem,repo-review,system-view,repo-create,repo-createrepo,repo-import,repo-edit,repo-binduser');
 
 $lang->devops->homeMenu->spaceSetting = array('link' => "{$lang->devops->spaceSetting}|space|view|spaceID=%s", 'subModule' =>'space', 'exclude' => 'repo-maintain,repo-browsesystem,system-view,repo-create,repo-createrepo,repo-import,repo-edit');
 $lang->devops->homeMenu->spaceSetting['subMenu'] = new stdclass();
 $lang->devops->homeMenu->spaceSetting['subMenu']->overview = array('link' => "{$lang->devops->overview}|space|view|spaceID=%s");
 $lang->devops->homeMenu->spaceSetting['subMenu']->member   = array('link' => "{$lang->devops->member}|space|members|spaceID=%s", 'alias' => 'managemembers');
 $lang->devops->homeMenu->spaceSetting['subMenu']->group    = array('link' => "{$lang->devops->group}|space|group|spaceID=%s", 'alias' => 'managepriv');
+
+$lang->devops->homeMenu->issue['subMenu'] = new stdclass();
+$lang->devops->homeMenu->issue['subMenu']->review   = array('link' => "{$lang->devops->reviewIssue}|repo|review|", 'subModule' => 'bug');
+$lang->devops->homeMenu->issue['subMenu']->codescan = array('link' => "{$lang->devops->scanIssue}|codescan|issue|", 'alias' => 'issueview', 'subModule' => 'bug', 'exclude' => 'bug-view');
+
+$lang->devops->homeMenu->issue['menuOrder'][5]  = 'review';
+$lang->devops->homeMenu->issue['menuOrder'][10] = 'codescan';
 
 $lang->devops->homeMenu->codescan['subMenu'] = new stdclass();
 //$lang->devops->homeMenu->codescan['subMenu']->overview     = array('link' => "{$lang->devops->overview}|codescan|overview");
@@ -605,28 +614,32 @@ $lang->devops->homeMenu->configure['menuOrder'][25] = 'variable';
 /* The menu order $lang->devops->menuOrder[30] is a reserved position for 'artifactrepo'. */
 $lang->devops->menuOrder[5]   = 'space';
 $lang->devops->menuOrder[10]  = 'repos';
-$lang->devops->menuOrder[15]  = 'code';
-$lang->devops->menuOrder[20]  = 'commit';
-$lang->devops->menuOrder[25]  = 'branch';
-$lang->devops->menuOrder[35]  = 'tag';
-$lang->devops->menuOrder[40]  = 'ppm';
-$lang->devops->menuOrder[42]  = 'pipeline';
-$lang->devops->menuOrder[43]  = 'artifact';
-$lang->devops->menuOrder[47]  = 'repoCodeScan';
-$lang->devops->menuOrder[49]  = 'codescan';
-$lang->devops->menuOrder[51]  = 'aiCodeReview';
-$lang->devops->menuOrder[53]  = 'system';
-$lang->devops->menuOrder[55]  = 'deploy';
-$lang->devops->menuOrder[65]  = 'review';
-$lang->devops->menuOrder[70]  = 'settings';
-$lang->devops->menuOrder[75]  = 'apps';
-$lang->devops->menuOrder[80]  = 'configure';
+$lang->devops->menuOrder[12]  = 'code';
+$lang->devops->menuOrder[14]  = 'commit';
+$lang->devops->menuOrder[16]  = 'branch';
+$lang->devops->menuOrder[18]  = 'tag';
+$lang->devops->menuOrder[19]  = 'ppmList';
+$lang->devops->menuOrder[20]  = 'ppm';
+$lang->devops->menuOrder[23]  = 'codescan';
+$lang->devops->menuOrder[24]  = 'aiCodeReview';
+$lang->devops->menuOrder[25]  = 'issue';
+$lang->devops->menuOrder[27]  = 'pipeline';
+$lang->devops->menuOrder[29]  = 'runner';
+$lang->devops->menuOrder[31]  = 'artifact';
+$lang->devops->menuOrder[35]  = 'repoCodeScan';
+$lang->devops->menuOrder[37]  = 'review';
+$lang->devops->menuOrder[39]  = 'settings';
+$lang->devops->menuOrder[41]  = 'system';
+$lang->devops->menuOrder[42]  = 'deploy';
+$lang->devops->menuOrder[43]  = 'resource';
+$lang->devops->menuOrder[44]  = 'apps';
+$lang->devops->menuOrder[45]  = 'configure';
 $lang->devops->menuOrder[85]  = 'spaceSetting';
 $lang->devops->menuOrder[90]  = 'overview';
 $lang->devops->menuOrder[95]  = 'member';
 $lang->devops->menuOrder[100] = 'group';
 
-$lang->devops->dividerMenu = ',configure,spaceSetting';
+$lang->devops->dividerMenu = ',pipeline,system,';
 
 /* Kanban menu. */
 $lang->kanban->menu = new stdclass();

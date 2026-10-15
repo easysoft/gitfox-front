@@ -1260,4 +1260,52 @@ class commonModelTest extends baseTest
         }
     }
 
+    /**
+     * 模拟 DevOps 应用页面的请求上下文。
+     * Mock the request context of a DevOps app page.
+     *
+     * @param  string $module
+     * @param  string $method
+     * @param  array  $params
+     * @param  int    $repoID
+     * @param  bool   $setMenuVars
+     * @static
+     * @access public
+     * @return string
+     */
+    public static function setDevopsRequestTest(string $module, string $method, array $params = array(), int $repoID = 0, bool $setMenuVars = false): string
+    {
+        global $app, $lang;
+
+        $app->tab        = 'devops';
+        $app->rawModule  = $module;
+        $app->rawMethod  = $method;
+        $app->moduleName = $module;
+        $app->methodName = $method;
+        $app->params     = $params;
+
+        $lang->menu      = $lang->devops->menu;
+        $lang->menuOrder = $lang->devops->menuOrder;
+
+        if($setMenuVars) commonModel::setMenuVars('devops', $repoID);
+
+        /* 与页面渲染流程保持一致，先设置应用的二级菜单。 */
+        commonModel::setMainMenu();
+
+        return "{$module}-{$method}";
+    }
+
+    /**
+     * 判断当前页面是否为 DevOps 应用二级菜单的页面。
+     * Check whether the current page belongs to the DevOps app homeMenu.
+     *
+     * @static
+     * @access public
+     * @return string
+     */
+    public static function isDevopsHomeMenuPageTest(): string
+    {
+        return commonModel::isDevopsHomeMenuPage() ? '1' : '0';
+    }
+
 }
