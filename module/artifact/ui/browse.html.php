@@ -12,10 +12,14 @@ namespace zin;
 
 $linkRepoID   = empty($repo) ? 0 : $repo->id;
 $spaceItems   = array();
-$spaceItems[] = array('text' => $lang->artifact->allSpace, 'url' => createLink('artifact', 'browse', "spaceID=0&repoID=0&type={$type}"));
+
+$devopsAllRepos = common::isDevopsHomeMenuPage();
+$allRepoParam   = $devopsAllRepos ? '&recTotal=0&recPerPage=20&pageID=1&allRepo=1' : '';
+
+$spaceItems[] = array('text' => $lang->artifact->allSpace, 'url' => createLink('artifact', 'browse', "spaceID=0&repoID=0&type={$type}{$allRepoParam}"));
 foreach($spaces as $id => $spaceName)
 {
-    $spaceItems[] = array('text' => $spaceName, 'url' => createLink('artifact', 'browse', "spaceID={$id}&repoID={$linkRepoID}&type={$type}"));
+    $spaceItems[] = array('text' => $spaceName, 'url' => createLink('artifact', 'browse', "spaceID={$id}&repoID={$linkRepoID}&type={$type}{$allRepoParam}"));
 }
 if($repoID)
 {
@@ -25,7 +29,7 @@ if($repoID)
 
 featureBar
 (
-    $app->tab != 'artifact' ? null : to::before
+    !($app->tab == 'artifact' || $devopsAllRepos) ? null : to::before
     (
         dropdown
         (
@@ -34,7 +38,7 @@ featureBar
         )
     ),
     set::current($type),
-    set::link($this->createLink('artifact', 'browse', "spaceID={$spaceID}&repoID={$linkRepoID}&type={key}")),
+    set::link($this->createLink('artifact', 'browse', "spaceID={$spaceID}&repoID={$linkRepoID}&type={key}{$allRepoParam}")),
 );
 $canCreate = hasPriv('artifact', 'create') && $app->tab != 'artifact';
 $canEdit   = hasPriv('artifact', 'edit');

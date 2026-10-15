@@ -51,7 +51,8 @@ class artifact extends control
      */
     public function commonAction(int $spaceID = 0, int $repoID = 0)
     {
-        $this->loadModel('space')->setMenu($spaceID);
+        $menuSpaceID = empty($this->app->params['allRepo']) ? $spaceID : 0;
+        $this->loadModel('space')->setMenu($menuSpaceID);
         if($repoID)
         {
             $repoID = $this->loadModel('repo')->saveState($repoID);
@@ -77,7 +78,7 @@ class artifact extends control
      * @access public
      * @return void
      */
-    public function browse(int $space = 0, int $repoID = 0, string $type = 'space', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    public function browse(int $space = 0, int $repoID = 0, string $type = 'space', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1, int $allRepo = 0)
     {
         $this->commonAction($space, $repoID);
         $this->app->loadClass('pager', true);
