@@ -11,6 +11,11 @@ declare(strict_types=1);
 namespace zin;
 
 $module = $app->tab == 'devops' ? 'repo' : $app->tab;
+
+$devopsAllRepos = common::isDevopsHomeMenuPage();
+$showRepoFilter = ($config->vision == 'gitfox' && $app->tab == 'issue') || $devopsAllRepos;
+$allRepoParam   = $devopsAllRepos ? '&allRepo=1' : '';
+
 if(!$allRepo) dropmenu
 (
     set::module($module),
@@ -72,24 +77,24 @@ foreach($statusList as $status => $statusText)
         'active' => $browseType === $status,
         'badge'  => $browseType === $status && $pager->recTotal != '' ? array('text' => $pager->recTotal, 'class' => 'size-sm canvas ring-0 rounded-md') : null,
         'props'  => array('data-id' => $status, 'data-load' => 'table', 'title' => $statusText),
-        'url'    => createLink('repo', 'review', "repoID={$repoID}&browseType={$status}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1")
+        'url'    => createLink('repo', 'review', "repoID={$repoID}&browseType={$status}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1{$allRepoParam}")
     );
 }
 
 /* 代码库筛选下拉。The repo filter dropdown. */
 $repoItems = array();
-if($config->vision == 'gitfox' && $app->tab == 'issue')
+if($showRepoFilter)
 {
-    $repoItems[] = array('text' => $lang->repo->allRepo, 'data-app' => 'issue', 'url' => createLink('repo', 'review', "repoID=0&browseType={$browseType}&objectID={$objectID}"));
+    $repoItems[] = array('text' => $lang->repo->allRepo, 'data-app' => $app->tab, 'url' => createLink('repo', 'review', "repoID=0&browseType={$browseType}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1{$allRepoParam}"));
     foreach($repoPairs as $repoId => $repoName)
     {
-        $repoItems[] = array('text' => $repoName, 'data-app' => 'issue', 'url' => createLink('repo', 'review', "repoID={$repoId}&browseType={$browseType}&objectID={$objectID}"));
+        $repoItems[] = array('text' => $repoName, 'data-app' => $app->tab, 'url' => createLink('repo', 'review', "repoID={$repoId}&browseType={$browseType}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1{$allRepoParam}"));
     }
 }
 
 featureBar
 (
-    $config->vision != 'gitfox' || $app->tab != 'issue' ? null : to::before
+    !$showRepoFilter ? null : to::before
     (
         dropdown
         (
