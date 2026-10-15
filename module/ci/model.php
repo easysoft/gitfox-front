@@ -29,6 +29,8 @@ class ciModel extends model
         if(!in_array("{$this->app->moduleName}", $homeMenuModule) && !in_array($this->app->methodName, $homeMenuMethod)) common::setMenuVars($isGitfox ? 'repo' : 'devops', (int)$this->session->repoID);
         if($isGitfox && $this->app->tab == 'space') $this->app->tab = 'repo';
 
+        if(!$isGitfox && commonModel::isDevopsHomeMenuPage()) $this->loadModel('space')->setMenu(0);
+
         $repoMenu = $isGitfox ? $this->lang->repo->menu : $this->lang->devops->menu;
 
         if($this->session->repoID)
@@ -36,8 +38,10 @@ class ciModel extends model
             $repo = $this->loadModel('repo')->getByID($this->session->repoID);
             if(!$repo) unset($repoMenu->tag);
             if(!$repo) unset($repoMenu->branch);
-            $this->session->set('devopsSpace', empty($repo) ? 0 : $repo->spaceID);
-            $this->loadModel('common')->resetDevOpsPriv(empty($repo) ? 0 : $repo->spaceID);
+
+            $spaceID = (!$isGitfox && commonModel::isDevopsHomeMenuPage()) ? 0 : (empty($repo) ? 0 : $repo->spaceID);
+            $this->session->set('devopsSpace', $spaceID);
+            $this->loadModel('common')->resetDevOpsPriv($spaceID);
 
             if($repo && $this->repo->isSvn($repo))
             {

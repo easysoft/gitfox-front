@@ -387,6 +387,7 @@ $lang->devops->execution        = 'Execution';
 $lang->artifact->common         = 'Artifact Repository';
 $lang->ssh->common              = 'SSH Key';
 $lang->codeReview->common       = 'Code Review';
+$lang->ppm->common              = 'Review Requests';
 $lang->runner->common           = 'Runner';
 $lang->repobranchrule->common   = 'Branch Rule';
 
@@ -493,6 +494,7 @@ $lang->devops->scanPlan     = 'Scan Plan';
 $lang->devops->scanTask     = 'Scan Task';
 $lang->devops->reviewIssue  = 'Review Issue';
 $lang->devops->scanIssue    = 'Scan Issue';
+$lang->devops->issue        = 'Issue';
 $lang->devops->ruleSet      = 'Rule Set';
 $lang->devops->system       = 'Applications';
 $lang->systemManage->common = 'Applications';

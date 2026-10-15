@@ -11,7 +11,12 @@ declare(strict_types=1);
 namespace zin;
 
 $isInModal = isInModal();
-if($repoID && !$taskID && !$isInModal) dropmenu(set::objectID($repoID), set::tab('repo'));
+
+$devopsAllRepos = common::isDevopsHomeMenuPage();
+$showRepoFilter = ($config->vision == 'gitfox' && $app->tab == 'issue') || $devopsAllRepos;
+$allRepoParam   = $devopsAllRepos ? '&orderBy=' . $orderBy . '&recPerPage=20&pageID=1&allRepo=1' : '';
+
+if($repoID && !$taskID && !$isInModal && !$devopsAllRepos) dropmenu(set::objectID($repoID), set::tab('repo'));
 
 jsVar('taskID', $taskID);
 jsVar('taskURL', inLink('issue', "repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type=%s&queryID=0&severity={$severity}&extras=%s"));
@@ -67,26 +72,26 @@ foreach($severityList as &$value)
 
 /* 代码库筛选下拉。The repo filter dropdown. */
 $repoItems = array();
-if($config->vision == 'gitfox' && $app->tab == 'issue')
+if($showRepoFilter)
 {
-    $repoItems[] = array('text' => $lang->codescan->allRepo, 'data-app' => 'issue', 'url' => createLink('codescan', 'issue', "repoID=0&taskID=0&serviceRepoID=0&type={$browseType}&queryID={$queryID}&severity={$severity}&extras={$extras}"));
+    $repoItems[] = array('text' => $lang->codescan->allRepo, 'data-app' => $app->tab, 'url' => createLink('codescan', 'issue', "repoID=0&taskID=0&serviceRepoID=0&type={$browseType}&queryID={$queryID}&severity={$severity}&extras={$extras}{$allRepoParam}"));
     foreach($repoList as $repoId => $repoName)
     {
-        $repoItems[] = array('text' => $repoName, 'data-app' => 'issue', 'url' => createLink('codescan', 'issue', "repoID={$repoId}&taskID=0&serviceRepoID=0&type={$browseType}&queryID={$queryID}&severity={$severity}&extras={$extras}"));
+        $repoItems[] = array('text' => $repoName, 'data-app' => $app->tab, 'url' => createLink('codescan', 'issue', "repoID={$repoId}&taskID=0&serviceRepoID=0&type={$browseType}&queryID={$queryID}&severity={$severity}&extras={$extras}{$allRepoParam}"));
     }
 }
 
 $featureBar = $isInModal ? null : featureBar
 (
-    $config->vision == 'gitfox' && $app->tab == 'issue' ? to::before(dropdown
+    !$showRepoFilter ? null : to::before(dropdown
     (
         to('trigger', btn(zget($repoList, $repoID, $lang->codescan->allRepo), setID('repoDropdown'), setClass('ghost text-ellipsis text-left'))),
         set::items($repoItems)
-    )) : null,
+    )),
     set::current($browseType),
     set::load('table'),
     empty($taskID) ? null : set::link("javascript:changeType('repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type={key}&queryID=0&severity={$severity}&extras={$extras}');"),
-    set::linkParams("repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type={key}&queryID=0&severity={$severity}&extras={$extras}"),
+    set::linkParams("repoID={$repoID}&taskID={$taskID}&serviceRepoID={$serviceRepoID}&type={key}&queryID=0&severity={$severity}&extras={$extras}{$allRepoParam}"),
     set::queryMenuLinkCallback(array(fn($key) => str_replace('{queryID}', (string)$key, $queryMenuLink))),
     picker
     (

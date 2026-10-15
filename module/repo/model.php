@@ -94,7 +94,9 @@ class repoModel extends model
         }
         $this->session->set('repoID', $repoID);
         $repo = $this->fetchByID($repoID);
-        $this->session->set('devopsSpace', empty($repo) ? 0 : $repo->spaceID);
+
+        $devopsSpaceID = (!$isGitfox && commonModel::isDevopsHomeMenuPage()) ? 0 : (empty($repo) ? 0 : $repo->spaceID);
+        $this->session->set('devopsSpace', $devopsSpaceID);
 
         $repoMenu = $isGitfox ? $this->lang->repo->menu : $this->lang->devops->menu;
 

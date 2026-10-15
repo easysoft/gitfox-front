@@ -508,7 +508,7 @@ class repo extends control
 
         /* Set menu and session. */
         $repo = $this->repo->getByID($repoID);
-        $this->commonAction($repoID, $objectID, $repo->spaceID);
+        $this->commonAction($repoID, $objectID, empty($repo->spaceID) ? 0 : $repo->spaceID);
         $this->repoZen->setBrowseSession($repo);
 
         /* Get repo and synchronous commit. */
@@ -2630,10 +2630,10 @@ class repo extends control
      * @access public
      * @return void
      */
-    public function review(int $repoID = 0, string $browseType = '', int $objectID = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    public function review(int $repoID = 0, string $browseType = '', int $objectID = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1, int $allRepo = 0)
     {
         /* Save the original $repoID to this variable to check if $repoID is 0. */
-        $isAllRepo = !$repoID;
+        $isAllRepo = !$repoID || $allRepo;
 
         if($repoID) $repoID = $this->repo->saveState($repoID);
         $this->commonAction($repoID, (int)$objectID);

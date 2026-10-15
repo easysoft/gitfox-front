@@ -13,6 +13,8 @@ cid=0
 - 设置空间ID=0后验证返回结果无错误 @0
 - 设置空间菜单后验证session值类型为数值 @0
 - 独立版设置菜单保留概览和成员三级菜单，隐藏权限三级菜单 @defined:1|group:0|overview:1|member:1
+- 未进入空间时流水线和制品库保留在DevOps二级菜单中 @pipeline:1|artifact:1|spaceSetting:0|ppmList:1|issue:1
+- 进入空间后隐藏DevOps的评审请求和问题二级菜单 @pipeline:1|artifact:1|spaceSetting:1|ppmList:0|issue:0
 
 */
 
@@ -33,3 +35,5 @@ r($spaceTester->setMenuTest(0)) && p() && e('0');        // 设置空间ID=0后�
 r($spaceTester->setMenuTest(0)) && p() && e('0');        // 设置空间ID=0后验证返回结果无错误
 r($spaceTester->setMenuTest(0)) && p() && e('0');        // 设置空间菜单后验证session值类型为数值
 r($spaceTester->setMenuGitfoxPrivMenuTest(1)) && p() && e('defined:1|group:0|overview:1|member:1'); // 独立版设置菜单保留概览和成员三级菜单，隐藏权限三级菜单
+r($spaceTester->setMenuDevopsHomeMenuTest(0)) && p() && e('pipeline:1|artifact:1|spaceSetting:0|ppmList:1|issue:1'); // 未进入空间时流水线和制品库保留在DevOps二级菜单中
+r($spaceTester->setMenuDevopsHomeMenuTest(1)) && p() && e('pipeline:1|artifact:1|spaceSetting:1|ppmList:0|issue:0'); // 进入空间后隐藏DevOps的评审请求和问题二级菜单

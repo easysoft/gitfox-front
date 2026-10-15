@@ -534,6 +534,8 @@ class spaceModel extends model
             unset($this->lang->devops->homeMenu->space);
             unset($this->lang->devops->homeMenu->configure);
             unset($this->lang->devops->homeMenu->codescan);
+            unset($this->lang->devops->homeMenu->ppmList);
+            unset($this->lang->devops->homeMenu->issue);
 
             foreach($this->config->setSpaceMenu as $menu)
             {
@@ -574,9 +576,12 @@ class spaceModel extends model
         {
             $this->session->set('repoID', 0);
             $this->session->set('devopsSpace', 0);
-            unset($this->lang->devops->homeMenu->pipeline);
-            unset($this->lang->devops->homeMenu->artifact);
             unset($this->lang->devops->homeMenu->spaceSetting);
+
+            foreach(array('pipeline', 'artifact') as $menu)
+            {
+                if(isset($this->lang->devops->homeMenu->$menu)) $this->lang->devops->homeMenu->$menu = common::setMenuVarsEx($this->lang->devops->homeMenu->$menu, 0);
+            }
         }
     }
 

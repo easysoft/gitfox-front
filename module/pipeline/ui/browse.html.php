@@ -19,19 +19,22 @@ h::css('.status-canceled, .status-killed {color: var(--color-gray-400, #b2b9c5);
 jsVar('repoID', $repoID);
 jsVar('type', $type);
 
+$devopsAllRepos = common::isDevopsHomeMenuPage();
+$allRepoParam   = $devopsAllRepos ? "&queryID={$queryID}&orderBy={$orderBy}&recTotal=0&recPerPage={$pager->recPerPage}&pageID=1&allRepo=1" : '';
+
 /* 空间级别的代码库流水线或镜像代码库的流水线需显示服务器列。 */
 $needServer = (!$repoID && $type != 'space') || !empty($repo->mirror);
 
 $spaceItems = array();
-$spaceItems[] = array('text' => $lang->pipeline->allSpace, 'url' => createLink('pipeline', 'browse', "space=0&repoID=0&type={$type}"));
+$spaceItems[] = array('text' => $lang->pipeline->allSpace, 'url' => createLink('pipeline', 'browse', "space=0&repoID=0&type={$type}{$allRepoParam}"));
 foreach($spaces as $id => $spaceName)
 {
-    $spaceItems[] = array('text' => $spaceName, 'url' => createLink('pipeline', 'browse', "space={$id}&repoID={$repoID}&type={$type}"));
+    $spaceItems[] = array('text' => $spaceName, 'url' => createLink('pipeline', 'browse', "space={$id}&repoID={$repoID}&type={$type}{$allRepoParam}"));
 }
 
 /* 流水线应用会显示空间切换下拉菜单，从空间或代码库进入时不显示。 */
 $dropdown = null;
-if($app->tab == 'pipeline')
+if($app->tab == 'pipeline' || $devopsAllRepos)
 {
     $config->pipeline->dtable->fieldList['space']['map'] = $spaces;
     $dropdown = dropdown
@@ -67,7 +70,7 @@ else
     (
         $app->tab != 'pipeline' && empty($dropdown) ? null : to::before($dropdown),
         set::current($type),
-        set::link($this->createLink('pipeline', 'browse', "spaceID={$spaceID}&repoID={$repoID}&type={key}")),
+        set::link($this->createLink('pipeline', 'browse', "spaceID={$spaceID}&repoID={$repoID}&type={key}{$allRepoParam}")),
         div(searchToggle(set::module('pipeline'), set::open($type == 'bySearch')))
     );
 }

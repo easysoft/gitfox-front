@@ -20,7 +20,7 @@ class codescan extends control
 
         $spaceID = 0;
         $repoID  = (int)zget($this->app->params, 'repoID', 0);
-        if($repoID)
+        if($repoID && !commonModel::isDevopsHomeMenuPage())
         {
             $repo = $this->loadModel('repo')->fetchByID($repoID);
             if($repo && !empty($repo->spaceID)) $spaceID = (int)$repo->spaceID;
@@ -1236,7 +1236,7 @@ class codescan extends control
      * @access public
      * @return void
      */
-    public function issue(int $repoID = 0, int $taskID = 0, int $serviceRepoID = 0, string $type = 'wait', string $queryID = '', string  $severity = '', string $extras = '', string $orderBy = 'id_desc', int $recPerPage = 20, int $pageID = 1)
+    public function issue(int $repoID = 0, int $taskID = 0, int $serviceRepoID = 0, string $type = 'wait', string $queryID = '', string  $severity = '', string $extras = '', string $orderBy = 'id_desc', int $recPerPage = 20, int $pageID = 1, int $allRepo = 0)
     {
         $decodeExtras = str_replace(array(',', ' ', '*'), array('&', '', '-'), trim($extras, ','));
         parse_str($decodeExtras, $params);

@@ -40,7 +40,8 @@ class pipeline extends control
      */
     public function commonAction(int $spaceID = 0)
     {
-        $this->loadModel('space')->setMenu($spaceID);
+        $menuSpaceID = empty($this->app->params['allRepo']) ? $spaceID : 0;
+        $this->loadModel('space')->setMenu($menuSpaceID);
 
         $this->view->spaceID = $spaceID;
         $this->view->inSpace = !empty($spaceID);
@@ -61,7 +62,7 @@ class pipeline extends control
      * @access public
      * @return void
      */
-    public function browse(int $space = 0, int $repoID = 0, string $type = 'space', string $queryID = '', string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    public function browse(int $space = 0, int $repoID = 0, string $type = 'space', string $queryID = '', string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1, int $allRepo = 0)
     {
         $this->commonAction($space);
 
@@ -117,7 +118,9 @@ class pipeline extends control
         $this->view->pager        = $pager;
         $this->view->pipelineList = $pipelineList;
         $this->view->users        = $this->loadModel('user')->getPairs('noletter|noclosed');
-        $this->view->spaces       = $this->config->edition == 'gitfox' ? $this->loadModel('space')->getPairs() : array();
+
+        $loadSpaces = $this->config->edition == 'gitfox' || commonModel::isDevopsHomeMenuPage();
+        $this->view->spaces = $loadSpaces ? $this->loadModel('space')->getPairs() : array();
 
         $this->display();
     }
