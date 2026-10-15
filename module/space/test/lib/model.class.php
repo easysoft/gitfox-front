@@ -1019,6 +1019,30 @@ class spaceModelTest extends baseTest
     }
 
     /**
+     * Test the DevOps homeMenu of setMenu method.
+     * 返回二级菜单的显隐，1 表示菜单保留，0 表示菜单隐藏。
+     *
+     * @param  int    $spaceID
+     * @access public
+     * @return string
+     */
+    public function setMenuDevopsHomeMenuTest(int $spaceID): string
+    {
+        global $lang;
+
+        /* 重新加载菜单定义，保证每个步骤从同一份菜单开始。 */
+        include dirname(__FILE__, 5) . '/module/common/lang/menu.php';
+
+        $this->instance->setMenu($spaceID);
+
+        $result  = 'pipeline:' . (isset($lang->devops->homeMenu->pipeline) ? 1 : 0) . '|artifact:' . (isset($lang->devops->homeMenu->artifact) ? 1 : 0);
+        $result .= '|spaceSetting:' . (isset($lang->devops->homeMenu->spaceSetting) ? 1 : 0);
+        $result .= '|ppmList:' . (isset($lang->devops->homeMenu->ppmList) ? 1 : 0) . '|issue:' . (isset($lang->devops->homeMenu->issue) ? 1 : 0);
+
+        return $result;
+    }
+
+    /**
      * Test setMenu method of the gitfox standalone version.
      * 返回 "defined:{0|1}|group:{0|1}|overview:{0|1}|member:{0|1}"，1 表示菜单保留，0 表示菜单隐藏。
      *
