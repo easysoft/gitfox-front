@@ -13,6 +13,7 @@ namespace zin;
 jsVar('ppm', $ppm);
 
 $app->loadLang('codescan');
+$app->loadLang('pipeline');
 unset($lang->codescan->typeList['all']);
 unset($lang->codescan->severityList['all']);
 
@@ -39,7 +40,7 @@ $domBox = div
         set::repoID($repoID),
         set::ppmID($ppm->id),
         set::height('calc(100vh - 286px)'),
-        set::labels($lang->ppm->diffHub->labels),
+        set::labels($lang->pipeline->diffHub->labels),
         set::fileCollapseRules($config->devops->diffConfig),
         set::resolveFileLink(jsRaw('fileDiff => window.resolveFileLink ? window.resolveFileLink(fileDiff) : undefined')),
         set::resolveFileMenu(jsRaw('fileDiff => window.resolveFileMenu ? window.resolveFileMenu(fileDiff) : undefined'))
