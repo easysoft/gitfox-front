@@ -29,7 +29,7 @@ jsVar('langParamName', $lang->pipeline->paramNamePlaceholder);
 jsVar('langParamValue', $lang->pipeline->paramValue);
 jsVar('langDelete', $lang->pipeline->flowApp->labels['delete']);
 jsVar('addTriggerTitle', $lang->pipeline->addTrigger);
-jsVar('editTriggerTitle', $lang->pipeline->flowApp->labels['edit'] . $lang->pipeline->trigger);
+jsVar('editTriggerTitle', $lang->edit . $lang->pipeline->trigger);
 
 /* Build branch picker items. */
 $branchItems = array();
