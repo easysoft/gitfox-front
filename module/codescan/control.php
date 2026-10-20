@@ -1502,6 +1502,39 @@ class codescan extends control
     }
 
     /**
+     * 解析关闭问题时的 ID 列表。
+     * Resolve issue IDs for closing.
+     *
+     * @param  int $issueID
+     * @access protected
+     * @return array
+     */
+    protected function resolveCloseIssueIds(int $issueID = 0): array
+    {
+        $sources = array(
+            $this->post->issueIdList,
+            isset($_GET['issueIdList']) ? $_GET['issueIdList'] : null,
+            $issueID,
+            isset($_COOKIE['issueIdList']) ? $_COOKIE['issueIdList'] : null,
+        );
+
+        foreach($sources as $source)
+        {
+            if($source === null || $source === '' || $source === 0 || $source === '0') continue;
+            if(is_string($source)) $source = preg_split('/[|,]/', $source);
+
+            $ids = array();
+            foreach((array)$source as $id)
+            {
+                $id = (int)$id;
+                if($id > 0 && !in_array($id, $ids, true)) $ids[] = $id;
+            }
+            if(!empty($ids)) return $ids;
+        }
+        return array();
+    }
+
+    /**
      * 关闭人工审查问题。
      * Close manual review issue.
      *
@@ -1516,10 +1549,19 @@ class codescan extends control
     {
         if($this->server->request_method == 'POST')
         {
-            $this->closeIssue($issueID, $from);
-            return;
+            $issueIdList = $this->resolveCloseIssueIds($issueID);
+            if(empty($issueIdList)) $this->sendError($this->lang->codescan->notice->changeStateFailed);
+
+            $reason = trim((string)$this->post->reason);
+            if($reason === '') $this->sendError(array('reason' => sprintf($this->lang->error->notempty, $this->lang->codescan->closeReason)));
+
+            $result = $this->codescan->changeIssueState($issueIdList, 'closed', '', '', 0, $reason);
+            if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
+
+            $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
         }
 
+        $this->view->issueIdList = $this->resolveCloseIssueIds($issueID);
         $this->view->title = $from == 'manual' ? $this->lang->codescan->closeManualIssue : $this->lang->codescan->closeIssueTitle;
         $this->display('codescan', 'closeissue');
     }

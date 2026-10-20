@@ -73,7 +73,25 @@ $(document).off('click','.batch-btn').on('click', '.batch-btn', function()
 
     if(!hasIssue) return false;
 
-    isAjaxBtn ? $.ajaxSubmit({url, data: form}) : (['ignore', 'close'].includes(type) ? loadModal(url) : loadPage(url, '#mainContainer'));
+    if(isAjaxBtn)
+    {
+        $.ajaxSubmit({url, data: form});
+        return true;
+    }
+
+    if(['ignore', 'close'].includes(type))
+    {
+        let modalUrl = url;
+        if(type === 'close')
+        {
+            const separator = modalUrl.includes('?') ? '&' : '?';
+            modalUrl += separator + 'issueIdList=' + encodeURIComponent(issueIdList.join(','));
+        }
+        loadModal(modalUrl);
+        return true;
+    }
+
+    loadPage(url, '#mainContainer');
     return true;
 });
 

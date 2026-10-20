@@ -37,15 +37,20 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
         return true;
     }
 
-    /* 关闭/忽略打开原因表单弹窗，转 Bug 跳到缺陷创建页，都会离开列表，直接清空勾选。 */
-    dtable.$.toggleCheckRows(false);
-
+    /* 关闭/忽略保持勾选，提交成功后由页面刷新清空；转 Bug 等离开列表的操作直接清空。 */
     if(['ignore', 'close'].includes(type))
     {
-        loadModal(url);
+        let modalUrl = url;
+        if(type === 'close')
+        {
+            const separator = modalUrl.includes('?') ? '&' : '?';
+            modalUrl += separator + 'issueIdList=' + encodeURIComponent(issueIdList.join(','));
+        }
+        loadModal(modalUrl);
         return false;
     }
 
+    dtable.$.toggleCheckRows(false);
     loadPage(url, '#mainContainer');
     return true;
 });
