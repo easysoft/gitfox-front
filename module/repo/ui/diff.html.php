@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace zin;
 
 $module  = $app->tab == 'devops' ? 'repo' : $app->tab;
+$app->loadLang('pipeline');
 $inModal = isInModal() || !empty($fromModal);
 $inModal ? null : dropmenu
 (
@@ -149,6 +150,7 @@ if(!empty($diffText))
         set::enableAnnotations(false),
         set::product(0),
         set::module(''),
+        set::labels($lang->pipeline->diffHub->labels),
         set::repoID($repoID),
         set::ppmID(0)
     );
