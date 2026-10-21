@@ -607,11 +607,10 @@ $filter->codescan = new stdclass();
 $filter->codescan->issue       = new stdclass();
 $filter->codescan->closeissue  = new stdclass();
 $filter->codescan->issue->cookie['issueFile']         = 'string';
-$filter->codescan->closeissue->cookie['issueIdList']  = 'reg::any';
+$filter->codescan->closeissue->get['issueIdList']     = 'string';
 
 $filter->codescan->closemanualissue = new stdclass();
-$filter->codescan->closemanualissue->get['issueIdList']  = 'string';
-$filter->codescan->closemanualissue->post['issueIdList'] = 'array';
+$filter->codescan->closemanualissue->get['issueIdList'] = 'string';
 
 $filter->bug->batchcreate->cookie['issueIdList']      = 'reg::any';
 

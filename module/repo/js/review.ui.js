@@ -23,7 +23,7 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
     });
 
     const issueIdList = form.getAll('issueIdList[]');
-    if(issueIdList.length > 0) $.cookie.set('issueIdList', issueIdList.join('|'));
+    if(type !== 'close' && issueIdList.length > 0) $.cookie.set('issueIdList', issueIdList.join('|'));
 
     if(!hasIssue) return false;
 

@@ -1478,19 +1478,20 @@ class codescan extends control
     {
         if($this->server->request_method == 'POST')
         {
-            if(empty($issueID) && !empty($_COOKIE['issueIdList'])) $issueID = explode('|', $_COOKIE['issueIdList']);
-            if(empty($issueID) && $this->post->issueIdList) $issueID = $this->post->issueIdList;
+            $issueIdList = $this->resolveCloseIssueIds($issueID);
+            if(empty($issueIdList)) $this->sendError($this->lang->codescan->notice->changeStateFailed);
 
             /* 关闭必须填写原因，原因记入操作历史。 */
             $reason = trim((string)$this->post->reason);
             if($reason === '') $this->sendError(array('reason' => sprintf($this->lang->error->notempty, $this->lang->codescan->closeReason)));
 
-            $result = $this->codescan->changeIssueState($issueID, 'closed', '', '', 0, $reason);
+            $result = $this->codescan->changeIssueState($issueIdList, 'closed', '', '', 0, $reason);
             if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
 
             $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
         }
 
+        $this->view->issueIdList = $this->resolveCloseIssueIds($issueID);
         $this->view->title = zget($this->lang->codescan->closeIssueTitles, $from, $this->lang->codescan->closeIssueTitle);
         $this->display();
     }
@@ -1524,7 +1525,6 @@ class codescan extends control
             $this->post->issueIdList,
             isset($_GET['issueIdList']) ? $_GET['issueIdList'] : null,
             $issueID,
-            isset($_COOKIE['issueIdList']) ? $_COOKIE['issueIdList'] : null,
         );
 
         foreach($sources as $source)
