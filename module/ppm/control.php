@@ -847,36 +847,50 @@ class ppm extends control
      * @param  string $targetBranch
      * @param  int $recPerPage
      * @param  int $pageID
+     * @param  string $tab
      * @access public
      * @return void
      */
-    public function ajaxGetCreateCheckList(int $repoID, string $sourceBranch, string $targetBranch, int $recPerPage = 20, int $pageID = 1)
+    public function ajaxGetCreateCheckList(int $repoID, string $sourceBranch, string $targetBranch, int $recPerPage = 20, int $pageID = 1, string $tab = 'commit')
     {
+        global $config;
+
         $sourceBranch = helper::safe64Decode($sourceBranch);
         $targetBranch = helper::safe64Decode($targetBranch);
+        $tab          = strtolower($tab);
 
-        $repo = $this->loadModel('repo')->getByID($repoID);
-        $scm  = $this->app->loadClass('scm');
-        $scm->setEngine($repo);
+        $allowedTabs = $config->edition == 'gitfox' ? array('commit', 'diff') : array('commit', 'diff', 'object');
+        if(!in_array($tab, $allowedTabs, true)) $tab = 'commit';
 
         $this->app->loadClass('pager', true);
-        $commitPager = new pager(0, $recPerPage, $pageID);
-        $objectPager = new pager(0, $recPerPage, $pageID);
 
-        $commits = $this->ppm->getCommitListByBranch($repo, $sourceBranch, $targetBranch, $commitPager);
-        $diffs   = $scm->diff('', $targetBranch, $sourceBranch, 'yes', 'isBranchOrTag', true);
-        $objects = $this->ppm->getRelationByBranch($repo, $sourceBranch, $targetBranch, '', $objectPager);
+        if($tab == 'commit')
+        {
+            $commitPager = new pager(0, $recPerPage, $pageID);
+            $repo        = $this->loadModel('repo')->getByID($repoID);
 
-        $this->view->commits      = $commits;
-        $this->view->objects      = $objects;
-        $this->view->diffs        = $diffs;
-        $this->view->commitPager  = $commitPager;
-        $this->view->objectPager  = $objectPager;
+            $this->view->commits     = $this->ppm->getCommitListByBranch($repo, $sourceBranch, $targetBranch, $commitPager);
+            $this->view->commitPager = $commitPager;
+            $this->view->users       = $this->loadModel('user')->getPairs('noletter|noclosed|nodeleted');
+        }
+        elseif($tab == 'object')
+        {
+            $objectPager = new pager(0, $recPerPage, $pageID);
+            $repo        = $this->loadModel('repo')->getByID($repoID);
+
+            $this->view->objects     = $this->ppm->getRelationByBranch($repo, $sourceBranch, $targetBranch, '', $objectPager);
+            $this->view->objectPager = $objectPager;
+            $this->view->users       = $this->loadModel('user')->getPairs('noletter|noclosed|nodeleted');
+        }
+        else
+        {
+            $this->view->diffUrl = $this->createLink('repo', 'ajaxGetDiffs', "repoID={$repoID}&fromVersion=" . helper::safe64Encode($targetBranch) . "&toVersion=" . helper::safe64Encode($sourceBranch));
+        }
+
+        $this->view->tab          = $tab;
         $this->view->repoID       = $repoID;
-        $this->view->repo         = $repo;
         $this->view->sourceBranch = $sourceBranch;
         $this->view->targetBranch = $targetBranch;
-        $this->view->users        = $this->loadModel('user')->getPairs('noletter|noclosed|nodeleted');
         $this->display();
     }
 

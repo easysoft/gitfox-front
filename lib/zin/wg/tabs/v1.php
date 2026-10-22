@@ -37,6 +37,7 @@ class tabs extends wg
         $active   = $tabPane->prop('active');
         $hide     = $tabPane->prop('hide');
         $param    = $tabPane->prop('param');
+        $url      = $tabPane->prop('url');
         $prefix   = $tabPane->block('prefix');
         $suffix   = $tabPane->block('suffix');
         $navClass = $this->prop('navClass');
@@ -47,10 +48,10 @@ class tabs extends wg
             setData('key', $key),
             a
             (
-                set('data-toggle', 'tab'),
+                $url ? null : set('data-toggle', 'tab'),
                 set('data-param', $param),
-                setClass('font-medium', $active ? 'active' : null, $titleClass),
-                set::href("#$key"),
+                setClass('font-medium', $url ? 'not-open-url' : null, $active ? 'active' : null, $titleClass),
+                set::href($url ?: "#$key"),
                 $prefix,
                 span($title),
                 $suffix
