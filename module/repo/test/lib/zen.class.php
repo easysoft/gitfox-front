@@ -236,6 +236,25 @@ class repoZenTest extends baseTest
     }
 
     /**
+     * Test core buildIssueActions method.
+     *
+     * @param  array $issues
+     * @access public
+     * @return array
+     */
+    public function buildIssueActionsTest(array $issues): array
+    {
+        $reflection = new ReflectionClass('repoZen');
+        $instance   = $reflection->newInstance();
+        $result     = $this->invokeArgs('buildIssueActions', array($issues), 'repo', 'zen', $instance, $reflection);
+        if(dao::isError()) return dao::getError();
+
+        $actions = array();
+        foreach($result as $issue) $actions[$issue->id] = isset($issue->actions) ? $issue->actions : array();
+        return $actions;
+    }
+
+    /**
      * Test buildRepoPaths method.
      *
      * @param  array $repos

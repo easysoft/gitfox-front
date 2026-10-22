@@ -1,8 +1,8 @@
 <?php
 global $lang, $app;
-$app->loadLang('repo');
 $app->loadLang('deploy');
 $app->loadLang('system');
+$app->loadLang('codescan');
 
 $config->repo->notSetMenuVars = array('maintain', 'create', 'createrepo', 'edit', 'import', 'group');
 
@@ -201,3 +201,7 @@ $config->repo->system->search['params']['id']            = array('operator' => '
 $config->repo->system->search['params']['name']          = array('operator' => 'include', 'control' => 'input',  'values' => '');
 $config->repo->system->search['params']['product']       = array('operator' => '=',       'control' => 'select', 'values' => array());
 $config->repo->system->search['params']['status']        = array('operator' => '=',       'control' => 'select', 'values' => $lang->system->statusList);
+
+$config->repo->issue = new stdclass();
+$config->repo->issue->typeList     = $lang->codescan->typeList;
+$config->repo->issue->severityList = $lang->codescan->severityList;
