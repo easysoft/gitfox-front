@@ -10,6 +10,12 @@ declare(strict_types=1);
  */
 namespace zin;
 
+$issueIdList = isset($issueIdList) ? (array)$issueIdList : array();
+if(empty($issueIdList) && !empty($_GET['issueIdList'])) $issueIdList = explode(',', (string)$_GET['issueIdList']);
+
+$hiddenInputs = array();
+foreach($issueIdList as $issueID) $hiddenInputs[] = formHidden('issueIdList[]', (int)$issueID);
+
 formPanel
 (
     set::title($title),
@@ -22,5 +28,6 @@ formPanel
             set::required(true),
             set::label($lang->codescan->closeReason)
         )
-    )
+    ),
+    ...$hiddenInputs
 );
