@@ -13,14 +13,15 @@ namespace zin;
 jsVar('ppm', $ppm);
 
 $app->loadLang('codescan');
+$app->loadConfig('repo');
 $app->loadLang('pipeline');
-unset($lang->codescan->typeList['all']);
-unset($lang->codescan->severityList['all']);
+unset($config->repo->issue->typeList['all']);
+unset($config->repo->issue->severityList['all']);
 
 $issueTypes = array();
-foreach($lang->codescan->typeList as $issueType => $typeName) $issueTypes[] = array('value' => $issueType, 'text' => $typeName, 'key' => $typeName);
+foreach($config->repo->issue->typeList as $issueType => $typeName) $issueTypes[] = array('value' => $issueType, 'text' => $typeName, 'key' => $typeName);
 $severities = array();
-foreach($lang->codescan->severityList as $severityID => $severityName) $severities[] = array('value' => $severityID, 'text' => $severityName, 'key' => $severityName);
+foreach($config->repo->issue->severityList as $severityID => $severityName) $severities[] = array('value' => $severityID, 'text' => $severityName, 'key' => $severityName);
 $statusList = array();
 foreach($lang->codescan->issueStatusList as $status => $statusName) $statusList[] = array('value' => $status, 'text' => $statusName, 'key' => $statusName);
 

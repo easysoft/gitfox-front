@@ -1452,17 +1452,28 @@ class codescan extends control
      * Resolve scan issue.
      *
      * @param  int    $issueID
+     * @param  string $callBack
      * @access public
      * @return void
      */
-    public function resolveIssue(int $issueID = 0)
+    public function resolveIssue(int $issueID = 0, string $callBack = '')
     {
         if(empty($issueID) && $this->post->issueIdList) $issueID = $this->post->issueIdList;
 
         $result = $this->codescan->changeIssueState($issueID, 'solved', '', helper::now());
         if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
 
-        $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
+        $response = array();
+        $response['message'] = $this->lang->saveSuccess;
+        if($callBack)
+        {
+            $response['callback'] = array('name' => $callBack, 'params' => array((int)$issueID));
+        }
+        else
+        {
+            $response['load'] = true;
+        }
+        $this->sendSuccess($response);
     }
 
     /**
@@ -1471,10 +1482,11 @@ class codescan extends control
      *
      * @param  int    $issueID
      * @param  string $from
+     * @param  string $callBack
      * @access public
      * @return void
      */
-    public function closeIssue(int $issueID = 0, string $from = '')
+    public function closeIssue(int $issueID = 0, string $from = '', string $callBack = '')
     {
         if($this->server->request_method == 'POST')
         {
@@ -1488,7 +1500,17 @@ class codescan extends control
             $result = $this->codescan->changeIssueState($issueIdList, 'closed', '', '', 0, $reason);
             if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
 
-            $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
+            $response = array();
+            $response['message'] = $this->lang->saveSuccess;
+            if($callBack)
+            {
+                $response['callback'] = array('name' => $callBack, 'params' => array((int)$issueID));
+            }
+            else
+            {
+                $response['load'] = true;
+            }
+            $this->sendSuccess($response);
         }
 
         $this->view->issueIdList = $this->resolveCloseIssueIds($issueID);
@@ -1503,12 +1525,13 @@ class codescan extends control
      * 与代码评审问题共用同一套解决逻辑，独立成方法仅为使用独立权限。
      *
      * @param  int    $issueID
+     * @param  string $callBack
      * @access public
      * @return void
      */
-    public function resolveManualIssue(int $issueID = 0)
+    public function resolveManualIssue(int $issueID = 0, string $callBack = '')
     {
-        $this->resolveIssue($issueID);
+        $this->resolveIssue($issueID, $callBack);
     }
 
     /**
@@ -1551,10 +1574,11 @@ class codescan extends control
      *
      * @param  int    $issueID
      * @param  string $from
+     * @param  string $callBack
      * @access public
      * @return void
      */
-    public function closeManualIssue(int $issueID = 0, string $from = '')
+    public function closeManualIssue(int $issueID = 0, string $from = '', string $callBack = '')
     {
         if($this->server->request_method == 'POST')
         {
@@ -1567,7 +1591,17 @@ class codescan extends control
             $result = $this->codescan->changeIssueState($issueIdList, 'closed', '', '', 0, $reason);
             if(!$result) $this->responseError($this->lang->codescan->notice->changeStateFailed);
 
-            $this->sendSuccess(array('message' => $this->lang->saveSuccess, 'load' => true));
+            $response = array();
+            $response['message'] = $this->lang->saveSuccess;
+            if($callBack)
+            {
+                $response['callback'] = array('name' => $callBack, 'params' => array((int)$issueID));
+            }
+            else
+            {
+                $response['load'] = true;
+            }
+            $this->sendSuccess($response);
         }
 
         $this->view->issueIdList = $this->resolveCloseIssueIds($issueID);

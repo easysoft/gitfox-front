@@ -3218,11 +3218,13 @@ class repo extends control
             }
             $this->loadModel('action')->create('scanissue', $issueID, 'created', '', $actionExtra);
 
-            $issue = $this->codescan->getIssueByID($issueID);
+            $issue = $this->codescan->processIssueData($this->codescan->getIssueByID($issueID));
             $user  = $this->loadModel('user')->getListByAccounts(array($issue->createdBy), 'account');
             $issue->user    = zget($user, $issue->createdBy);
             $issue->content = empty($issue->content) ? '' : htmlspecialchars_decode($issue->content);
-            $this->sendSuccess(array('data' => $issue));
+
+            $issueList = $this->repoZen->buildIssueActions(array($issue));
+            $this->sendSuccess(array('data' => reset($issueList)));
         }
 
         return $this->send(array('result' => 'success', 'data' => array()));
@@ -3247,6 +3249,7 @@ class repo extends control
         foreach($issues as $issue)
         {
             if(!in_array($issue->status, array('wait', 'solved'))) continue;
+            $issue = $this->codescan->processIssueData($issue);
             $issue->content = empty($issue->content) ? '' : htmlspecialchars_decode($issue->content);
 
             if(!empty($issue->createdBy) && isset($users[$issue->createdBy]))
@@ -3255,8 +3258,31 @@ class repo extends control
             }
             $issueList[] = $issue;
         }
+        $issueList = $this->repoZen->buildIssueActions($issueList);
 
         $this->send(array('result' => 'success', 'data' => $issueList));
+    }
+
+    /**
+     * 获取问题详情。
+     * Ajax get issue.
+     *
+     * @param  int    $issueID
+     * @access public
+     * @return void
+     */
+    public function ajaxGetIssue(int $issueID = 0)
+    {
+        $issue = $this->loadModel('codescan')->getIssueByID($issueID);
+        if(empty($issue)) return $this->send(array('result' => 'fail', 'message' => $this->lang->notFound));
+
+        $issue = $this->codescan->processIssueData($issue);
+        $user = $this->loadModel('user')->getListByAccounts(array($issue->createdBy), 'account');
+        $issue->user    = zget($user, $issue->createdBy);
+        $issue->content = empty($issue->content) ? '' : htmlspecialchars_decode($issue->content);
+
+        $issueList = $this->repoZen->buildIssueActions(array($issue));
+        $this->send(array('result' => 'success', 'data' => reset($issueList)));
     }
 
     /**

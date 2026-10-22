@@ -335,3 +335,20 @@ window.resolveFileMenu = function(fileDiff)
         },
     ];
 }
+
+/**
+ * 刷新单条扫描问题数据。
+ * Refresh a single scan issue.
+ *
+ * @param  int issueID
+ * @access public
+ * @return void
+ */
+window.refreshScanIssue = function(issueID)
+{
+    var diffHub = $('[zui-create-diffhub]').zui('diffhub');
+    if(!diffHub) return;
+
+    if(typeof diffHub.refreshIssue === 'function') return diffHub.refreshIssue(issueID);
+    if(typeof diffHub.reload === 'function') diffHub.reload();
+};

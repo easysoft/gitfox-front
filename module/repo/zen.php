@@ -1668,4 +1668,101 @@ class repoZen extends repo
 
         return $this->config->repo->form->import;
     }
+
+    /**
+     * 构建问题操作按钮URL.
+     * Build issue actions.
+     *
+     * @param  array $issues
+     * @access public
+     * @return array
+     */
+    public function buildIssueActions(array $issues): array
+    {
+        if(empty($issues)) return $issues;
+
+        $this->loadModel('codescan');
+        $issueTypes        = array('manual', 'check', 'smell', 'ai');
+        $actionDefinitions = array();
+        foreach($issueTypes as $issueType)
+        {
+            $actionDefinitions[$issueType] = $this->getIssueActionDefinitions($issueType);
+        }
+
+        foreach($issues as &$issue)
+        {
+            $issueType = zget($issue, 'scanMethod');
+            if(!isset($issue->actions)) $issue->actions = array();
+            if(empty($issue->openedBy) && !empty($issue->createdBy)) $issue->openedBy = $issue->createdBy;
+            if(!isset($actionDefinitions[$issueType])) continue;
+
+            $actions = array();
+            foreach($actionDefinitions[$issueType] as $actionName => $action)
+            {
+                if(!$this->codescan->isClickable($issue, $action['method'])) continue;
+
+                $params = array('issueID' => $issue->id);
+                if(in_array(strtolower($action['method']), array('closeissue', 'closemanualissue'), true)) $params['from'] = '';
+                if($action['module'] == 'codescan') $params['callback'] = 'refreshScanIssue';
+
+                $actions[$actionName] = $this->createLink($action['module'], $action['method'], $params);
+            }
+
+            $issue->actions = array();
+            foreach(array('resolve', 'close') as $actionName)
+            {
+                if(isset($actions[$actionName])) $issue->actions[$actionName] = $actions[$actionName];
+            }
+        }
+        return $issues;
+    }
+
+    /**
+     * 获取有权限的问题操作定义。
+     * Get permitted issue action definitions.
+     *
+     * @param  string $issueType
+     * @access protected
+     * @return array
+     */
+    protected function getIssueActionDefinitions(string $issueType): array
+    {
+        $this->loadModel('codescan');
+
+        $actionsConfig = array();
+        if($issueType == 'manual' && isset($this->config->codescan->manualIssue->dtable->fieldList['actions']))
+        {
+            $actionsConfig = $this->config->codescan->manualIssue->dtable->fieldList['actions'];
+        }
+        elseif($issueType == 'ai' && isset($this->config->codescan->aiIssue->dtable->fieldList['actions']))
+        {
+            $actionsConfig = $this->config->codescan->aiIssue->dtable->fieldList['actions'];
+        }
+        elseif(isset($this->config->codescan->issue->dtable->fieldList['actions']))
+        {
+            $actionsConfig = $this->config->codescan->issue->dtable->fieldList['actions'];
+        }
+
+        $allowedActions = array('resolveissue' => 'resolve', 'closeissue' => 'close');
+        $actionList     = zget($actionsConfig, 'list', array());
+        $definitions    = array();
+        foreach(zget($actionsConfig, 'menu', array()) as $menuAction)
+        {
+            if(!is_string($menuAction)) continue;
+
+            $actionName = strtolower($menuAction);
+            if(!isset($allowedActions[$actionName]) || !isset($actionList[$menuAction])) continue;
+
+            $urlConfig    = zget($actionList[$menuAction], 'url', array());
+            $actionModule = zget($urlConfig, 'module', 'codescan');
+            $actionMethod = zget($urlConfig, 'method', $menuAction);
+
+            if(!common::hasPriv($actionModule, $actionMethod)) continue;
+
+            $definitions[$allowedActions[$actionName]] = array('module' => $actionModule, 'method' => $actionMethod);
+        }
+
+        return $definitions;
+    }
+
 }
