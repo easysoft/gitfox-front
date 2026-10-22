@@ -7,7 +7,7 @@ tabs
     tabPane
     (
         set::key('commit'),
-        set::title($lang->ppm->conflictFiles . ' (' . count($conflictFiles) . ')'),
+        set::title($lang->ppm->conflictFiles),
         set::active(true),
         dtable
         (
