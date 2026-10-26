@@ -389,7 +389,7 @@ class ppm extends control
      * View a MR.
      *
      * @param  int    $id
-     * @param  string $type
+     * @param  string $type  页签类型（basic|files|commit|issue|bug）
      * @param  int    $recTotal
      * @param  int    $recPerPage
      * @param  int    $pageID
@@ -410,8 +410,9 @@ class ppm extends control
         $this->app->loadClass('pager', true);
         $commitPager = new pager($type == 'commit' ? $recTotal : 0, $recPerPage, $type == 'commit' ? $pageID : 1);
         $objectPager = new pager($type == 'object' ? $recTotal : 0, $recPerPage, $type == 'object' ? $pageID : 1);
-        $bugPager    = new pager($type == 'bug' && $issueTab == 'static' ? $recTotal : 0, $issueTab == 'static' ? $recPerPage : 20, $type == 'bug' && $issueTab == 'static' ? $pageID : 1, 'static');
-        $scanPager   = new pager($type == 'bug' && $issueTab == 'scan'   ? $recTotal : 0, $issueTab == 'scan'   ? $recPerPage : 20, $type == 'bug' && $issueTab == 'scan'   ? $pageID : 1, 'scan');
+        $issuePager  = new pager($type == 'issue' && $issueTab == 'static' ? $recTotal : 0, $issueTab == 'static' ? $recPerPage : 20, $type == 'issue' && $issueTab == 'static' ? $pageID : 1, 'static');
+        $scanPager   = new pager($type == 'issue' && $issueTab == 'scan'   ? $recTotal : 0, $issueTab == 'scan'   ? $recPerPage : 20, $type == 'issue' && $issueTab == 'scan'   ? $pageID : 1, 'scan');
+        $bugPager    = new pager($type == 'bug' ? $recTotal : 0, $recPerPage, $type == 'bug' ? $pageID : 1, 'bug');
 
         $fromRevision = !empty($ppm->mergeBaseSHA) ? $ppm->mergeBaseSHA : $ppm->targetBranch;
         $toRevision   = !empty($ppm->sourceSHA) ? $ppm->sourceSHA : $ppm->sourceBranch;
@@ -432,7 +433,7 @@ class ppm extends control
         $bugIssueStatus               = in_array($issueStatus, array('all', 'converted')) ? '' : $issueStatus;
         $this->view->bugs             = $this->ppm->getBugsByCommits($repo->id, $ppm->id, $bugPager, $type == 'bug' ? $bugIssueStatus : '');
         $this->view->bugsTotal        = $this->ppm->getBugsByCommitsTotal($repo->id, $ppm->id);
-        if($type != 'bug')
+        if($type != 'issue')
         {
             $this->view->staticIssues = array();
         }
@@ -442,10 +443,11 @@ class ppm extends control
         }
         $this->view->staticIssueTotal  = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
 
-        $this->view->manualIssues      = $type == 'bug' ? $this->loadModel('codescan')->getManualIssues($ppm->id, $repo->id, $bugPager, $issueStatus) : array();
+        $this->view->manualIssues      = $type == 'issue' ? $this->loadModel('codescan')->getManualIssues($ppm->id, $repo->id, $issuePager, $issueStatus) : array();
         $this->view->manualIssuesTotal = $this->ppm->getIssueBadgeCount('manual', (int)$repo->id, (int)$ppm->id);
         $this->view->linkObjects       = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
         $this->view->commitPager       = $commitPager;
+        $this->view->issuePager        = $issuePager;
         $this->view->bugPager          = $bugPager;
         $this->view->scanPager         = $scanPager;
         $this->view->objectPager       = $objectPager;

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 /**
- * The bug view file of ppm module of ZenTaoPMS.
+ * The issue view file of ppm module of ZenTaoPMS.
  * @copyright   Copyright 2009-2025 禅道软件（青岛）有限公司(ZenTao Software (Qingdao) Co., Ltd. www.zentao.net)
  * @license     ZPL(https://zpl.pub/page/zplv12.html) or AGPL(https://www.gnu.org/licenses/agpl-3.0.en.html)
  * @author      Yang Li <liyang@chandao.com>
@@ -27,7 +27,7 @@ $buildIssueStatusBar = function(string $tabKey, string $listKey = '') use ($ppm,
         (
             'text'   => zget($lang->ppm->issueStatusTabs, $statusKey, $statusKey),
             'active' => $issueStatus === $statusKey,
-            'url'    => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$tabKey}&issueStatus={$statusKey}")
+            'url'    => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$tabKey}&issueStatus={$statusKey}")
         );
     }
     return nav(setClass('mb-2'), set::items($items));
@@ -133,7 +133,7 @@ $staticPanel = div
         (
             'recPerPage'  => $scanPager->recPerPage,
             'recTotal'    => $scanPager->recTotal,
-            'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$scanPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=scan&issueStatus={$issueStatus}")
+            'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$scanPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=scan&issueStatus={$issueStatus}")
         ), null, '', 'scan'))
     )
 );
@@ -153,7 +153,7 @@ $manualPanel = div
         set::data($manualRows),
         set::responsive(true),
         set::footToolbar($manualBatchToolbar),
-        set::footPager(usePager('bugPager', '', array('recPerPage' => $bugPager->recPerPage, 'recTotal' => $bugPager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=bug&param=&recTotal={$bugPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static&issueStatus={$issueStatus}")), null, '', 'static'))
+        set::footPager(usePager('issuePager', '', array('recPerPage' => $issuePager->recPerPage, 'recTotal' => $issuePager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$issuePager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static&issueStatus={$issueStatus}")), null, '', 'static'))
     )
 );
 

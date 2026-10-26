@@ -67,7 +67,9 @@ $actions = $this->loadModel('common')->buildOperateMenu($ppm);
 $isMergeReady  = $ppm->status == 'opened' && $canMerge && !$checkMessage;
 $showMergeIcon = $isMergeReady && !empty($defaultMergeType) && $type == 'basic';
 
-include "{$type}.html.php";
+$typeViewFile = __DIR__ . "/{$type}.html.php";
+$domBox       = null;
+if(is_file($typeViewFile)) include $typeViewFile;
 
 div
 (
@@ -143,9 +145,9 @@ div
                             (
                                 $lang->ppm->issueList . " ({$issueListTotal})",
                                 setClass('font-medium font-bold text-md'),
-                                set::href(createLink('ppm', 'view', "id={$ppm->id}&type=bug")),
+                                set::href(createLink('ppm', 'view', "id={$ppm->id}&type=issue")),
                                 set('data-app', $app->tab),
-                                $type == 'bug' ? setClass('active') : null
+                                $type == 'issue' ? setClass('active') : null
                             )
                         ),
                         //li
