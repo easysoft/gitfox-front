@@ -25,7 +25,12 @@ class codescanModel extends model
         $issue->file       = zget($issue, 'path', '');
         $issue->priority   = zget($issue, 'rulePriority', '');
         $issue->type       = zget($issue, 'ruleType', '');
-        $issue->rulePlugin = zget($issue->payload, 'tool', '');
+
+        $payload = zget($issue, 'payload', new stdClass());
+        if(is_string($payload)) $payload = json_decode($payload);
+        if(!is_array($payload) && !is_object($payload)) $payload = new stdClass();
+        $issue->rulePlugin = (string)zget($issue, 'rulePlugin', '');
+        if($issue->rulePlugin === '') $issue->rulePlugin = (string)zget($payload, 'tool', '');
 
         /* 新增字段：AI 扫描 + API v2.0 字段 */
         $issue->scanMethod  = zget($issue, 'scanMethod', '');

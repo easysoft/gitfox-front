@@ -16,6 +16,9 @@ cid=0
 - 执行$result->ppmID) ? 1 : 0 @1
 - 执行$result->scanMethod === '' && $result->category === '' && $result->severity === '' ? 1 : 0 @1
 - 执行processIssueDataTest($existing)模块的title方法  @已存在问题
+- 执行processIssueDataTest($missingPlugin)模块的rulePlugin === '' ? 1 : 0方法  @1
+- 执行processIssueDataTest($stringPayload)模块的rulePlugin方法  @golangci-lint
+- 执行processIssueDataTest($topLevelPlugin)模块的rulePlugin方法  @clippy
 
 */
 
@@ -39,3 +42,16 @@ $existing = new stdclass();
 $existing->title   = '已存在问题';
 $existing->payload = new stdclass();
 r($test->processIssueDataTest($existing)->title) && p() && e('已存在问题');
+
+$missingPlugin = new stdclass();
+$missingPlugin->payload = null;
+r($test->processIssueDataTest($missingPlugin)->rulePlugin === '' ? 1 : 0) && p() && e('1');
+
+$stringPayload = new stdclass();
+$stringPayload->payload = '{"tool":"golangci-lint"}';
+r($test->processIssueDataTest($stringPayload)->rulePlugin) && p() && e('golangci-lint');
+
+$topLevelPlugin = new stdclass();
+$topLevelPlugin->rulePlugin = 'clippy';
+$topLevelPlugin->payload    = null;
+r($test->processIssueDataTest($topLevelPlugin)->rulePlugin) && p() && e('clippy');
