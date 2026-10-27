@@ -166,7 +166,7 @@ $config->file = new stdclass();
 $config->file->dangers        = 'php,php3,php4,phtml,php5,jsp,py,rb,asp,aspx,ashx,asa,cer,cdx,aspl,shtm,shtml,html,htm';
 $config->file->allowed        = 'txt,md,doc,docx,dot,wps,wri,pdf,ppt,pptx,xls,xlsx,ett,xlt,xlsm,csv,jpg,jpeg,png,psd,gif,ico,bmp,swf,avi,rmvb,rm,mp3,mp4,3gp,flv,mov,movie,rar,zip,bz,bz2,tar,gz,mpp,rp,pdm,vsdx,vsd,sql,xmind,mm';
 $config->file->storageType    = 'fs';       // fs or s3
-$config->file->allowedModules = 'artifact,testcase'; // 设置上传文件时不需要过滤文件类型的模块。
+$config->file->allowedModules = 'artifact'; // 设置上传文件时不需要过滤文件类型的模块。
 
 /* 文档多人协同配置。 Document Hocus Pocus. */
 $config->docHocuspocus = new stdclass();
@@ -278,6 +278,15 @@ if(file_exists($cacheConfig)) include $cacheConfig;
 /* Include extension config files. */
 $extConfigFiles = glob(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ext/*.php');
 if($extConfigFiles) foreach($extConfigFiles as $extConfigFile) include $extConfigFile;
+
+/* 扩展配置中可能指定 edition，需在加载扩展配置后再覆盖版本相关的配置。 */
+/* The edition may be specified in the extension config, so override edition-specific config after it is loaded. */
+if($config->edition == 'gitfox')
+{
+    $config->contactUs['email']  = 'wangzhaoning@chandao.com';
+    $config->contactUs['qq']     = '3684528290';
+    $config->contactUs['wechat'] = '17669512663';
+}
 
 /* Set version. */
 if($config->edition != 'open')

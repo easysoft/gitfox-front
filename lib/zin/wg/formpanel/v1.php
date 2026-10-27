@@ -49,6 +49,7 @@ class formPanel extends panel
         'cancelBtnText?: string',                      // 表单取消按钮文本，如果不指定则使用 `$lang->goback` 的值。
         'items?: array',                               // 使用一个列定义对象数组来定义表单项。
         'fields?: string|array|fieldList',             // 表单字段配置。
+        'formGrid?: array',                            // 表单网格配置。
         'fullModeOrders?: string|array',               // 完整模式下字段显示顺序。
         'layout?: string="horz"',                      // 表单布局，可选值为：'horz'、'grid' 和 `normal`。
         'labelWidth?: int',                            // 标签宽度，单位为像素。
@@ -375,7 +376,7 @@ class formPanel extends panel
                     'name' => $field->field,
                     'label' => $field->name,
                     'required' => $field->required,
-                    'control' => $field->control,
+                    'control' => is_array($field->control) ? array_merge($field->control, array('required' => false)) : $field->control,
                     'items' => $field->items,
                     'ditto' => in_array(zget($field->control, 'control', 'input'), $dittoControl) ? $field->ditto : false, 'width' => '200px',
                     'value' => $value,
@@ -385,7 +386,7 @@ class formPanel extends panel
                     set::name($field->field),
                     set::label($field->name),
                     set::required($field->required),
-                    set::control($field->control),
+                    set::control(is_array($field->control) ? array_merge($field->control, array('required' => false)) : $field->control),
                     set::items($field->items),
                     set::ditto(in_array(zget($field->control, 'control', 'input'), $dittoControl) ? $field->ditto : false),
                     set::width('200px'),
