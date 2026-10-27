@@ -1242,6 +1242,7 @@ class pipeline extends control
     public function arrange(int $id, int $space = 0, int $repoID = 0, $type = 'space')
     {
         $this->commonAction($space);
+        $fromApp = $this->app->tab;
         if($repoID)
         {
             $this->checkRepoEmpty();
@@ -1260,6 +1261,7 @@ class pipeline extends control
         $this->view->repoID   = $repoID;
         $this->view->type     = $type;
         $this->view->repo     = $this->loadModel('repo')->getByID($repoID);
+        $this->view->fromApp  = $fromApp;
 
         $this->display();
     }
@@ -1274,13 +1276,12 @@ class pipeline extends control
      */
     public function ajaxGetRepos(int $spaceID = 0)
     {
-        $repos = $this->loadModel('gitfox')->apiGetRepos();
+        $repos = $this->loadModel('gitfox')->apiGetRepos('', $spaceID);
         foreach($repos as $repo)
         {
             if($repo->scmType != 'git' || $repo->mirror) continue;
-            if($spaceID && $repo->spaceID != $spaceID) continue;
 
-            $repoList[] = array('value' => $repo->gitURL, 'text' => $repo->name, 'key' => $repo->name);
+            $repoList[] = array('value' => $repo->gitURL, 'text' => $repo->name . ' [' . $repo->gitURL . ']', 'key' => $repo->name);
         }
 
         echo json_encode($repoList);
