@@ -50,7 +50,7 @@ class gitlabWebhookEntry extends baseEntry
         {
             $entry    = $this->loadModel('entry')->getByCode('gitfox');
             $entryKey = empty($entry) ? '' : (string)$entry->key;
-            if(empty($entryKey) || (string)$token !== $entryKey) return $this->sendError(401, 'Unauthorized');
+            if(empty($entryKey) || !hash_equals($entryKey, (string)$token)) return $this->sendError(401, 'Unauthorized');
 
             $pipeline = $this->loadModel('pipeline')->getByID((int)$pipelineID);
             if(empty($pipeline)) return;
@@ -67,8 +67,9 @@ class gitlabWebhookEntry extends baseEntry
         $repo = $this->loadModel('repo')->fetchByID((int)$repoID);
         if(empty($repo)) return;
 
+        /* 迁移仓库的 gitUID 是 empty_gituid_{repoID} 占位值，可被推算，不能作为密钥。 */
         $expectedToken = isset($repo->gitUID) ? (string)$repo->gitUID : '';
-        if(empty($expectedToken) || (string)$token !== $expectedToken) return $this->sendError(401, 'Unauthorized');
+        if(empty($expectedToken) || strpos($expectedToken, 'empty_gituid_') === 0 || !hash_equals($expectedToken, (string)$token)) return $this->sendError(401, 'Unauthorized');
 
         /* 设置匿名用户，供 handleWebhook 内部创建 action、commit 记录使用。 */
         $this->app->user = new stdclass();

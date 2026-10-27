@@ -55,8 +55,10 @@ class gitfoxWebhookEntry extends baseEntry
         if(empty($repo)) return;
 
         $token         = $this->getHeaderValue($headers, 'X-Gitfox-Token');
-        $expectedToken = isset($repo->gitUID) ? $repo->gitUID : '';
-        if(empty($expectedToken) || (string)$token !== (string)$expectedToken) return $this->sendError(401, 'Unauthorized');
+
+        /* 迁移仓库的 gitUID 是 empty_gituid_{repoID} 占位值，可被推算，不能作为密钥。 */
+        $expectedToken = isset($repo->gitUID) ? (string)$repo->gitUID : '';
+        if(empty($expectedToken) || strpos($expectedToken, 'empty_gituid_') === 0 || !hash_equals($expectedToken, (string)$token)) return $this->sendError(401, 'Unauthorized');
 
         $server = $this->loadModel('gitfox')->getServer();
         if(empty($server)) return;
