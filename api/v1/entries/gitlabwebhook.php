@@ -42,15 +42,17 @@ class gitlabWebhookEntry extends baseEntry
         $event   = $this->getHeaderValue($headers, 'X-Gitlab-Event');
         if(empty($event)) return;
 
-        $token     = $this->getHeaderValue($headers, 'X-Gitlab-Token');
-        $entry     = $this->loadModel('entry')->getByCode('gitfox');
-        $entryKey  = empty($entry) ? '' : (string)$entry->key;
-        if(empty($entryKey) || (string)$token !== $entryKey) return $this->sendError(401, 'Unauthorized');
+        $token = $this->getHeaderValue($headers, 'X-Gitlab-Token');
 
+        /* 流水线 webhook：保持原有逻辑，使用 entry(gitfox) 的 key 校验。 */
         $pipelineID = $this->param('pipelineID');
         if(!empty($pipelineID))
         {
-            $pipeline = $this->loadModel('pipeline')->getByID($pipelineID);
+            $entry    = $this->loadModel('entry')->getByCode('gitfox');
+            $entryKey = empty($entry) ? '' : (string)$entry->key;
+            if(empty($entryKey) || (string)$token !== $entryKey) return $this->sendError(401, 'Unauthorized');
+
+            $pipeline = $this->loadModel('pipeline')->getByID((int)$pipelineID);
             if(empty($pipeline)) return;
             if($pipeline->engine != 'gitlab') return;
 
@@ -58,17 +60,30 @@ class gitlabWebhookEntry extends baseEntry
             return;
         }
 
+        /* 代码库 webhook（镜像库）：使用代码库自己的 gitUID 作为 token 校验。 */
         $repoID = $this->param('repoID');
         if(empty($repoID)) return;
 
+        $repo = $this->loadModel('repo')->fetchByID((int)$repoID);
+        if(empty($repo)) return;
+
+        $expectedToken = isset($repo->gitUID) ? (string)$repo->gitUID : '';
+        if(empty($expectedToken) || (string)$token !== $expectedToken) return $this->sendError(401, 'Unauthorized');
+
+        /* 设置匿名用户，供 handleWebhook 内部创建 action、commit 记录使用。 */
         $this->app->user = new stdclass();
         $this->app->user->account = '';
         $this->app->user->admin   = false;
         $this->app->user->rights['rights'] = array();
         $this->app->user->rights['acls']   = array();
 
-        $repo = $this->loadModel('repo')->fetchByID($repoID);
-        if(empty($repo)) return;
+        /* fetchByID 不填充 gitfox 连接信息，这里参照 gitfoxwebhook.php 补齐。 */
+        $server = $this->loadModel('gitfox')->getServer();
+        if(empty($server)) return;
+
+        $repo->apiPath  = sprintf($this->config->repo->gitfox->apiPath, $server->url, $repo->id);
+        $repo->client   = $server->url;
+        $repo->password = $server->token;
 
         $this->loadController('user', 'login');
         $this->repo->handleWebhook($event, $this->requestBody, $repo);
