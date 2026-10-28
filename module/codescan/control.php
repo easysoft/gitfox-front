@@ -858,12 +858,11 @@ class codescan extends control
 
         $planList    = $this->codescan->getScanPlans($repoID, (array)$params);
         $repoList    = $this->repo->getRepoPairs();
-        $repoMap     = $repoList;
         $gitFoxRepos = $this->repo->getGitFoxRepos();
+        $repoMap     = array_replace($repoList, array_column($gitFoxRepos, 'name', 'id'));
         foreach($gitFoxRepos as $repo)
         {
-            if(empty($repo->serviceProject) || !isset($repoList[$repo->id])) continue;
-            $repoMap[$repo->serviceProject] = $repo->name;
+            if(!empty($repo->serviceProject)) $repoMap[$repo->serviceProject] = $repo->name;
         }
 
         $pager->recTotal = empty($planList->pager) ? 0 : (int)zget($planList->pager, 'total', 0);
@@ -1011,8 +1010,17 @@ class codescan extends control
             $repo = $this->repo->fetchByID($repoID);
         }
 
-        $pager = $this->codescanZen->setPager($recPerPage, $pageID);
-        $this->view->repoList = $this->repo->getRepoPairs();
+        $pager       = $this->codescanZen->setPager($recPerPage, $pageID);
+        $repoList    = $this->repo->getRepoPairs();
+        $gitFoxRepos = $this->repo->getGitFoxRepos();
+
+        $this->view->repoList = $repoList;
+        $this->view->repoMap  = array_replace($repoList, array_column($gitFoxRepos, 'name', 'id'));
+
+        foreach($gitFoxRepos as $repo)
+        {
+            if(!empty($repo->serviceProject)) $this->view->repoMap[$repo->serviceProject] = $repo->name;
+        }
         $this->view->planList = array_column($this->codescanZen->getListByQuery('plan'), 'name', 'id');
 
         $queryID   = $type == 'bySearch' ? $queryID : 0;

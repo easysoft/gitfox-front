@@ -209,7 +209,7 @@ class upgradeZen extends upgrade
         if(version_compare($toVersion, $this->config->version, '='))
         {
             $edition = $this->upgrade->getUpgradeFromEdition($fromVersion);
-            $methods = $this->upgrade->getOtherMethods($edition);
+            $methods = $this->upgrade->getOtherMethods($edition, $fromVersion);
             foreach(array_keys($methods) as $method)
             {
                 $changes[] = $this->getChangesByMethod($currentVersion, $method);

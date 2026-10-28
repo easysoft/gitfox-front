@@ -121,12 +121,16 @@ class upgradeModel extends model
      * Get other methods to execute.
      *
      * @param  string $fromEdition
+     * @param  string $fromVersion
      * @access public
      * @return array
      */
-    public function getOtherMethods(string $fromEdition): array
+    public function getOtherMethods(string $fromEdition, string $fromVersion = ''): array
     {
         $methods = [];
+        if($fromVersion === '') $fromVersion = $this->fromVersion;
+        if(strpos($fromVersion, 'gitfox') === 0 && $this->config->edition != 'gitfox') $methods['migrateGitfoxVision'] = [];
+
         /* Means open source/pro upgrade to biz or max. */
         if($this->config->edition != 'open' && $this->config->edition != 'gitfox' && ($fromEdition == 'open' || $fromEdition == 'pro'))
         {
@@ -144,6 +148,32 @@ class upgradeModel extends model
         $methods['deletePatch']                = [];
 
         return $methods;
+    }
+
+    /**
+     * 迁移GitFox用户和权限组的视图类型。
+     * Migrate the vision of GitFox users and permission groups.
+     *
+     * @access public
+     * @return bool
+     */
+    public function migrateGitfoxVision(): bool
+    {
+        $users = $this->dao->select('id,visions')->from(TABLE_USER)
+            ->where('visions')->eq('gitfox')
+            ->orWhere('visions')->like('gitfox,%')
+            ->orWhere('visions')->like('%,gitfox')
+            ->orWhere('visions')->like('%,gitfox,%')
+            ->fetchAll('id');
+
+        foreach($users as $id => $user)
+        {
+            $this->dao->update(TABLE_USER)->set('visions')->eq(str_replace('gitfox', 'rnd', $user->visions))->where('id')->eq($id)->exec();
+            if(dao::isError()) return false;
+        }
+
+        $this->dao->update(TABLE_GROUP)->set('vision')->eq('rnd')->where('vision')->eq('gitfox')->exec();
+        return !dao::isError();
     }
 
     /**
