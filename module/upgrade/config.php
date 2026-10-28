@@ -382,6 +382,7 @@ $config->upgrade->ipdVersion['ipd5_7']         = '22_7'; // ipd insert position.
 
 $config->upgrade->gitfoxVersion = array();
 $config->upgrade->gitfoxVersion['gitfox4_3'] = '22_7';
+$config->upgrade->gitfoxVersion['gitfox4_4'] = '22_7';
 
 $config->upgrade->lowerTables = array();
 $config->upgrade->lowerTables[$config->db->prefix . 'caseStep']       = $config->db->prefix . 'casestep';

@@ -12,6 +12,8 @@ cid=19527
 - 测试获取版本 biz6_1 的开源版版本 @16_1
 - 测试获取版本 max4_3 的开源版版本 @18_3
 - 测试获取版本 ipd1_1 的开源版版本 @18_8
+- 测试获取GitFox4.3版本的开源版版本 @22_7
+- 测试获取GitFox4.4版本的开源版版本 @22_7
 
 **/
 
@@ -22,7 +24,7 @@ zenData('user')->loadYaml('user')->gen(5);
 
 su('admin');
 
-$versions = array('18_1', 'pro8_1', 'biz6_1', 'max4_3', 'ipd1_1');
+$versions = array('18_1', 'pro8_1', 'biz6_1', 'max4_3', 'ipd1_1', 'gitfox4_3', 'gitfox4_4');
 
 $upgrade = new upgradeModelTest();
 r($upgrade->getOpenVersionTest($versions[0])) && p() && e('18_1'); // 测试获取版本 18_1 的开源版版本
@@ -30,3 +32,5 @@ r($upgrade->getOpenVersionTest($versions[1])) && p() && e('11_2'); // 测试获�
 r($upgrade->getOpenVersionTest($versions[2])) && p() && e('16_1'); // 测试获取版本 biz6_1 的开源版版本
 r($upgrade->getOpenVersionTest($versions[3])) && p() && e('18_3'); // 测试获取版本 max4_3 的开源版版本
 r($upgrade->getOpenVersionTest($versions[4])) && p() && e('18_8'); // 测试获取版本 ipd1_1 的开源版版本
+r($upgrade->getOpenVersionTest($versions[5])) && p() && e('22_7'); // 测试获取GitFox4.3版本的开源版版本
+r($upgrade->getOpenVersionTest($versions[6])) && p() && e('22_7'); // 测试获取GitFox4.4版本的开源版版本

@@ -12,6 +12,7 @@ cid=19530
 - 测试获取版本 18.3 的开源版版本 @update18.3.sql
 - 测试获取版本 18.4 的开源版版本 @update18.4.sql
 - 测试获取版本 18.5 的开源版版本 @update18.5.sql
+- 测试获取GitFox4.7的升级SQL路径 @gitfox/update4.7.sql
 
 **/
 
@@ -22,7 +23,7 @@ zenData('user')->loadYaml('user')->gen(5);
 
 su('admin');
 
-$versions = array('18.1', '18.2', '18.3', '18.4', '18.5');
+$versions = array('18.1', '18.2', '18.3', '18.4', '18.5', 'gitfox4.7');
 
 $upgrade = new upgradeModelTest();
 r($upgrade->getUpgradeFileTest($versions[0])) && p() && e('update18.1.sql'); // 测试获取版本 18.1 的开源版版本
@@ -30,3 +31,4 @@ r($upgrade->getUpgradeFileTest($versions[1])) && p() && e('update18.2.sql'); // 
 r($upgrade->getUpgradeFileTest($versions[2])) && p() && e('update18.3.sql'); // 测试获取版本 18.3 的开源版版本
 r($upgrade->getUpgradeFileTest($versions[3])) && p() && e('update18.4.sql'); // 测试获取版本 18.4 的开源版版本
 r($upgrade->getUpgradeFileTest($versions[4])) && p() && e('update18.5.sql'); // 测试获取版本 18.5 的开源版版本
+r($upgrade->getUpgradeFileTest($versions[5])) && p() && e('gitfox/update4.7.sql'); // 测试获取GitFox4.7的升级SQL路径

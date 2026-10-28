@@ -18,7 +18,7 @@ cid=19532
 - 测试获取开源版版本 18_9 来源版本 biz 的升级版本 @pro:0;biz:biz8_9;max:0;ipd:0;gitfox:0
 - 测试获取开源版版本 18_9 来源版本 max 的升级版本 @pro:0;biz:biz8_9;max:max4_9;ipd:0;gitfox:0
 - 测试获取开源版版本 18_9 来源版本 ipd 的升级版本 @pro:0;biz:biz8_9;max:max4_9;ipd:ipd1_1_1;gitfox:0
-- 测试获取开源版版本 22_6 来源版本 gitfox 的升级版本 @pro:0;biz:0;max:0;ipd:0;gitfox:gitfox4_3
+- 测试GitFoxSQL改由统一迁移链执行 @pro:0;biz:0;max:0;ipd:0;gitfox:0
 - 测试获取开源版版本 18_8 来源版本 gitfox 的升级版本 @pro:0;biz:0;max:0;ipd:0;gitfox:0
 
 **/
@@ -46,5 +46,5 @@ r($upgrade->getVersionsToUpdateTest($openVersion[1], $fromEdition[2])) && p() &&
 r($upgrade->getVersionsToUpdateTest($openVersion[1], $fromEdition[3])) && p() && e('pro:0;biz:biz8_9;max:max4_9;ipd:0;gitfox:0');    // 测试获取开源版版本 18_9 来源版本 max 的升级版本
 r($upgrade->getVersionsToUpdateTest($openVersion[1], $fromEdition[4])) && p() && e('pro:0;biz:biz8_9;max:max4_9;ipd:ipd1_1_1;gitfox:0'); // 测试获取开源版版本 18_9 来源版本 ipd 的升级版本
 
-r($upgrade->getVersionsToUpdateTest('22_6', 'gitfox')) && p() && e('pro:0;biz:0;max:0;ipd:0;gitfox:gitfox4_3');                     // 测试获取开源版版本 22_6 来源版本 gitfox 的升级版本
+r($upgrade->getVersionsToUpdateTest('22_7', 'gitfox')) && p() && e('pro:0;biz:0;max:0;ipd:0;gitfox:0');                              // 测试GitFoxSQL改由统一迁移链执行
 r($upgrade->getVersionsToUpdateTest('18_8', 'gitfox')) && p() && e('pro:0;biz:0;max:0;ipd:0;gitfox:0');                             // 测试获取开源版版本 18_8 来源版本 gitfox 的升级版本

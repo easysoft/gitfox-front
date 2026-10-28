@@ -80,11 +80,6 @@ class upgradeModel extends model
         }
         if($fromEdition == 'open') return $versions;
 
-        /* Update gitfox sql only from gitfox. */
-        foreach($this->config->upgrade->gitfoxVersion as $gitfox => $open)
-        {
-            if(isset($versions[$open])) $versions[$open]['gitfox'][] = $gitfox;
-        }
         if($fromEdition == 'gitfox') return $versions;
 
         /* Update pro sql from pro|biz|max|ipd. */
@@ -114,6 +109,200 @@ class upgradeModel extends model
             if(isset($versions[$open])) $versions[$open]['ipd'][] = $ipd;
         }
         return $versions;
+    }
+
+    /**
+     * 获取需要执行的GitFox升级版本。
+     * Get GitFox versions to update.
+     *
+     * @param  string $fromVersion
+     * @param  string $toVersion
+     * @access public
+     * @return array
+     */
+    public function getGitfoxVersionsToUpdate(string $fromVersion, string $toVersion): array
+    {
+        $fromVersion     = str_replace('.', '_', $fromVersion);
+        $toVersion       = str_replace('.', '_', $toVersion);
+        $fromOpenVersion = $this->getOpenVersion($fromVersion);
+        $toOpenVersion   = $this->getOpenVersion($toVersion);
+        $gitfoxVersions  = $this->getSortedGitfoxVersions();
+        $startVersion    = '';
+        $endVersion      = '';
+
+        if(empty($fromOpenVersion) || empty($toOpenVersion) || empty($gitfoxVersions)) return array();
+
+        foreach($gitfoxVersions as $gitfoxVersion => $openVersion)
+        {
+            if($this->compareUpgradeVersions($openVersion, $toOpenVersion) === 0) $endVersion = $gitfoxVersion;
+        }
+        if(empty($endVersion)) return array();
+
+        if($this->getEditionByVersion($fromVersion) == 'gitfox')
+        {
+            $startVersion = $fromVersion;
+        }
+        else
+        {
+            $previousOpenVersion = $this->getPreviousOpenVersion($fromOpenVersion);
+            $startVersion        = $this->getLastGitfoxVersionForOpen($previousOpenVersion, $gitfoxVersions);
+
+            if(empty($startVersion)) $startVersion = $this->getFirstGitfoxVersionForOpen($fromOpenVersion, $gitfoxVersions);
+            if(empty($startVersion)) $startVersion = $this->getFirstGitfoxVersionInOpenRange($fromOpenVersion, $toOpenVersion, $gitfoxVersions);
+        }
+        if(empty($startVersion)) return array();
+
+        $versions = array();
+        foreach($gitfoxVersions as $gitfoxVersion => $openVersion)
+        {
+            if($this->compareUpgradeVersions($gitfoxVersion, $startVersion) < 0) continue;
+            if($this->compareUpgradeVersions($gitfoxVersion, $endVersion) >= 0) continue;
+            $versions[$gitfoxVersion] = $openVersion;
+        }
+        return $versions;
+    }
+
+    /**
+     * 获取按版本排序的GitFox版本。
+     * Get sorted GitFox versions.
+     *
+     * @access private
+     * @return array
+     */
+    private function getSortedGitfoxVersions(): array
+    {
+        $versions = $this->config->upgrade->gitfoxVersion;
+        uksort($versions, function($left, $right)
+        {
+            return $this->compareUpgradeVersions($left, $right);
+        });
+        return $versions;
+    }
+
+    /**
+     * 获取上一个开源版本。
+     * Get previous open version.
+     *
+     * @param  string $openVersion
+     * @access private
+     * @return string
+     */
+    private function getPreviousOpenVersion(string $openVersion): string
+    {
+        $previousVersion = '';
+        foreach(array_keys($this->lang->upgrade->fromVersions) as $version)
+        {
+            if(!is_numeric($version[0])) continue;
+            if($this->compareUpgradeVersions($version, $openVersion) >= 0) continue;
+            if(empty($previousVersion) || $this->compareUpgradeVersions($version, $previousVersion) > 0) $previousVersion = $version;
+        }
+        return $previousVersion;
+    }
+
+    /**
+     * 获取指定开源版本的最后一个GitFox版本。
+     * Get last GitFox version for an open version.
+     *
+     * @param  string $openVersion
+     * @param  array  $gitfoxVersions
+     * @access private
+     * @return string
+     */
+    private function getLastGitfoxVersionForOpen(string $openVersion, array $gitfoxVersions): string
+    {
+        $gitfoxVersion = '';
+        if(empty($openVersion)) return $gitfoxVersion;
+
+        foreach($gitfoxVersions as $version => $mappedOpenVersion)
+        {
+            if($this->compareUpgradeVersions($mappedOpenVersion, $openVersion) === 0) $gitfoxVersion = $version;
+        }
+        return $gitfoxVersion;
+    }
+
+    /**
+     * 获取指定开源版本的第一个GitFox版本。
+     * Get first GitFox version for an open version.
+     *
+     * @param  string $openVersion
+     * @param  array  $gitfoxVersions
+     * @access private
+     * @return string
+     */
+    private function getFirstGitfoxVersionForOpen(string $openVersion, array $gitfoxVersions): string
+    {
+        foreach($gitfoxVersions as $version => $mappedOpenVersion)
+        {
+            if($this->compareUpgradeVersions($mappedOpenVersion, $openVersion) === 0) return $version;
+        }
+        return '';
+    }
+
+    /**
+     * 获取开源升级区间内的第一个GitFox版本。
+     * Get first GitFox version in an open upgrade range.
+     *
+     * @param  string $fromOpenVersion
+     * @param  string $toOpenVersion
+     * @param  array  $gitfoxVersions
+     * @access private
+     * @return string
+     */
+    private function getFirstGitfoxVersionInOpenRange(string $fromOpenVersion, string $toOpenVersion, array $gitfoxVersions): string
+    {
+        foreach($gitfoxVersions as $version => $mappedOpenVersion)
+        {
+            if($this->compareUpgradeVersions($mappedOpenVersion, $fromOpenVersion) < 0) continue;
+            if($this->compareUpgradeVersions($mappedOpenVersion, $toOpenVersion) > 0) continue;
+            return $version;
+        }
+        return '';
+    }
+
+    /**
+     * 比较两个升级版本。
+     * Compare two upgrade versions.
+     *
+     * @param  string $left
+     * @param  string $right
+     * @access private
+     * @return int
+     */
+    private function compareUpgradeVersions(string $left, string $right): int
+    {
+        return version_compare(str_replace('_', '.', $left), str_replace('_', '.', $right));
+    }
+
+    /**
+     * 执行GitFox升级SQL。
+     * Execute GitFox upgrade SQL files.
+     *
+     * @param  string $fromVersion
+     * @param  string $toVersion
+     * @access public
+     * @return bool
+     */
+    public function executeGitfoxUpgrades(string $fromVersion, string $toVersion): bool
+    {
+        $versions = $this->getGitfoxVersionsToUpdate($fromVersion, $toVersion);
+        foreach($versions as $version => $openVersion)
+        {
+            $sqlFile = $this->getUpgradeFile(str_replace('_', '.', $version));
+            if(is_file($sqlFile))
+            {
+                $this->saveLogs("Execute $version");
+                $result = $this->execSQL($sqlFile, $version);
+                if(!$result) return false;
+            }
+            else
+            {
+                $this->saveLogs("Skip $version: SQL file not found");
+            }
+
+            $result = $this->executeByConfig($version);
+            if(!$result) return false;
+        }
+        return true;
     }
 
     /**
@@ -273,6 +462,9 @@ class upgradeModel extends model
                 }
             }
         }
+
+        $result = $this->executeGitfoxUpgrades($fromVersion, $toVersion);
+        if(!$result) return $this->recordExecutedChanges();
 
         /* 如果此次升级到最终版本，则执行额外的数据处理流程。*/
         if(version_compare($toVersion, $this->config->version, '='))
@@ -460,6 +652,14 @@ class upgradeModel extends model
                     }
                 }
             }
+        }
+
+        $toVersion      = str_replace('.', '_', $this->config->version);
+        $gitfoxVersions = $this->getGitfoxVersionsToUpdate($fromVersion, $toVersion);
+        foreach($gitfoxVersions as $gitfoxVersion => $openVersion)
+        {
+            $sqlFile = $this->getUpgradeFile(str_replace('_', '.', $gitfoxVersion));
+            if(file_exists($sqlFile)) $confirmContent .= file_get_contents($sqlFile);
         }
 
         return str_replace($this->config->db->defaultPrefix, $this->config->db->prefix, $confirmContent);
@@ -1367,7 +1567,7 @@ class upgradeModel extends model
         if(str_starts_with($version, 'gitfox'))
         {
             $version = str_replace('gitfox', '', $version);
-            return $this->app->getAppRoot() . 'db' . DS . 'gitfox' . DS . 'upgrade' . $version . '.sql';
+            return $this->app->getAppRoot() . 'db' . DS . 'gitfox' . DS . 'update' . $version . '.sql';
         }
         return $this->app->getAppRoot() . 'db' . DS . 'update' . $version . '.sql';
     }

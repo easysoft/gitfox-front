@@ -13,6 +13,7 @@ cid=0
 - 测试升级目标版本低于当前版本时返回true @1
 - 测试该场景不记录错误信息 @0
 - 测试GitFox独立版来源版本同样执行降级检查 @0
+- 测试GitFoxSQL文件缺失时跳过并继续 @1
 
 */
 
@@ -30,3 +31,4 @@ r($upgrade->executeUpgradeErrorTest('18_1', '22_7', '18_1', '22_7'))       && p(
 r($upgrade->executeUpgradeTest('18_1', '18_2', '22_7', '22_7'))            && p() && e('1');                                                          // 测试升级目标版本低于当前版本时返回true
 r($upgrade->executeUpgradeErrorTest('18_1', '18_2', '22_7', '22_7'))       && p() && e('0');                                                          // 测试该场景不记录错误信息
 r($upgrade->executeUpgradeTest('gitfox4_3', '22_7', '18_1', '22_7'))       && p() && e('0');                                                          // 测试GitFox独立版来源版本同样执行降级检查
+r($upgrade->executeGitfoxUpgradesMissingFileTest())                        && p() && e('1');                                                          // 测试GitFoxSQL文件缺失时跳过并继续
