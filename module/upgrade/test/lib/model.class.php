@@ -23,10 +23,36 @@ class upgradeModelTest extends baseTest
         $return   = '';
         foreach($versions[$openVersion] as $edition => $version)
         {
-            if(!isset($version[0])) $version[0] = '0';
-            $return .="{$edition}:{$version[0]};";
+            $versionList = empty($version) ? '0' : implode(',', $version);
+            $return     .= "{$edition}:{$versionList};";
         }
         return trim($return, ';');
+    }
+
+    /**
+     * 测试获取GitFox升级版本。
+     * Test get GitFox versions to update.
+     *
+     * @param  string     $fromVersion
+     * @param  string     $toVersion
+     * @param  array|null $gitfoxVersions
+     * @param  array|null $openVersions
+     * @access public
+     * @return string
+     */
+    public function getGitfoxVersionsToUpdateTest(string $fromVersion, string $toVersion, ?array $gitfoxVersions = null, ?array $openVersions = null): string
+    {
+        $oldGitfoxVersions = $this->instance->config->upgrade->gitfoxVersion;
+        $oldOpenVersions   = $this->instance->lang->upgrade->fromVersions;
+
+        if($gitfoxVersions !== null) $this->instance->config->upgrade->gitfoxVersion = $gitfoxVersions;
+        if($openVersions !== null)   $this->instance->lang->upgrade->fromVersions   = $openVersions;
+
+        $versions = $this->instance->getGitfoxVersionsToUpdate($fromVersion, $toVersion);
+
+        $this->instance->config->upgrade->gitfoxVersion = $oldGitfoxVersions;
+        $this->instance->lang->upgrade->fromVersions   = $oldOpenVersions;
+        return implode(',', array_keys($versions));
     }
 
     /**
@@ -309,6 +335,41 @@ class upgradeModelTest extends baseTest
     }
 
     /**
+     * 测试确认SQL是否包含GitFox迁移内容。
+     * Test whether confirm SQL contains GitFox migration content.
+     *
+     * @access public
+     * @return int
+     */
+    public function getConfirmGitfoxContainsTest(): int
+    {
+        global $config;
+
+        $oldVersion        = $config->version;
+        $oldGitfoxVersions = $config->upgrade->gitfoxVersion;
+        $oldOpenVersions   = $this->instance->lang->upgrade->fromVersions;
+        $sqlFile           = $this->instance->getUpgradeFile('gitfox99.1');
+        if(file_exists($sqlFile)) return 0;
+
+        try
+        {
+            file_put_contents($sqlFile, "SELECT 'GITFOX_CONFIRM_MARKER';\n");
+            $config->version = 'gitfox99.2';
+            $config->upgrade->gitfoxVersion = array('gitfox99_1' => '22_7', 'gitfox99_2' => '22_7');
+            $this->instance->lang->upgrade->fromVersions = array('22_7' => '22.7');
+
+            return strpos($this->instance->getConfirm('gitfox99_1'), 'GITFOX_CONFIRM_MARKER') !== false ? 1 : 0;
+        }
+        finally
+        {
+            if(file_exists($sqlFile)) unlink($sqlFile);
+            $config->version = $oldVersion;
+            $config->upgrade->gitfoxVersion = $oldGitfoxVersions;
+            $this->instance->lang->upgrade->fromVersions = $oldOpenVersions;
+        }
+    }
+
+    /**
      * 测试执行升级。
      * Test execute upgrade.
      *
@@ -338,6 +399,31 @@ class upgradeModelTest extends baseTest
         upgradeModel::$errors     = $oldErrors;
 
         return $result ? '1' : '0';
+    }
+
+    /**
+     * 测试执行缺失SQL文件的GitFox升级。
+     * Test GitFox upgrade with a missing SQL file.
+     *
+     * @access public
+     * @return int
+     */
+    public function executeGitfoxUpgradesMissingFileTest(): int
+    {
+        $oldGitfoxVersions = $this->instance->config->upgrade->gitfoxVersion;
+        $oldOpenVersions   = $this->instance->lang->upgrade->fromVersions;
+
+        try
+        {
+            $this->instance->config->upgrade->gitfoxVersion = array('gitfox99_1' => '22_7', 'gitfox99_2' => '22_7');
+            $this->instance->lang->upgrade->fromVersions   = array('22_7' => '22.7');
+            return $this->instance->executeGitfoxUpgrades('gitfox99_1', 'gitfox99_2') ? 1 : 0;
+        }
+        finally
+        {
+            $this->instance->config->upgrade->gitfoxVersion = $oldGitfoxVersions;
+            $this->instance->lang->upgrade->fromVersions   = $oldOpenVersions;
+        }
     }
 
     /**

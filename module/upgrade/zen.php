@@ -205,6 +205,14 @@ class upgradeZen extends upgrade
             }
         }
 
+        $gitfoxVersions = $this->upgrade->getGitfoxVersionsToUpdate($fromVersion, $toVersion);
+        foreach($gitfoxVersions as $gitfoxVersion => $openVersion)
+        {
+            $sqlFile = $this->upgrade->getUpgradeFile(str_replace('_', '.', $gitfoxVersion));
+            $changes = array_merge($changes, $this->getChangesBySql($gitfoxVersion, $sqlFile));
+            $changes = array_merge($changes, $this->getChangesByConfig($gitfoxVersion));
+        }
+
         /* 如果此次升级到最终版本，则执行额外的数据处理流程。*/
         if(version_compare($toVersion, $this->config->version, '='))
         {
