@@ -34,7 +34,7 @@ $isInPlanView ? null : featureBar
     )) : null,
     div(searchToggle(set::module('codeScanTask'), set::open($type == 'bySearch')))
 );
-$repoMap = $repoList;
+$repoMap = isset($repoMap) ? $repoMap : $repoList;
 foreach($tasks as $task)
 {
     if(isset($repoMap[$task->repoID]) || empty($task->repoName)) continue;
