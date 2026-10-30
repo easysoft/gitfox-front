@@ -144,11 +144,7 @@ class upgradeModel extends model
         }
         else
         {
-            $previousOpenVersion = $this->getPreviousOpenVersion($fromOpenVersion);
-            $startVersion        = $this->getLastGitfoxVersionForOpen($previousOpenVersion, $gitfoxVersions);
-
-            if(empty($startVersion)) $startVersion = $this->getFirstGitfoxVersionForOpen($fromOpenVersion, $gitfoxVersions);
-            if(empty($startVersion)) $startVersion = $this->getFirstGitfoxVersionInOpenRange($fromOpenVersion, $toOpenVersion, $gitfoxVersions);
+            $startVersion = $this->getGitfoxStartVersion($fromOpenVersion, $gitfoxVersions);
         }
         if(empty($startVersion)) return array();
 
@@ -239,22 +235,28 @@ class upgradeModel extends model
     }
 
     /**
-     * 获取开源升级区间内的第一个GitFox版本。
-     * Get first GitFox version in an open upgrade range.
+     * 获取GitFox升级起始版本。
+     * Get the starting GitFox version for an upgrade.
      *
      * @param  string $fromOpenVersion
-     * @param  string $toOpenVersion
      * @param  array  $gitfoxVersions
      * @access private
      * @return string
      */
-    private function getFirstGitfoxVersionInOpenRange(string $fromOpenVersion, string $toOpenVersion, array $gitfoxVersions): string
+    private function getGitfoxStartVersion(string $fromOpenVersion, array $gitfoxVersions): string
     {
-        foreach($gitfoxVersions as $version => $mappedOpenVersion)
+        $openVersion = $fromOpenVersion;
+        for($searchCount = 0; $searchCount < 3; $searchCount++)
         {
-            if($this->compareUpgradeVersions($mappedOpenVersion, $fromOpenVersion) < 0) continue;
-            if($this->compareUpgradeVersions($mappedOpenVersion, $toOpenVersion) > 0) continue;
-            return $version;
+            if($searchCount > 0)
+            {
+                $openVersion = $this->getPreviousOpenVersion($openVersion);
+                if(empty($openVersion)) break;
+            }
+
+            if($searchCount === 0) $gitfoxVersion = $this->getFirstGitfoxVersionForOpen($openVersion, $gitfoxVersions);
+            else                   $gitfoxVersion = $this->getLastGitfoxVersionForOpen($openVersion, $gitfoxVersions);
+            if(!empty($gitfoxVersion)) return $gitfoxVersion;
         }
         return '';
     }
