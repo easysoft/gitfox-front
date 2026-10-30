@@ -16969,3 +16969,7 @@ CREATE TABLE IF NOT EXISTS `ops_variable` (
 ) ENGINE=InnoDB COMMENT='凭证表';
 CREATE UNIQUE INDEX `uk_spaceID_repoID_name` ON `ops_variable` (`spaceID`, `repoID`, `name`);
 CREATE UNIQUE INDEX `uk_key` ON `ops_variable` (`key`);
+
+-- 阶段执行表增加审批状态字段。
+ALTER TABLE `ops_stage_executions` ADD COLUMN `approvalStatus` varchar(30) NOT NULL DEFAULT '' COMMENT '审批状态：''=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消' AFTER `status`;
+ALTER TABLE `ops_stage_executions` ADD COLUMN `approvalConfig` varchar(500) NOT NULL DEFAULT '' COMMENT '审批配置' AFTER `approvalStatus`;
