@@ -182,4 +182,20 @@ class reporeviewflowModel extends model
             ->beginIF($status)->andWhere('status')->eq($status)->fi()
             ->fetchPairs();
     }
+
+    /**
+     * 获取问题类型列表。
+     * Get issue type list.
+     *
+     * @access public
+     * @return array
+     */
+    public function getIssueTypeList(): array
+    {
+        $this->app->loadLang('codescan');
+        $issueTypeList = $this->lang->codescan->typeList;
+        unset($issueTypeList['all']);
+
+        return $issueTypeList;
+    }
 }
