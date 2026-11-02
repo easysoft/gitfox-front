@@ -145,6 +145,7 @@ class upgradeModel extends model
         else
         {
             $startVersion = $this->getGitfoxStartVersion($fromOpenVersion, $gitfoxVersions);
+            if(empty($startVersion)) $startVersion = $this->getFirstGitfoxVersionInOpenRange($fromOpenVersion, $toOpenVersion, $gitfoxVersions);
         }
         if(empty($startVersion)) return array();
 
@@ -257,6 +258,27 @@ class upgradeModel extends model
             if($searchCount === 0) $gitfoxVersion = $this->getFirstGitfoxVersionForOpen($openVersion, $gitfoxVersions);
             else                   $gitfoxVersion = $this->getLastGitfoxVersionForOpen($openVersion, $gitfoxVersions);
             if(!empty($gitfoxVersion)) return $gitfoxVersion;
+        }
+        return '';
+    }
+
+    /**
+     * 获取开源升级区间内的第一个GitFox版本。
+     * Get first GitFox version in an open upgrade range.
+     *
+     * @param  string $fromOpenVersion
+     * @param  string $toOpenVersion
+     * @param  array  $gitfoxVersions
+     * @access private
+     * @return string
+     */
+    private function getFirstGitfoxVersionInOpenRange(string $fromOpenVersion, string $toOpenVersion, array $gitfoxVersions): string
+    {
+        foreach($gitfoxVersions as $version => $mappedOpenVersion)
+        {
+            if($this->compareUpgradeVersions($mappedOpenVersion, $fromOpenVersion) < 0) continue;
+            if($this->compareUpgradeVersions($mappedOpenVersion, $toOpenVersion) > 0) continue;
+            return $version;
         }
         return '';
     }
