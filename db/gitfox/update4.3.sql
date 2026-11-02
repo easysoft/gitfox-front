@@ -36,3 +36,7 @@ REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) SELECT DISTINCT `group
 
 -- DevOps 开发者默认拥有解决人工审查问题的权限。
 REPLACE INTO `zt_grouppriv` (`group`, `module`, `method`) SELECT `id`, 'codescan', 'resolveManualIssue' FROM `zt_group` WHERE `role` = 'DEVOPSUSER';
+
+-- 阶段执行表增加审批状态字段。
+ALTER TABLE `ops_stage_executions` ADD COLUMN `approvalStatus` varchar(30) NOT NULL DEFAULT '' COMMENT '审批状态：""=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消' AFTER `status`;
+ALTER TABLE `ops_stage_executions` ADD COLUMN `approvalConfig` varchar(500) NOT NULL DEFAULT '' COMMENT '审批配置' AFTER `approvalStatus`;
