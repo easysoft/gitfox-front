@@ -26,6 +26,7 @@ cid=0
 - 执行test模块的getIssuesTest方法，参数是24, 5, 'scan', 'all'  @0
 - 执行$staticIssues[5], 'bugID', 0 @101
 - 执行$staticIssues[6], 'bugID', 0 @0
+- 执行test模块的getIssuesTest方法，参数是24, 5, array  @2
 
 */
 
@@ -78,3 +79,5 @@ r(count($test->getIssuesTest(24, 5, 'scan', 'all')))         && p() && e('0');
 $staticIssues = $test->getIssuesTest(24, 5, 'static', 'all');
 r(zget($staticIssues[5], 'bugID', 0)) && p() && e('101');
 r(zget($staticIssues[6], 'bugID', 0)) && p() && e('0');
+
+r(count($test->getIssuesTest(24, 5, array('check', 'smell'), 'all'))) && p() && e('2');

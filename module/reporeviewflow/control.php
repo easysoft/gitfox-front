@@ -71,7 +71,7 @@ class reporeviewflow extends control
         $this->view->repoID        = $repoID;
         $this->view->repo          = $repo;
         $this->view->repoMembers   = !empty($repoMembers) ? array_column($repoMembers, 'realname', 'account') : array();
-        $this->view->issueTypeList = $this->reporeviewflow->getIssueTypeList();
+        $this->view->issueTypeList = $this->reporeviewflowZen->getIssueTypeList();
         $this->display();
     }
 
@@ -111,7 +111,7 @@ class reporeviewflow extends control
         $this->view->repo          = $repo;
         $this->view->reviewFlow    = $reviewFlow;
         $this->view->repoMembers   = !empty($repoMembers) ? array_column($repoMembers, 'realname', 'account') : array();
-        $this->view->issueTypeList = $this->reporeviewflow->getIssueTypeList();
+        $this->view->issueTypeList = $this->reporeviewflowZen->getIssueTypeList();
         $this->display();
     }
 

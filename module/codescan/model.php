@@ -1429,16 +1429,17 @@ class codescanModel extends model
      *
      * @param  int     $repoID
      * @param  int     $ppmID
-     * @param  string  $type   问题类型（ai|manual|static）。
+     * @param  string|array $type 问题类型或扫描方式列表（ai|manual|static）。
      * @param  string  $status 问题状态；bug/converted 表示已转缺陷。
      * @param  ?object $pager
      * @access public
      * @return array
      */
-    public function getIssues(int $repoID = 0, int $ppmID = 0, string $type = '', string $status = '', ?object $pager = null): array
+    public function getIssues(int $repoID = 0, int $ppmID = 0, string|array $type = '', string $status = '', ?object $pager = null): array
     {
         $transferredStatus = in_array($status, array('bug', 'converted'));
         $bugIssueSQL       = $transferredStatus ? $this->dao->select('`issueKey`')->from(TABLE_BUG)->where('deleted')->eq(0)->andWhere('`issueKey`')->ne('')->get() : '';
+        $scanMethods       = is_array($type) ? $type : ($type == 'static' ? array('check', 'smell') : ($type != '' && $type != 'all' ? array($type) : array()));
 
         $issues = $this->dao->select('*')->from(TABLE_SCANISSUE)
             ->where('deleted')->eq(0)
@@ -1446,8 +1447,7 @@ class codescanModel extends model
             ->beginIF($ppmID)->andWhere('`ppmID`')->eq($ppmID)->fi()
             ->beginIF($transferredStatus)->andWhere("id IN ($bugIssueSQL)")->fi()
             ->beginIF(!$transferredStatus && $status != '' && $status != 'all')->andWhere('`status`')->eq($status)->fi()
-            ->beginIF($type != '' && $type != 'all' && $type != 'static')->andWhere('`scanMethod`')->eq($type)->fi()
-            ->beginIF($type == 'static')->andWhere('(`scanMethod`')->eq('check')->orWhere('`scanMethod`')->eq('smell')->markRight()->fi()
+            ->beginIF(!empty($scanMethods))->andWhere('`scanMethod`')->in($scanMethods)->fi()
             ->orderBy('id_desc')
             ->page($pager)
             ->fetchAll('id', false);

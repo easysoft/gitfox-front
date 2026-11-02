@@ -1344,12 +1344,32 @@ class ppmModel extends model
     }
 
     /**
+     * 解析问题清单状态。
+     * Resolve an issue list status.
+     *
+     * @param  string $type
+     * @param  string $status
+     * @access protected
+     * @return string|false
+     */
+    protected function resolveIssueStatus(string $type, string $status): string|false
+    {
+        if($status === '' || $status === 'all') return '';
+
+        $mappedStatus = $this->mapIssueStatus($type, $status);
+        if($mappedStatus !== '') return $mappedStatus;
+
+        $statusList = zget($this->config->ppm->issueStatusList, $type, array());
+        return in_array($status, $statusList) ? $status : false;
+    }
+
+    /**
      * 按问题类型获取问题列表。
      * Get the issue list by issue type.
      *
      * @param  int    $repoID
      * @param  int    $ppmID
-     * @param  string $type   问题类型（static|manual）。
+     * @param  string $type   由 issueScanMethods 配置注册的问题类型。
      * @param  string $status 问题清单状态。
      * @param  object $pager
      * @access public
@@ -1357,13 +1377,14 @@ class ppmModel extends model
      */
     public function getIssueList(int $repoID, int $ppmID, string $type, string $status, object $pager): array
     {
-        if(!in_array($type, array('static', 'manual'))) return array();
+        $scanMethods = zget($this->config->ppm->issueScanMethods, $type, array());
+        if(empty($scanMethods)) return array();
 
-        $mappedStatus = $this->mapIssueStatus($type, $status);
-        if($mappedStatus == '' && in_array($status, array('bug', 'converted'))) $mappedStatus = $status;
+        $mappedStatus = $this->resolveIssueStatus($type, $status);
+        if($mappedStatus === false) return array();
 
         $codescan = $this->loadModel('codescan');
-        $issues   = $codescan->getIssues($repoID, $ppmID, $type, $mappedStatus, $pager);
+        $issues   = $codescan->getIssues($repoID, $ppmID, $scanMethods, $mappedStatus, $pager);
         foreach($issues as $issueID => $issue)
         {
             if($type == 'manual')
@@ -1381,18 +1402,29 @@ class ppmModel extends model
     }
 
     /**
-     * 获取当前代码评审的问题总数。
-     * Get the total issue count of the current PPM.
+     * 获取当前代码评审中已注册类型的问题总数。
+     * Get the issue count of registered issue types in the current PPM.
      *
-     * @param  int $ppmID
+     * @param  int   $repoID
+     * @param  int   $ppmID
+     * @param  array $issueTypes
      * @access public
      * @return int
      */
-    public function getIssueTotal(int $ppmID): int
+    public function getIssueTotal(int $repoID, int $ppmID, array $issueTypes): int
     {
+        $scanMethods = array();
+        foreach(array_unique($issueTypes) as $type)
+        {
+            $scanMethods = array_merge($scanMethods, zget($this->config->ppm->issueScanMethods, $type, array()));
+        }
+        if(empty($scanMethods)) return 0;
+
         return (int)$this->dao->select('COUNT(*) AS `count`')->from(TABLE_SCANISSUE)
             ->where('deleted')->eq(0)
+            ->beginIF($repoID)->andWhere('`repoID`')->eq($repoID)->fi()
             ->beginIF($ppmID)->andWhere('ppmID')->eq($ppmID)->fi()
+            ->andWhere('`scanMethod`')->in(array_unique($scanMethods))
             ->fetch('count');
     }
 

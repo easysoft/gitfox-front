@@ -15,14 +15,22 @@ cid=0
 - 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'unknown', 'wait', $invalidPager  @0
 - 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'scan', 'all', $scanPager  @0
 - 执行$emptyPager->recTotal @0
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'static', 'all', $allPager  @2
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'static', '', $emptyStatusPager  @2
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'static', 'todo', $todoPager  @0
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'static', 'solving', $solvingPager  @0
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'static', 'bug', $bugPager  @1
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'manual', 'converted', $convertedPager  @1
+- 执行ppmModel模块的getIssueListTest方法，参数是42, 81, 'custom', 'wait', $customPager  @1
 
 */
 
 include dirname(__FILE__, 5) . '/test/lib/init.php';
 include dirname(__FILE__, 2) . '/lib/model.class.php';
 
-global $app;
+global $app, $config, $tester;
 $app->loadClass('pager', true);
+$app->loadConfig('ppm');
 $app->rawModule = 'ppm';
 $app->rawMethod = 'view';
 $app->setMethodName('view');
@@ -42,6 +50,14 @@ $scanIssue->endLine->range('12,22,32,9');
 $scanIssue->content->range('check,smell,ai,&lt;p&gt;人工问题&lt;/p&gt;');
 $scanIssue->deleted->range('0{4}');
 $scanIssue->gen(4);
+
+$tester->dao->delete()->from(TABLE_BUG)->where('issueKey')->in('1,4')->exec();
+$tester->dao->insert(TABLE_BUG)->data((object)array('id' => 300, 'issueKey' => '1', 'deleted' => 0))->exec();
+$tester->dao->insert(TABLE_BUG)->data((object)array('id' => 301, 'issueKey' => '4', 'deleted' => 0))->exec();
+$config->ppm->issueStatusList['static'][] = 'bug';
+$config->ppm->issueStatusList['manual'][] = 'converted';
+$config->ppm->issueScanMethods['custom'] = array('ai');
+$config->ppm->issueStatusMaps['custom']  = array('wait' => 'wait');
 
 su('admin');
 
@@ -75,3 +91,24 @@ r(count((array)$ppmModel->getIssueListTest(42, 81, 'scan', 'all', $scanPager))) 
 $emptyPager = new pager(0, 20, 1, 'empty');
 $ppmModel->getIssueListTest(42, 81, 'static', 'closed', $emptyPager);
 r($emptyPager->recTotal) && p() && e('0');
+
+$allPager = new pager(0, 20, 1, 'all');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'static', 'all', $allPager))) && p() && e('2');
+
+$emptyStatusPager = new pager(0, 20, 1, 'emptyStatus');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'static', '', $emptyStatusPager))) && p() && e('2');
+
+$todoPager = new pager(0, 20, 1, 'todo');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'static', 'todo', $todoPager))) && p() && e('0');
+
+$solvingPager = new pager(0, 20, 1, 'solving');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'static', 'solving', $solvingPager))) && p() && e('0');
+
+$bugPager = new pager(0, 20, 1, 'bug');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'static', 'bug', $bugPager))) && p() && e('1');
+
+$convertedPager = new pager(0, 20, 1, 'converted');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'manual', 'converted', $convertedPager))) && p() && e('1');
+
+$customPager = new pager(0, 20, 1, 'custom');
+r(count((array)$ppmModel->getIssueListTest(42, 81, 'custom', 'wait', $customPager))) && p() && e('1');

@@ -452,7 +452,7 @@ class ppm extends control
 
             helper::setcookie('issueTab', (string)$issueTab, $this->config->cookieLife, $this->config->webRoot, '', $this->config->cookieSecure, true);
         }
-        $issueTotal = $this->ppm->getIssueTotal((int)$ppm->id);
+        $issueTotal = $this->ppm->getIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id, array_keys($issueTabs));
 
         $this->view->title            = empty($repo->name) ? $this->lang->ppm->common : $repo->name . ' - ' . $this->lang->ppm->common;
         $this->view->ppm              = $ppm;

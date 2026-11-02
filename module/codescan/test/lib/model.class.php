@@ -75,13 +75,13 @@ class codescanModelTest extends baseTest
      *
      * @param  int     $repoID
      * @param  int     $ppmID
-     * @param  string  $type
+     * @param  string|array $type
      * @param  string  $status
      * @param  ?object $pager
      * @access public
      * @return array
      */
-    public function getIssuesTest(int $repoID = 0, int $ppmID = 0, string $type = '', string $status = '', ?object $pager = null): array
+    public function getIssuesTest(int $repoID = 0, int $ppmID = 0, string|array $type = '', string $status = '', ?object $pager = null): array
     {
         return $this->instance->getIssues($repoID, $ppmID, $type, $status, $pager);
     }

@@ -152,3 +152,7 @@ $config->ppm->issueStatusMaps = array();
 $config->ppm->issueStatusMaps['static'] = array('wait' => 'wait', 'solved' => 'solved', 'ignore' => 'ignore', 'closed' => 'closed');
 $config->ppm->issueStatusMaps['manual'] = array('wait' => 'wait', 'solved' => 'solved', 'closed' => 'closed');
 $config->ppm->issueStatusMaps['bug']    = array('wait' => 'active', 'solved' => 'resolved', 'closed' => 'closed');
+
+$config->ppm->issueScanMethods = array();
+$config->ppm->issueScanMethods['static'] = array('check', 'smell');
+$config->ppm->issueScanMethods['manual'] = array('manual');
