@@ -221,6 +221,7 @@ if($config->vision == 'gitfox')
     $lang->navGroup->admin          = 'admin';
     $lang->navGroup->provider       = 'admin';
     $lang->navGroup->runner         = 'admin';
+    $lang->navGroup->variable       = 'admin';
     $lang->navGroup->reporeviewflow = 'repo';
     $lang->navGroup->repobranchtype = 'repo';
     $lang->navGroup->repobranchrule = 'repo';
