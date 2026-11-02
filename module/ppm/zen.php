@@ -258,7 +258,25 @@ class ppmZen extends ppm
         $ppmHandLeUser     = empty($rule) ? array() : explode(',', zget($rule, 'ppmHandleUser', ''));
         $ppmHandLeUser     = array_filter($ppmHandLeUser);
         $userCanMerge      = empty($ppmHandLeUser) || in_array($this->app->user->account, $ppmHandLeUser);
+
         $issueTypeList = $this->loadModel('reporeviewflow')->getIssueTypeList();
+        $issueTypeMap  = array();
+        foreach($issueTypeList as $key => $issueType)
+        {
+            if(!is_array($issueType))
+            {
+                $issueTypeMap[$key] = $issueType;
+                continue;
+            }
+
+            if(isset($issueType['value'], $issueType['text']))
+            {
+                $issueTypeMap[$issueType['value']] = $issueType['text'];
+                continue;
+            }
+
+            foreach(zget($issueType, 'items', array()) as $item) $issueTypeMap[$item['value']] = $item['text'];
+        }
 
         if(!$userCanMerge)
         {
@@ -291,13 +309,15 @@ class ppmZen extends ppm
                     $this->app->loadLang('codescan');
                     foreach($unresolvedIssues as $unresolvedIssue)
                     {
-                        if(in_array($unresolvedIssue->category, $handleIssueFlow->mandatoryType))
+                        $issueType = !empty($unresolvedIssue->category) ? $unresolvedIssue->category : zget($unresolvedIssue, 'type', '');
+                        if(in_array($issueType, $handleIssueFlow->mandatoryType))
                         {
                             $mandatoryType = array();
                             foreach($handleIssueFlow->mandatoryType as $type)
                             {
-                                if(empty($issueTypeList[$type])) continue;
-                                $mandatoryType[] = zget($issueTypeList, $type);
+                                $typeName = zget($issueTypeMap, $type, $type);
+                                if($typeName === $type && isset($this->lang->ppm->aiCodeReview->issueTypeList[$type])) $typeName = $this->lang->ppm->aiCodeReview->issueTypeList[$type];
+                                $mandatoryType[] = $typeName;
                             }
                             $hasUnresolvedSpecifiedIssues = sprintf($this->lang->ppm->notice->hasUnresolvedSpecifiedIssues, implode(',', $mandatoryType));
                             $result->message = $result->message ? $result->message . '; ' . $hasUnresolvedSpecifiedIssues : $hasUnresolvedSpecifiedIssues;
