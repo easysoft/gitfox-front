@@ -315,9 +315,8 @@ class ppmZen extends ppm
                             $mandatoryType = array();
                             foreach($handleIssueFlow->mandatoryType as $type)
                             {
-                                $typeName = zget($issueTypeMap, $type, $type);
-                                if($typeName === $type && isset($this->lang->ppm->aiCodeReview->issueTypeList[$type])) $typeName = $this->lang->ppm->aiCodeReview->issueTypeList[$type];
-                                $mandatoryType[] = $typeName;
+                                if(empty($issueTypeMap[$type])) continue;
+                                $mandatoryType[] = zget($issueTypeMap, $type);
                             }
                             $hasUnresolvedSpecifiedIssues = sprintf($this->lang->ppm->notice->hasUnresolvedSpecifiedIssues, implode(',', $mandatoryType));
                             $result->message = $result->message ? $result->message . '; ' . $hasUnresolvedSpecifiedIssues : $hasUnresolvedSpecifiedIssues;
