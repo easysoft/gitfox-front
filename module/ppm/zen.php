@@ -156,6 +156,21 @@ class ppmZen extends ppm
     }
 
     /**
+     * 获取核心问题清单类型。
+     * Get the core issue tabs.
+     *
+     * @access public
+     * @return array
+     */
+    public function getIssueTabs(): array
+    {
+        $tabs = array();
+        if(!empty($this->lang->ppm->staticScanIssueList))   $tabs['static'] = $this->lang->ppm->staticScanIssueList;
+        if(!empty($this->lang->ppm->manualReviewIssueList)) $tabs['manual'] = $this->lang->ppm->manualReviewIssueList;
+        return $tabs;
+    }
+
+    /**
      * 按问题清单的状态取扫描问题列表。
      * Get the scan issue list by the issue list status.
      *
@@ -239,10 +254,11 @@ class ppmZen extends ppm
         $result->message       = empty($result->message) ? '' : $result->message;
         if(dao::isError()) $result->message = zget(dao::getError(), 'apiMessage', $result->message);
 
-        $rule          = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
-        $ppmHandLeUser = empty($rule) ? array() : explode(',', zget($rule, 'ppmHandleUser', ''));
-        $ppmHandLeUser = array_filter($ppmHandLeUser);
-        $userCanMerge  = empty($ppmHandLeUser) || in_array($this->app->user->account, $ppmHandLeUser);
+        $rule              = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
+        $ppmHandLeUser     = empty($rule) ? array() : explode(',', zget($rule, 'ppmHandleUser', ''));
+        $ppmHandLeUser     = array_filter($ppmHandLeUser);
+        $userCanMerge      = empty($ppmHandLeUser) || in_array($this->app->user->account, $ppmHandLeUser);
+        $issueTypeList = $this->loadModel('reporeviewflow')->getIssueTypeList();
 
         if(!$userCanMerge)
         {
@@ -257,14 +273,14 @@ class ppmZen extends ppm
             $result->message = $result->message ? $result->message . '; ' . $canMergeUsers : $canMergeUsers;
         }
 
-        $reviewFlow = $this->loadModel('reporeviewflow')->getById(empty($rule) ? 0 : $rule->reviewFlowID);
+        $reviewFlow = $this->reporeviewflow->getById(empty($rule) ? 0 : $rule->reviewFlowID);
         if(!empty($reviewFlow) && !empty($reviewFlow->definition->reviewFlow->issues))
         {
-            $activeIssues = array();
-            foreach($issues as $issue) if($issue->status == 'active') $activeIssues[] = $issue;
+            $unresolvedIssues = array();
+            foreach($issues as $issue) if($issue->status == 'wait') $unresolvedIssues[] = $issue;
 
             $handleIssueFlow = $reviewFlow->definition->reviewFlow->issues;
-            if(!empty($handleIssueFlow) && !empty($activeIssues))
+            if(!empty($handleIssueFlow) && !empty($unresolvedIssues))
             {
                 if($handleIssueFlow->addressOption == 'allMustBeSolved')
                 {
@@ -272,16 +288,16 @@ class ppmZen extends ppm
                 }
                 elseIf($handleIssueFlow->addressOption == 'specificMustBeSolved')
                 {
-                    $this->app->loadLang('bug');
-                    foreach($activeIssues as $activeIssue)
+                    $this->app->loadLang('codescan');
+                    foreach($unresolvedIssues as $unresolvedIssue)
                     {
-                        if(in_array($activeIssue->type, $handleIssueFlow->mandatoryType))
+                        if(in_array($unresolvedIssue->category, $handleIssueFlow->mandatoryType))
                         {
                             $mandatoryType = array();
                             foreach($handleIssueFlow->mandatoryType as $type)
                             {
-                                if(empty($this->lang->bug->typeList[$type])) continue;
-                                $mandatoryType[] = zget($this->lang->bug->typeList, $type);
+                                if(empty($issueTypeList[$type])) continue;
+                                $mandatoryType[] = zget($issueTypeList, $type);
                             }
                             $hasUnresolvedSpecifiedIssues = sprintf($this->lang->ppm->notice->hasUnresolvedSpecifiedIssues, implode(',', $mandatoryType));
                             $result->message = $result->message ? $result->message . '; ' . $hasUnresolvedSpecifiedIssues : $hasUnresolvedSpecifiedIssues;

@@ -252,9 +252,9 @@ class ppmModelTest extends ppmBaseTest
         return $this->invokeMethod('execJob', array($ppmID, $jobID));
     }
 
-    public function getStaticScanIssuesTest(int $repoID, object $pager, int $ppmID = 0)
+    public function getStaticScanIssuesTest(int $repoID, object $pager, int $ppmID = 0, string $status = '')
     {
-        return $this->invokeMethod('getStaticScanIssues', array($repoID, $pager, $ppmID));
+        return $this->invokeMethod('getStaticScanIssues', array($repoID, $pager, $ppmID, $status));
     }
 
     public function getStaticScanIssueTotalTest(int $repoID, int $ppmID = 0)
@@ -262,9 +262,14 @@ class ppmModelTest extends ppmBaseTest
         return $this->invokeMethod('getStaticScanIssueTotal', array($repoID, $ppmID));
     }
 
-    public function buildStaticScanParamsTest(int $repoID, int $page, int $pageSize, int $ppmID)
+    public function getIssueListTest(int $repoID, int $ppmID, string $type, string $status, object $pager)
     {
-        return $this->invokeMethod('buildStaticScanParams', array($repoID, $page, $pageSize, $ppmID));
+        return $this->invokeMethod('getIssueList', array($repoID, $ppmID, $type, $status, $pager));
+    }
+
+    public function getIssueTotalTest(int $repoID, int $ppmID, array $issueTypes)
+    {
+        return $this->invokeMethod('getIssueTotal', array($repoID, $ppmID, $issueTypes));
     }
 
     public function getIssueBadgeCountTest(string $type, int $repoID, int $ppmID)

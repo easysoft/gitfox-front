@@ -1257,7 +1257,7 @@ class ppmModel extends model
             ->markRight()
             ->andWhere('deleted')->eq(0);
 
-        $query = $this->applyIssueStatusCondition($query, $status, 'static');
+        $query = $this->applyIssueStatusCondition($query, $status, 'bug');
         if($query === false) return array();
 
         $bugs = $query->page($pager)->fetchAll('id');
@@ -1332,7 +1332,7 @@ class ppmModel extends model
     /**
      * 把问题清单的状态口径转换成指定数据源的状态值。
      *
-     * @param  string $type   分类（ai|scan|manual）
+     * @param  string $type   分类（static|manual|bug）
      * @param  string $status
      * @access private
      * @return string
@@ -1344,7 +1344,93 @@ class ppmModel extends model
     }
 
     /**
+     * 解析问题清单状态。
+     * Resolve an issue list status.
+     *
+     * @param  string $type
+     * @param  string $status
+     * @access protected
+     * @return string|false
+     */
+    protected function resolveIssueStatus(string $type, string $status): string|false
+    {
+        if($status === '' || $status === 'all') return '';
+
+        $mappedStatus = $this->mapIssueStatus($type, $status);
+        if($mappedStatus !== '') return $mappedStatus;
+
+        $statusList = zget($this->config->ppm->issueStatusList, $type, array());
+        return in_array($status, $statusList) ? $status : false;
+    }
+
+    /**
+     * 按问题类型获取问题列表。
+     * Get the issue list by issue type.
+     *
+     * @param  int    $repoID
+     * @param  int    $ppmID
+     * @param  string $type   由 issueScanMethods 配置注册的问题类型。
+     * @param  string $status 问题清单状态。
+     * @param  object $pager
+     * @access public
+     * @return array
+     */
+    public function getIssueList(int $repoID, int $ppmID, string $type, string $status, object $pager): array
+    {
+        $scanMethods = zget($this->config->ppm->issueScanMethods, $type, array());
+        if(empty($scanMethods)) return array();
+
+        $mappedStatus = $this->resolveIssueStatus($type, $status);
+        if($mappedStatus === false) return array();
+
+        $codescan = $this->loadModel('codescan');
+        $issues   = $codescan->getIssues($repoID, $ppmID, $scanMethods, $mappedStatus, $pager);
+        foreach($issues as $issueID => $issue)
+        {
+            if($type == 'manual')
+            {
+                $issues[$issueID] = $codescan->processManualIssueData($issue, $repoID);
+                continue;
+            }
+
+            $issue = $codescan->processIssueData($issue);
+            if(empty($issue->file)) $issue->file = zget($issue, 'filePath', '');
+            $issues[$issueID] = $issue;
+        }
+
+        return $issues;
+    }
+
+    /**
+     * 获取当前代码评审中已注册类型的问题总数。
+     * Get the issue count of registered issue types in the current PPM.
+     *
+     * @param  int   $repoID
+     * @param  int   $ppmID
+     * @param  array $issueTypes
+     * @access public
+     * @return int
+     */
+    public function getIssueTotal(int $repoID, int $ppmID, array $issueTypes): int
+    {
+        $scanMethods = array();
+        foreach(array_unique($issueTypes) as $type)
+        {
+            $scanMethods = array_merge($scanMethods, zget($this->config->ppm->issueScanMethods, $type, array()));
+        }
+        if(empty($scanMethods)) return 0;
+
+        return (int)$this->dao->select('COUNT(*) AS `count`')->from(TABLE_SCANISSUE)
+            ->where('deleted')->eq(0)
+            ->beginIF($repoID)->andWhere('`repoID`')->eq($repoID)->fi()
+            ->beginIF($ppmID)->andWhere('ppmID')->eq($ppmID)->fi()
+            ->andWhere('`scanMethod`')->in(array_unique($scanMethods))
+            ->fetch('count');
+    }
+
+    /**
      * 获取静态扫描问题列表（scanMethod=check/smell），供问题清单的「静态扫描问题」面板使用。
+     * 统一通过 codescanModel::getIssues() 读取本地问题表。
      * Get the static scan issue list for the issue list panel.
      *
      * @param  int    $repoID
@@ -1356,22 +1442,7 @@ class ppmModel extends model
      */
     public function getStaticScanIssues(int $repoID, object $pager, int $ppmID = 0, string $status = ''): array
     {
-        $codescan = $this->loadModel('codescan');
-
-        $scanResult = $codescan->getScanIssueList(0, $this->buildStaticScanParams($repoID, (int)$pager->pageID, (int)$pager->recPerPage, $ppmID, $status));
-        if(empty($scanResult) || empty($scanResult->data)) return array();
-
-        $pager->recTotal = (int)zget(zget($scanResult, 'pager', new stdclass()), 'total', 0);
-
-        $issues = array();
-        foreach($scanResult->data as $rawIssue)
-        {
-            $issue = $codescan->processIssueData($rawIssue);
-            if(empty($issue->file)) $issue->file = zget($issue, 'filePath', '');
-            $issues[] = $issue;
-        }
-
-        return $issues;
+        return $this->getIssueList($repoID, $ppmID, 'static', $status, $pager);
     }
 
     /**
@@ -1381,7 +1452,7 @@ class ppmModel extends model
      * 也就是 issueStatusMaps 里登记过的状态；todo/solving 等无标签的状态不计入。
      * 扫描问题在本地 ops_scan_issues 表里与接口同源，所以直接查表，不必按状态打多次接口。
      *
-     * @param  string $type   分类（ai|scan|manual）
+     * @param  string $type   分类（static|manual）
      * @param  int    $repoID
      * @param  int    $ppmID
      * @access public
@@ -1389,7 +1460,9 @@ class ppmModel extends model
      */
     public function getIssueBadgeCount(string $type, int $repoID, int $ppmID): int
     {
-        $scanMethods = zget(array('ai' => array('ai'), 'manual' => array('manual')), $type, array('check', 'smell'));
+        if(!in_array($type, array('static', 'manual'))) return 0;
+
+        $scanMethods = $type == 'manual' ? array('manual') : array('check', 'smell');
         $statusList  = array_keys(zget($this->config->ppm->issueStatusMaps, $type, array()));
         if(empty($statusList)) return 0;
 
@@ -1414,33 +1487,7 @@ class ppmModel extends model
      */
     public function getStaticScanIssueTotal(int $repoID, int $ppmID = 0): int
     {
-        return $this->getIssueBadgeCount('scan', $repoID, $ppmID);
+        return $this->getIssueBadgeCount('static', $repoID, $ppmID);
     }
 
-    /**
-     * 组装静态扫描问题（scanMethod=check/smell）的接口查询参数，与 codescan issue 列表同一套口径。
-     *
-     * @param  int $repoID
-     * @param  int $page
-     * @param  int $pageSize
-     * @param  int $ppmID
-     * @param  string $status
-     * @access private
-     * @return array
-     */
-    private function buildStaticScanParams(int $repoID, int $page, int $pageSize, int $ppmID, string $status = ''): array
-    {
-        $apiParams = array(
-            'repoID'      => $repoID,
-            'scanMethods' => array('check', 'smell'),
-            'page'        => $page,
-            'pageSize'    => $pageSize,
-        );
-        if($ppmID > 0) $apiParams['ppmID'] = $ppmID;
-
-        $status = $this->mapIssueStatus('scan', $status);
-        if($status != '') $apiParams['status'] = $status;
-
-        return $apiParams;
-    }
 }

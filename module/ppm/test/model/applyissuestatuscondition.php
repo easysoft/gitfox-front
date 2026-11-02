@@ -16,14 +16,14 @@ title=测试 ppmModel->applyIssueStatusCondition();
 timeout=0
 cid=0
 
-- 空状态表示全部，不加状态条件  @5
-- type=static 且 status=wait 映射为缺陷 active  @2
-- type=static 且 status=solved 映射为缺陷 resolved  @1
-- type=static 且 status=closed 映射为缺陷 closed  @1
-- type=static 不支持的清单状态返回 false  @1
-- type=ai 且 status=ignore 映射为缺陷 ignore  @1
-- 未注册的 type 对非空状态返回 false  @1
-- 返回对象即传入对象，可继续链式调用  @1
+- 执行applyIssueStatusConditionTest($buildQuery(), '', 'bug')模块的fetchAll方法，参数是'id'  @5
+- 执行applyIssueStatusConditionTest($buildQuery(), 'wait', 'bug')模块的fetchAll方法，参数是'id'  @2
+- 执行applyIssueStatusConditionTest($buildQuery(), 'solved', 'bug')模块的fetchAll方法，参数是'id'  @1
+- 执行applyIssueStatusConditionTest($buildQuery(), 'closed', 'bug')模块的fetchAll方法，参数是'id'  @1
+- 执行test模块的applyIssueStatusConditionTest方法，参数是$buildQuery  @1
+- 执行test模块的applyIssueStatusConditionTest方法，参数是$buildQuery  @1
+- 执行test模块的applyIssueStatusConditionTest方法，参数是$buildQuery  @1
+- 执行test模块的applyIssueStatusConditionTest方法，参数是$query, 'wait', 'bug') === $query  @1
 
 */
 
@@ -37,13 +37,13 @@ $buildQuery = function() use ($tester)
     return $tester->dao->select('id')->from(TABLE_BUG)->where('repo')->eq(1)->andWhere('deleted')->eq(0);
 };
 
-r(count($test->applyIssueStatusConditionTest($buildQuery(), '', 'static')->fetchAll('id'))) && p() && e('5');
-r(count($test->applyIssueStatusConditionTest($buildQuery(), 'wait', 'static')->fetchAll('id'))) && p() && e('2');
-r(count($test->applyIssueStatusConditionTest($buildQuery(), 'solved', 'static')->fetchAll('id'))) && p() && e('1');
-r(count($test->applyIssueStatusConditionTest($buildQuery(), 'closed', 'static')->fetchAll('id'))) && p() && e('1');
-r($test->applyIssueStatusConditionTest($buildQuery(), 'ignore', 'static') === false) && p() && e('1');
-r(count($test->applyIssueStatusConditionTest($buildQuery(), 'ignore', 'ai')->fetchAll('id'))) && p() && e('1');
+r(count($test->applyIssueStatusConditionTest($buildQuery(), '', 'bug')->fetchAll('id'))) && p() && e('5');
+r(count($test->applyIssueStatusConditionTest($buildQuery(), 'wait', 'bug')->fetchAll('id'))) && p() && e('2');
+r(count($test->applyIssueStatusConditionTest($buildQuery(), 'solved', 'bug')->fetchAll('id'))) && p() && e('1');
+r(count($test->applyIssueStatusConditionTest($buildQuery(), 'closed', 'bug')->fetchAll('id'))) && p() && e('1');
+r($test->applyIssueStatusConditionTest($buildQuery(), 'ignore', 'bug') === false) && p() && e('1');
+r($test->applyIssueStatusConditionTest($buildQuery(), 'ignore', 'ai') === false) && p() && e('1');
 r($test->applyIssueStatusConditionTest($buildQuery(), 'wait', 'unknown') === false) && p() && e('1');
 
 $query = $buildQuery();
-r($test->applyIssueStatusConditionTest($query, 'wait', 'static') === $query) && p() && e('1');
+r($test->applyIssueStatusConditionTest($query, 'wait', 'bug') === $query) && p() && e('1');

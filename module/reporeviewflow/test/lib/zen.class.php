@@ -18,4 +18,5 @@ class reporeviewflowZenTest extends baseTest
     {
         return $this->invokeArgs('buildDefinition', [$definition]);
     }
+
 }

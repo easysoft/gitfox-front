@@ -1427,18 +1427,38 @@ class codescanModel extends model
      * 获取问题列表。
      * Get issue list.
      *
-     * @param  int $repoID
-     * @param  int $ppmID
+     * @param  int     $repoID
+     * @param  int     $ppmID
+     * @param  string|array $type 问题类型或扫描方式列表（ai|manual|static）。
+     * @param  string  $status 问题状态；bug/converted 表示已转缺陷。
+     * @param  ?object $pager
      * @access public
      * @return array
      */
-    public function getIssues(int $repoID = 0, int $ppmID = 0): array
+    public function getIssues(int $repoID = 0, int $ppmID = 0, string|array $type = '', string $status = '', ?object $pager = null): array
     {
-        return $this->dao->select('*')->from(TABLE_SCANISSUE)
+        $transferredStatus = in_array($status, array('bug', 'converted'));
+        $bugIssueSQL       = $transferredStatus ? $this->dao->select('`issueKey`')->from(TABLE_BUG)->where('deleted')->eq(0)->andWhere('`issueKey`')->ne('')->get() : '';
+        $scanMethods       = is_array($type) ? $type : ($type == 'static' ? array('check', 'smell') : ($type != '' && $type != 'all' ? array($type) : array()));
+
+        $issues = $this->dao->select('*')->from(TABLE_SCANISSUE)
             ->where('deleted')->eq(0)
             ->beginIF($repoID)->andWhere('`repoID`')->eq($repoID)->fi()
             ->beginIF($ppmID)->andWhere('`ppmID`')->eq($ppmID)->fi()
+            ->beginIF($transferredStatus)->andWhere("id IN ($bugIssueSQL)")->fi()
+            ->beginIF(!$transferredStatus && $status != '' && $status != 'all')->andWhere('`status`')->eq($status)->fi()
+            ->beginIF(!empty($scanMethods))->andWhere('`scanMethod`')->in($scanMethods)->fi()
             ->orderBy('id_desc')
+            ->page($pager)
             ->fetchAll('id', false);
+        if(empty($issues)) return $issues;
+
+        $bugList = $this->dao->select('`issueKey`,`id`')->from(TABLE_BUG)
+            ->where('deleted')->eq(0)
+            ->andWhere('`issueKey`')->in(array_keys($issues))
+            ->fetchPairs('issueKey', 'id');
+        foreach($issues as $issueID => $issue) $issue->bugID = isset($bugList[$issueID]) ? (int)$bugList[$issueID] : 0;
+
+        return $issues;
     }
 }

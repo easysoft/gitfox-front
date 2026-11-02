@@ -10,152 +10,103 @@ declare(strict_types=1);
  */
 namespace zin;
 
-$aiIssueCount     = (int)data('aiIssueCount');
-$scanIssueCount   = (int)data('staticIssueTotal');
-$manualIssueCount = (int)data('manualIssuesTotal');
-
-$issueStatus = (string)data('issueStatus');
-
-$buildIssueStatusBar = function(string $tabKey, string $listKey = '') use ($ppm, $lang, $config, $issueStatus)
-{
-    $listKey = $listKey ?: $tabKey;
-
-    $items = array();
-    foreach(zget($config->ppm->issueStatusList, $listKey, array()) as $statusKey)
-    {
-        $items[] = array
-        (
-            'text'   => zget($lang->ppm->issueStatusTabs, $statusKey, $statusKey),
-            'active' => $issueStatus === $statusKey,
-            'url'    => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$tabKey}&issueStatus={$statusKey}")
-        );
-    }
-    return nav(setClass('mb-2'), set::items($items));
-};
-
-$scanTabItems = array();
-if(!empty($lang->ppm->aiScanIssueList))       $scanTabItems['ai']     = array('text' => "{$lang->ppm->aiScanIssueList} ({$aiIssueCount})",       'url' => 'javascript:;', 'props' => array('data-tab' => 'ai',     'data-target' => '#aiBugsPane'));
-if(!empty($lang->ppm->staticScanIssueList))   $scanTabItems['scan']   = array('text' => "{$lang->ppm->staticScanIssueList} ({$scanIssueCount})",   'url' => 'javascript:;', 'props' => array('data-tab' => 'scan',   'data-target' => '#staticScanPane'));
-if(!empty($lang->ppm->manualReviewIssueList)) $scanTabItems['static'] = array('text' => "{$lang->ppm->manualReviewIssueList} ({$manualIssueCount})", 'url' => 'javascript:;', 'props' => array('data-tab' => 'static', 'data-target' => '#staticBugs'));
-
-$currentIssueTab = (string)(data('issueTab') ?: zget($_GET, 'issueTab', ''));
-if($currentIssueTab === '') $currentIssueTab = (string)$this->cookie->issueTab;
-if(!isset($scanTabItems[$currentIssueTab])) $currentIssueTab = '';
-$isFirst = true;
-foreach($scanTabItems as $tabKey => $tabItem)
-{
-    $scanTabItems[$tabKey]['active'] = $currentIssueTab ? ($tabKey === $currentIssueTab) : $isFirst;
-    $isFirst = false;
-}
-
-$staticRows = array();
-foreach((array)$staticIssues as $staticIssue)
-{
-    $staticIssue->repoID = (int)zget($staticIssue, 'repoID', 0) ?: (int)$ppm->targetRepoID;
-    $staticRows[] = $staticIssue;
-}
-$staticCols = $this->loadModel('datatable')->getSetting('codescan', 'issue');
-$staticCols['content']['name'] = 'title';
-if(hasPriv('codescan', 'issueview')) $staticCols['content']['link'] = array('module' => 'codescan', 'method' => 'issueview', 'params' => 'issueID={id}&repoID={repoID}');
-$staticRows = initTableData($staticRows, $staticCols, $this->loadModel('codescan'));
+$issueTab          = (string)data('issueTab');
+$issueStatus       = (string)data('issueStatus');
+$issuePager        = data('issuePager');
+$issues            = data('issues');
+$issueStatusMenu   = (array)data('issueStatusMenu');
+$issueStatusLink   = (string)data('issueStatusLink');
+$issuePagerOptions = (array)data('issuePagerOptions');
+if(!is_array($issues)) $issues = array();
 
 $app->loadLang('codescan');
 $app->loadConfig('codescan');
-jsVar('window.batchStatus',   $config->codescan->issue->batchStatus);
-jsVar('window.batchBlockers', $config->codescan->issue->batchBlockers);
 
-$scanBatchToolbar = null;
-$buttons          = $config->codescan->issue->batchList;
-$items            = array();
-foreach(zget((array)$config->codescan->issue->batchMenu, $issueStatus, array()) as $action)
+$tabItems = array();
+foreach((array)data('issueTabs') as $tabKey => $tabName)
 {
-    if(empty($buttons[$action])) continue;
-
-    $button = $buttons[$action];
-    $priv   = zget($button, 'priv', array('codescan', $action));
-    if(!hasPriv($priv[0], $priv[1])) continue;
-
-    unset($button['priv']);
-    $items[] = $button;
-}
-if(!empty($items)) $scanBatchToolbar = array('items' => $items);
-
-$manualBatchToolbar = null;
-$manualButtons      = $config->codescan->manualIssue->batchList;
-if(isset($manualButtons['bug']))
-{
-    $manualRepoID   = (int)$ppm->targetRepoID;
-    $manualRepo     = $manualRepoID ? $this->loadModel('repo')->getByID($manualRepoID) : null;
-    $manualProduct  = empty($manualRepo->product) ? 0 : (int)explode(',', (string)$manualRepo->product)[0];
-    $manualButtons['bug']['data-url'] = createLink('bug', 'batchCreate', "productID={$manualProduct}&branch=0&executionID=0&moduleID=0&extra=from=codescan,fromServerID={$manualRepoID},repoID={$manualRepoID}");
-}
-$manualItems = array();
-foreach(zget((array)$config->codescan->manualIssue->batchMenu, $issueStatus, array()) as $action)
-{
-    if(empty($manualButtons[$action])) continue;
-
-    $button = $manualButtons[$action];
-    $priv   = zget($button, 'priv', array('codescan', $action));
-    if(!hasPriv($priv[0], $priv[1])) continue;
-
-    unset($button['priv']);
-    $manualItems[] = $button;
-}
-if(!empty($manualItems)) $manualBatchToolbar = array('items' => $manualItems);
-
-$scanPaneStyle   = empty($scanTabItems['scan']['active'])   ? array('display' => 'none') : array();
-$manualPaneStyle = empty($scanTabItems['static']['active']) ? array('display' => 'none') : array();
-
-// 人工审查问题改读问题表（scanMethod=manual）
-$manualRows = array();
-foreach((array)$manualIssues as $manualIssue)
-{
-    $manualRows[] = $this->loadModel('codescan')->processManualIssueData($manualIssue, (int)$ppm->targetRepoID);
-}
-$manualCols = $config->codescan->manualIssue->dtable->fieldList;
-$manualRows = initTableData($manualRows, $manualCols, $this->loadModel('codescan'));
-
-$staticPanel = div
-(
-    setID('staticScanPane'),
-    setStyle($scanPaneStyle),
-    $buildIssueStatusBar('scan'),
-    dtable
+    $statusList = zget($config->ppm->issueStatusList, $tabKey, array());
+    $tabStatus  = in_array($issueStatus, $statusList) ? $issueStatus : 'wait';
+    $tabItems[] = array
     (
-        setID('staticScanIssues'),
-        set::customCols(false),
-        set::cols($staticCols),
-        set::data($staticRows),
-        set::responsive(true),
-        $scanBatchToolbar ? set::checkable(true) : null,
-        set::footToolbar($scanBatchToolbar),
-        set::footPager(usePager('scanPager', '', array
+        'text'   => $tabName,
+        'active' => $tabKey === $issueTab,
+        'url'    => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$tabKey}&issueStatus={$tabStatus}")
+    );
+}
+
+$issuePanel = null;
+if(in_array($issueTab, array('static', 'manual')))
+{
+    $batchConfig = $issueTab == 'manual' ? $config->codescan->manualIssue : $config->codescan->issue;
+    jsVar('window.batchStatus',   $batchConfig->batchStatus);
+    jsVar('window.batchBlockers', $batchConfig->batchBlockers);
+
+    $batchButtons = $batchConfig->batchList;
+    if(isset($batchButtons['bug']))
+    {
+        $batchRepoID  = (int)$ppm->targetRepoID;
+        $batchRepo    = $batchRepoID ? $this->loadModel('repo')->getByID($batchRepoID) : null;
+        $batchProduct = empty($batchRepo->product) ? 0 : (int)explode(',', (string)$batchRepo->product)[0];
+        $batchButtons['bug']['data-url'] = createLink('bug', 'batchCreate', "productID={$batchProduct}&branch=0&executionID=0&moduleID=0&extra=from=codescan,fromServerID={$batchRepoID},repoID={$batchRepoID}");
+    }
+
+    $batchItems = array();
+    foreach(zget((array)$batchConfig->batchMenu, $issueStatus, array()) as $action)
+    {
+        if(empty($batchButtons[$action])) continue;
+
+        $button = $batchButtons[$action];
+        $priv   = zget($button, 'priv', array('codescan', $action));
+        if(!hasPriv($priv[0], $priv[1])) continue;
+
+        unset($button['priv']);
+        $batchItems[] = $button;
+    }
+    $batchToolbar = empty($batchItems) ? null : array('items' => $batchItems);
+
+    $lang->ppm->featureBar['issueStatus'] = $issueStatusMenu;
+
+    $issueRows = array_values($issues);
+    if($issueTab == 'static')
+    {
+        foreach($issueRows as $issue) $issue->repoID = (int)zget($issue, 'repoID', 0) ?: (int)$ppm->targetRepoID;
+
+        $issueCols = $this->loadModel('datatable')->getSetting('codescan', 'issue');
+        $issueCols['content']['name'] = 'title';
+        if(hasPriv('codescan', 'issueview')) $issueCols['content']['link'] = array('module' => 'codescan', 'method' => 'issueview', 'params' => 'issueID={id}&repoID={repoID}');
+        $dtableID = 'staticScanIssues';
+    }
+    else
+    {
+        $issueCols = $config->codescan->manualIssue->dtable->fieldList;
+        $dtableID  = 'bugs';
+    }
+
+    $issueRows = initTableData($issueRows, $issueCols, $this->loadModel('codescan'));
+    $issuePanel = div
+    (
+        featureBar
         (
-            'recPerPage'  => $scanPager->recPerPage,
-            'recTotal'    => $scanPager->recTotal,
-            'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$scanPager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=scan&issueStatus={$issueStatus}")
-        ), null, '', 'scan'))
-    )
-);
-
-$manualPanel = div
-(
-    setID('staticBugs'),
-    setStyle($manualPaneStyle),
-    /* 人工审查问题面板：tab key 沿用历史的 static，状态列表用 manual。 */
-    $buildIssueStatusBar('static', 'manual'),
-    dtable
-    (
-        set::id('bugs'),
-        set::customCols(false),
-        $manualBatchToolbar ? set::checkable(true) : null,
-        set::cols($manualCols),
-        set::data($manualRows),
-        set::responsive(true),
-        set::footToolbar($manualBatchToolbar),
-        set::footPager(usePager('issuePager', '', array('recPerPage' => $issuePager->recPerPage, 'recTotal' => $issuePager->recTotal, 'linkCreator' => createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$issuePager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab=static&issueStatus={$issueStatus}")), null, '', 'static'))
-    )
-);
+            set::module('ppm'),
+            set::method('issueStatus'),
+            set::current($issueStatus),
+            set::linkParams($issueStatusLink),
+            set::labelCount((string)$issuePager->recTotal)
+        ),
+        dtable
+        (
+            setID($dtableID),
+            set::customCols(false),
+            set::cols($issueCols),
+            set::data($issueRows),
+            set::responsive(true),
+            $batchToolbar ? set::checkable(true) : null,
+            set::footToolbar($batchToolbar),
+            set::footPager(usePager('issuePager', '', $issuePagerOptions, null, '', $issueTab))
+        )
+    );
+}
 
 $domBox = div
 (
@@ -166,11 +117,11 @@ $domBox = div
         set::minWidth(100),
         nav
         (
-            setID('scanTabs'),
+            setID('issueTabs'),
             set::stacked(true),
             set::compact(),
-            set::items(array_values($scanTabItems))
+            set::items($tabItems)
         )
     ),
-    div(setID('scanPanes'), setClass('flex-auto min-w-0'), $staticPanel, $manualPanel)
+    div(setID('issuePanes'), setClass('flex-auto min-w-0'), $issuePanel)
 );

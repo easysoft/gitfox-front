@@ -127,4 +127,18 @@ class reporeviewflowTest
         if(dao::isError()) return false;
         return $result;
     }
+
+    /**
+     * Test getIssueTypeList method.
+     *
+     * @access public
+     * @return array
+     */
+    public function getIssueTypeListTest(): array
+    {
+        $result = $this->objectModel->getIssueTypeList();
+        if(dao::isError()) return dao::getError();
+
+        return $result;
+    }
 }
