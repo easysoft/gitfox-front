@@ -13,7 +13,8 @@ cid=0
 - 测试来源版本无GitFox时使用上一开源版本最后GitFox版本 @gitfox4_2,gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6
 
 - 测试来源和上一版本无GitFox时继续向上查找 @gitfox4_1,gitfox4_2,gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6
-- 测试向上查找超过三次时停止查找 @0
+- 测试向前三个版本找不到GitFox时使用升级区间第一个GitFox版本 @gitfox4_1,gitfox4_2,gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6
+- 测试从更早版本升级时使用升级区间第一个GitFox版本 @gitfox4_3,gitfox4_4,gitfox4_5
 - 测试GitFox来源使用已安装版本作为起点 @gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6
 
 - 测试源目标GitFox版本相同时不返回候选版本 @0
@@ -77,10 +78,18 @@ $outsideSearchLimit = array(
     'gitfox4_7' => '23_0',
 );
 
+$crossVersion = array(
+    'gitfox4_3' => '22_7',
+    'gitfox4_4' => '22_7',
+    'gitfox4_5' => '23_0',
+    'gitfox4_6' => '23_0',
+);
+
 r($upgrade->getGitfoxVersionsToUpdateTest('22_7', '23_0', $withSource, $openVersions))         && p() && e('gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6'); // 测试非GitFox来源优先使用来源版本第一个GitFox版本
 r($upgrade->getGitfoxVersionsToUpdateTest('22_7', '23_0', $withoutSource, $openVersions))      && p() && e('gitfox4_2,gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6'); // 测试来源版本无GitFox时使用上一开源版本最后GitFox版本
 r($upgrade->getGitfoxVersionsToUpdateTest('22_7', '23_0', $thirdSearch, $openVersions))        && p() && e('gitfox4_1,gitfox4_2,gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6'); // 测试来源和上一版本无GitFox时继续向上查找
-r($upgrade->getGitfoxVersionsToUpdateTest('22_7', '23_0', $outsideSearchLimit, $openVersions)) && p() && e('0');                                              // 测试向上查找超过三次时停止查找
+r($upgrade->getGitfoxVersionsToUpdateTest('22_7', '23_0', $outsideSearchLimit, $openVersions)) && p() && e('gitfox4_1,gitfox4_2,gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6'); // 测试向前三个版本找不到GitFox时使用升级区间第一个GitFox版本
+r($upgrade->getGitfoxVersionsToUpdateTest('22_5', '23_0', $crossVersion, $openVersions))       && p() && e('gitfox4_3,gitfox4_4,gitfox4_5');                     // 测试从更早版本升级时使用升级区间第一个GitFox版本
 r($upgrade->getGitfoxVersionsToUpdateTest('gitfox4_3', 'gitfox4_7', $withSource))              && p() && e('gitfox4_3,gitfox4_4,gitfox4_5,gitfox4_6');      // 测试GitFox来源使用已安装版本作为起点
 r($upgrade->getGitfoxVersionsToUpdateTest('gitfox4_4', 'gitfox4_4'))                            && p() && e('0');                                              // 测试源目标GitFox版本相同时不返回候选版本
 r($upgrade->getGitfoxVersionsToUpdateTest('22_7', '23_0', array(), $openVersions))              && p() && e('0');                                              // 测试整个区间没有GitFox版本时返回空
