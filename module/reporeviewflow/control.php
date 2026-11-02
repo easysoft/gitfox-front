@@ -67,11 +67,11 @@ class reporeviewflow extends control
 
         $repoMembers = !empty($repo->members) ? $this->loadModel('user')->getListByAccounts(array_keys($repo->members)) : array();
 
-        $this->app->loadLang('bug');
-        $this->view->title       = $this->lang->reporeviewflow->create;
-        $this->view->repoID      = $repoID;
-        $this->view->repo        = $repo;
-        $this->view->repoMembers = !empty($repoMembers) ? array_column($repoMembers, 'realname', 'account') : array();
+        $this->view->title         = $this->lang->reporeviewflow->create;
+        $this->view->repoID        = $repoID;
+        $this->view->repo          = $repo;
+        $this->view->repoMembers   = !empty($repoMembers) ? array_column($repoMembers, 'realname', 'account') : array();
+        $this->view->issueTypeList = $this->reporeviewflowZen->getIssueTypeList();
         $this->display();
     }
 
@@ -105,13 +105,13 @@ class reporeviewflow extends control
 
         $repoMembers = !empty($repo->members) ? $this->loadModel('user')->getListByAccounts(array_keys($repo->members)) : array();
 
-        $this->app->loadLang('bug');
-        $this->view->title       = $this->lang->reporeviewflow->edit;
-        $this->view->repoID      = $repoID;
-        $this->view->flowID      = $flowID;
-        $this->view->repo        = $repo;
-        $this->view->reviewFlow  = $reviewFlow;
-        $this->view->repoMembers = !empty($repoMembers) ? array_column($repoMembers, 'realname', 'account') : array();
+        $this->view->title         = $this->lang->reporeviewflow->edit;
+        $this->view->repoID        = $repoID;
+        $this->view->flowID        = $flowID;
+        $this->view->repo          = $repo;
+        $this->view->reviewFlow    = $reviewFlow;
+        $this->view->repoMembers   = !empty($repoMembers) ? array_column($repoMembers, 'realname', 'account') : array();
+        $this->view->issueTypeList = $this->reporeviewflowZen->getIssueTypeList();
         $this->display();
     }
 

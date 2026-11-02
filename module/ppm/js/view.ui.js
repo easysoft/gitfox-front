@@ -233,65 +233,6 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
     return true;
 });
 
-/**
- * 问题清单分类菜单切换：AI 评审问题 / 静态扫描问题 / 人工审查问题。
- * Switch between the issue list panels.
- */
-(function()
-{
-    var paneIdList = ['staticBugs', 'aiBugsPane', 'staticScanPane'];
-
-    function switchScanTab(e)
-    {
-        var link = e.target && e.target.closest ? e.target.closest('#scanTabs a') : null;
-        if(!link) return;
-        e.preventDefault();
-
-        var links = document.querySelectorAll('#scanTabs a');
-        for(var i = 0; i < links.length; i++)
-        {
-            links[i].classList.remove('active');
-            if(links[i].parentElement) links[i].parentElement.classList.remove('active');
-        }
-        link.classList.add('active');
-        if(link.parentElement) link.parentElement.classList.add('active');
-
-        for(var j = 0; j < paneIdList.length; j++)
-        {
-            var paneEl = document.getElementById(paneIdList[j]);
-            if(paneEl) paneEl.style.display = 'none';
-        }
-
-        var tar = link.getAttribute('data-target');
-        if(tar)
-        {
-            var pane = document.querySelector(tar);
-            if(pane) pane.style.display = '';
-        }
-
-        var tabKey = link.getAttribute('data-tab');
-        /* 记录当前分类，返回或刷新后仍停留在同一分类。 */
-        if(tabKey) $.cookie.set('issueTab', tabKey, {expires: config.cookieLife, path: config.webRoot});
-
-        if(tabKey && window.history && history.replaceState && /[?&]m=/.test(location.search))
-        {
-            var url = new URL(location.href);
-            url.searchParams.set('issueTab', tabKey);
-            var next = url.pathname + url.search + url.hash;
-            if(next !== location.pathname + location.search + location.hash) history.replaceState(null, '', next);
-        }
-    }
-
-    document.removeEventListener('click', switchScanTab);
-    document.addEventListener('click', switchScanTab);
-
-    setTimeout(function()
-    {
-        var defaultTab = document.querySelector('#scanTabs a.active') || document.querySelector('#scanTabs a');
-        if(defaultTab) defaultTab.click();
-    }, 0);
-})();
-
 window.encodeParam = function(value)
 {
     return btoa(encodeURIComponent(value)).replace(/\+/g, '_').replace(/\//g, '.');
@@ -335,20 +276,3 @@ window.resolveFileMenu = function(fileDiff)
         },
     ];
 }
-
-/**
- * 刷新单条扫描问题数据。
- * Refresh a single scan issue.
- *
- * @param  int issueID
- * @access public
- * @return void
- */
-window.refreshScanIssue = function(issueID)
-{
-    var diffHub = $('[zui-create-diffhub]').zui('diffhub');
-    if(!diffHub) return;
-
-    if(typeof diffHub.refreshIssue === 'function') return diffHub.refreshIssue(issueID);
-    if(typeof diffHub.reload === 'function') diffHub.reload();
-};

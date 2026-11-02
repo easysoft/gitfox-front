@@ -117,7 +117,7 @@ formPanel
                 setID('issueType'),
                 set::width(common::checkNotCN() ? '220px' : '150px'),
                 set::name('issueType'),
-                set::items($lang->bug->typeList),
+                set::items($issueTypeList),
                 set::multiple(true),
                 set::value(empty($definition->reviewFlow) || empty($definition->reviewFlow->issues) || empty($definition->reviewFlow->issues->mandatoryType) ? 'codeerror' : $definition->reviewFlow->issues->mandatoryType)
             )

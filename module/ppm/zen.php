@@ -156,6 +156,21 @@ class ppmZen extends ppm
     }
 
     /**
+     * 获取核心问题清单类型。
+     * Get the core issue tabs.
+     *
+     * @access public
+     * @return array
+     */
+    public function getIssueTabs(): array
+    {
+        $tabs = array();
+        if(!empty($this->lang->ppm->staticScanIssueList))   $tabs['static'] = $this->lang->ppm->staticScanIssueList;
+        if(!empty($this->lang->ppm->manualReviewIssueList)) $tabs['manual'] = $this->lang->ppm->manualReviewIssueList;
+        return $tabs;
+    }
+
+    /**
      * 按问题清单的状态取扫描问题列表。
      * Get the scan issue list by the issue list status.
      *

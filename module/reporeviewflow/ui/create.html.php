@@ -112,7 +112,7 @@ formPanel
                 setID('issueType'),
                 set::width(common::checkNotCN() ? '220px' : '150px'),
                 set::name('issueType'),
-                set::items($lang->bug->typeList),
+                set::items($issueTypeList),
                 set::multiple(true),
                 set::value('codeerror')
             )

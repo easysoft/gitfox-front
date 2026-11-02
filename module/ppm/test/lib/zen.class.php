@@ -66,4 +66,9 @@ class ppmZenTest extends ppmBaseTest
         return $this->invokeMethod('getScanIssuesByStatus', array($status, $repoID, $ppmID, $pager));
     }
 
+    public function getIssueTabsTest()
+    {
+        return $this->invokeMethod('getIssueTabs');
+    }
+
 }

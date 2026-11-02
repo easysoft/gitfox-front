@@ -30,8 +30,6 @@ $encoding       = empty($encoding) ? '' : $encoding;
 $checkMessage   = zget($checkResult, 'message', '');
 $conflictFiles  = zget($checkResult, 'conflictFiles', array());
 $minReviewers   = empty($flow) ? 0 : $flow->definition->reviewFlow->approvals->minReviewers;
-$issueListTotal = (int)data('manualIssuesTotal') + (int)data('aiIssueCount') + (int)data('staticIssueTotal');
-
 $basicItems = array();
 if($type != 'files')
 {
@@ -143,7 +141,7 @@ div
                             setClass('nav-item'),
                             a
                             (
-                                $lang->ppm->issueList . " ({$issueListTotal})",
+                                $lang->ppm->issueList . " ({$issueTotal})",
                                 setClass('font-medium font-bold text-md'),
                                 set::href(createLink('ppm', 'view', "id={$ppm->id}&type=issue")),
                                 set('data-app', $app->tab),

@@ -393,7 +393,7 @@ class ppm extends control
      * @param  int    $recTotal
      * @param  int    $recPerPage
      * @param  int    $pageID
-     * @param  string $issueTab    问题清单当前分类（ai|scan|static），该分类独占下面三个分页参数。
+     * @param  string $issueTab    问题清单当前分类（由 core/plugin 注册），该分类独占下面三个分页参数。
      * @param  string $issueStatus 问题清单当前状态，默认激活。
      * @access public
      * @return void
@@ -410,8 +410,7 @@ class ppm extends control
         $this->app->loadClass('pager', true);
         $commitPager = new pager($type == 'commit' ? $recTotal : 0, $recPerPage, $type == 'commit' ? $pageID : 1);
         $objectPager = new pager($type == 'object' ? $recTotal : 0, $recPerPage, $type == 'object' ? $pageID : 1);
-        $issuePager  = new pager($type == 'issue' && $issueTab == 'static' ? $recTotal : 0, $issueTab == 'static' ? $recPerPage : 20, $type == 'issue' && $issueTab == 'static' ? $pageID : 1, 'static');
-        $scanPager   = new pager($type == 'issue' && $issueTab == 'scan'   ? $recTotal : 0, $issueTab == 'scan'   ? $recPerPage : 20, $type == 'issue' && $issueTab == 'scan'   ? $pageID : 1, 'scan');
+        $issuePager  = new pager($type == 'issue' ? $recTotal : 0, $type == 'issue' ? $recPerPage : 20, $type == 'issue' ? $pageID : 1, 'issue');
         $bugPager    = new pager($type == 'bug' ? $recTotal : 0, $recPerPage, $type == 'bug' ? $pageID : 1, 'bug');
 
         $fromRevision = !empty($ppm->mergeBaseSHA) ? $ppm->mergeBaseSHA : $ppm->targetBranch;
@@ -422,6 +421,39 @@ class ppm extends control
         $reviewResult     = $this->ppm->getReviewResult($reviewers, empty($flow) ? array() : $flow);
         $defaultMergeType = $this->cookie->mergeType ? $this->cookie->mergeType : 'merge';
 
+        $issueTabs          = $this->ppmZen->getIssueTabs();
+        $availableIssueTabs = array_keys($issueTabs);
+
+        $issues            = array();
+        $issueStatusMenu   = array();
+        $issueStatusLink   = '';
+        $issuePagerOptions = array();
+        if($type == 'issue')
+        {
+            if(!in_array($issueTab, $availableIssueTabs))
+            {
+                $issueTab = (string)$this->cookie->issueTab;
+            }
+            if(!in_array($issueTab, $availableIssueTabs)) $issueTab = reset($availableIssueTabs);
+
+            $issueStatusList = zget($this->config->ppm->issueStatusList, $issueTab, array());
+            if(!in_array($issueStatus, $issueStatusList)) $issueStatus = 'wait';
+
+            $issues = $this->ppm->getIssueList((int)$ppm->targetRepoID, (int)$ppm->id, $issueTab, $issueStatus, $issuePager);
+
+            foreach($issueStatusList as $statusKey) $issueStatusMenu[$statusKey] = zget($this->lang->ppm->issueStatusTabs, $statusKey, $statusKey);
+            $issueStatusLink = "id={$ppm->id}&type=issue&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$issueTab}&issueStatus={key}";
+            $issuePagerOptions = array
+            (
+                'recPerPage'  => $issuePager->recPerPage,
+                'recTotal'    => $issuePager->recTotal,
+                'linkCreator' => $this->createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$issuePager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab={$issueTab}&issueStatus={$issueStatus}")
+            );
+
+            helper::setcookie('issueTab', (string)$issueTab, $this->config->cookieLife, $this->config->webRoot, '', $this->config->cookieSecure, true);
+        }
+        $issueTotal = $this->ppm->getIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id, array_keys($issueTabs));
+
         $this->view->title            = empty($repo->name) ? $this->lang->ppm->common : $repo->name . ' - ' . $this->lang->ppm->common;
         $this->view->ppm              = $ppm;
         $this->view->reviewers        = $reviewers;
@@ -430,40 +462,30 @@ class ppm extends control
         $this->view->repoID           = $repo->id;
         $this->view->flow             = $flow;
         $this->view->commitLogs       = $this->ppm->apiGetMRCommits($ppm->targetRepoID, $ppm->id, $commitPager);
-        $bugIssueStatus               = in_array($issueStatus, array('all', 'converted')) ? '' : $issueStatus;
-        $this->view->bugs             = $this->ppm->getBugsByCommits($repo->id, $ppm->id, $bugPager, $type == 'bug' ? $bugIssueStatus : '');
-        $this->view->bugsTotal        = $this->ppm->getBugsByCommitsTotal($repo->id, $ppm->id);
-        if($type != 'issue')
-        {
-            $this->view->staticIssues = array();
-        }
-        else
-        {
-            $this->view->staticIssues = $this->ppmZen->getScanIssuesByStatus($issueStatus, (int)$ppm->targetRepoID, (int)$ppm->id, $scanPager);
-        }
-        $this->view->staticIssueTotal  = $this->ppm->getStaticScanIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id);
-
-        $this->view->manualIssues      = $type == 'issue' ? $this->loadModel('codescan')->getManualIssues($ppm->id, $repo->id, $issuePager, $issueStatus) : array();
-        $this->view->manualIssuesTotal = $this->ppm->getIssueBadgeCount('manual', (int)$repo->id, (int)$ppm->id);
-        $this->view->linkObjects       = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
-        $this->view->commitPager       = $commitPager;
-        $this->view->issuePager        = $issuePager;
-        $this->view->bugPager          = $bugPager;
-        $this->view->scanPager         = $scanPager;
-        $this->view->objectPager       = $objectPager;
-        $this->view->type              = $type;
-        $this->view->issueTab          = $issueTab;
-        $this->view->issueStatus       = $issueStatus;
-        $this->view->fromRevision      = helper::safe64Encode($fromRevision);
-        $this->view->toRevision        = helper::safe64Encode($toRevision);
-        $this->view->users             = $this->loadModel('user')->getPairs('noletter');
-        $this->view->oldRevision       = $ppm->targetBranch;
-        $this->view->newRevision       = $ppm->sourceBranch;
-        $this->view->defaultMergeType  = $defaultMergeType;
-        $this->view->checkResult       = $this->ppmZen->getCheckResult($ppm, $reviewResult, $this->view->bugs, $defaultMergeType);
-        $this->view->param             = $param;
-        $this->view->rule              = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
-        $this->view->pipelines         = $this->ppm->getPipelinesByPPM($ppm);
+        $this->view->issues           = $issues;
+        $this->view->issueStatusMenu  = $issueStatusMenu;
+        $this->view->issueStatusLink  = $issueStatusLink;
+        $this->view->issuePagerOptions = $issuePagerOptions;
+        $this->view->issueTotal       = $issueTotal;
+        $this->view->issueTabs        = $issueTabs;
+        $this->view->linkObjects      = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
+        $this->view->commitPager      = $commitPager;
+        $this->view->issuePager       = $issuePager;
+        $this->view->bugPager         = $bugPager;
+        $this->view->objectPager      = $objectPager;
+        $this->view->type             = $type;
+        $this->view->issueTab         = $issueTab;
+        $this->view->issueStatus      = $issueStatus;
+        $this->view->fromRevision     = helper::safe64Encode($fromRevision);
+        $this->view->toRevision       = helper::safe64Encode($toRevision);
+        $this->view->users            = $this->loadModel('user')->getPairs('noletter');
+        $this->view->oldRevision      = $ppm->targetBranch;
+        $this->view->newRevision      = $ppm->sourceBranch;
+        $this->view->defaultMergeType = $defaultMergeType;
+        $this->view->checkResult      = $this->ppmZen->getCheckResult($ppm, $reviewResult, array(), $defaultMergeType);
+        $this->view->param            = $param;
+        $this->view->rule             = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
+        $this->view->pipelines        = $this->ppm->getPipelinesByPPM($ppm);
         $this->display();
     }
 
