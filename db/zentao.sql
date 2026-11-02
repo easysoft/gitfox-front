@@ -16824,7 +16824,7 @@ CREATE TABLE IF NOT EXISTS `ops_stage_executions` (
   `finished` datetime DEFAULT NULL COMMENT '阶段结束执行时间',
   `duration` int unsigned NOT NULL DEFAULT 0 COMMENT '执行时长(s)',
   `status` varchar(50) NOT NULL DEFAULT '' COMMENT '阶段执行状态',
-  `approvalStatus` varchar(30) NOT NULL DEFAULT '' COMMENT '审批状态：''=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消',
+  `approvalStatus` varchar(30) NOT NULL DEFAULT '' COMMENT '审批状态：""=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消',
   `approvalConfig` varchar(500) NOT NULL DEFAULT '' COMMENT '审批配置',
   `errorType` varchar(50) NOT NULL DEFAULT '' COMMENT '失败类型',
   `errorCode` int unsigned NOT NULL DEFAULT 0 COMMENT '阶段执行退出码（0=成功，非0=失败）',
