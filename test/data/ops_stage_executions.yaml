@@ -67,6 +67,12 @@ fields:
   - field: status
     note: "阶段执行状态"
     range: "created,running,success,failure,skipped"
+  - field: approvalStatus
+    note: "审批状态：''=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消"
+    range: "[]{2},inProgress,approved,rejected,canceled"
+  - field: approvalConfig
+    note: "审批配置"
+    range: "and,percent,none"
   - field: errorType
     note: "失败类型"
     range: "timeout,script,system,manual"

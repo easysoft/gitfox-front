@@ -16824,6 +16824,8 @@ CREATE TABLE IF NOT EXISTS `ops_stage_executions` (
   `finished` datetime DEFAULT NULL COMMENT '阶段结束执行时间',
   `duration` int unsigned NOT NULL DEFAULT 0 COMMENT '执行时长(s)',
   `status` varchar(50) NOT NULL DEFAULT '' COMMENT '阶段执行状态',
+  `approvalStatus` varchar(30) NOT NULL DEFAULT '' COMMENT '审批状态：''=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消',
+  `approvalConfig` varchar(500) NOT NULL DEFAULT '' COMMENT '审批配置',
   `errorType` varchar(50) NOT NULL DEFAULT '' COMMENT '失败类型',
   `errorCode` int unsigned NOT NULL DEFAULT 0 COMMENT '阶段执行退出码（0=成功，非0=失败）',
   `errorLog` text DEFAULT NULL COMMENT '阶段执行错误信息（无错误则为空字符串）',
@@ -16969,7 +16971,3 @@ CREATE TABLE IF NOT EXISTS `ops_variable` (
 ) ENGINE=InnoDB COMMENT='凭证表';
 CREATE UNIQUE INDEX `uk_spaceID_repoID_name` ON `ops_variable` (`spaceID`, `repoID`, `name`);
 CREATE UNIQUE INDEX `uk_key` ON `ops_variable` (`key`);
-
--- 阶段执行表增加审批状态字段。
-ALTER TABLE `ops_stage_executions` ADD COLUMN `approvalStatus` varchar(30) NOT NULL DEFAULT '' COMMENT '审批状态：''=未发起，inProgress=审批中，approved=通过，rejected=拒绝，canceled=已取消' AFTER `status`;
-ALTER TABLE `ops_stage_executions` ADD COLUMN `approvalConfig` varchar(500) NOT NULL DEFAULT '' COMMENT '审批配置' AFTER `approvalStatus`;
