@@ -428,64 +428,61 @@ class ppm extends control
         $issueStatusMenu   = array();
         $issueStatusLink   = '';
         $issuePagerOptions = array();
-        if($type == 'issue')
+        if(!in_array($issueTab, $availableIssueTabs))
         {
-            if(!in_array($issueTab, $availableIssueTabs))
-            {
-                $issueTab = (string)$this->cookie->issueTab;
-            }
-            if(!in_array($issueTab, $availableIssueTabs)) $issueTab = reset($availableIssueTabs);
-
-            $issueStatusList = zget($this->config->ppm->issueStatusList, $issueTab, array());
-            if(!in_array($issueStatus, $issueStatusList)) $issueStatus = 'wait';
-
-            $issues = $this->ppm->getIssueList((int)$ppm->targetRepoID, (int)$ppm->id, $issueTab, $issueStatus, $issuePager);
-
-            foreach($issueStatusList as $statusKey) $issueStatusMenu[$statusKey] = zget($this->lang->ppm->issueStatusTabs, $statusKey, $statusKey);
-            $issueStatusLink = "id={$ppm->id}&type=issue&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$issueTab}&issueStatus={key}";
-            $issuePagerOptions = array
-            (
-                'recPerPage'  => $issuePager->recPerPage,
-                'recTotal'    => $issuePager->recTotal,
-                'linkCreator' => $this->createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$issuePager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab={$issueTab}&issueStatus={$issueStatus}")
-            );
-
-            helper::setcookie('issueTab', (string)$issueTab, $this->config->cookieLife, $this->config->webRoot, '', $this->config->cookieSecure, true);
+            $issueTab = (string)$this->cookie->issueTab;
         }
+        if(!in_array($issueTab, $availableIssueTabs)) $issueTab = reset($availableIssueTabs);
+
+        $issueStatusList = zget($this->config->ppm->issueStatusList, $issueTab, array());
+        if(!in_array($issueStatus, $issueStatusList)) $issueStatus = 'wait';
+
+        $issues = $this->ppm->getIssueList((int)$ppm->targetRepoID, (int)$ppm->id, $issueTab, $issueStatus, $issuePager);
+
+        foreach($issueStatusList as $statusKey) $issueStatusMenu[$statusKey] = zget($this->lang->ppm->issueStatusTabs, $statusKey, $statusKey);
+        $issueStatusLink = "id={$ppm->id}&type=issue&param=&recTotal=0&recPerPage=20&pageID=1&issueTab={$issueTab}&issueStatus={key}";
+        $issuePagerOptions = array
+        (
+            'recPerPage'  => $issuePager->recPerPage,
+            'recTotal'    => $issuePager->recTotal,
+            'linkCreator' => $this->createLink('ppm', 'view', "id={$ppm->id}&type=issue&param=&recTotal={$issuePager->recTotal}&recPerPage={recPerPage}&pageID={page}&issueTab={$issueTab}&issueStatus={$issueStatus}")
+        );
+
+        helper::setcookie('issueTab', (string)$issueTab, $this->config->cookieLife, $this->config->webRoot, '', $this->config->cookieSecure, true);
         $issueTotal = $this->ppm->getIssueTotal((int)$ppm->targetRepoID, (int)$ppm->id, array_keys($issueTabs));
 
-        $this->view->title            = empty($repo->name) ? $this->lang->ppm->common : $repo->name . ' - ' . $this->lang->ppm->common;
-        $this->view->ppm              = $ppm;
-        $this->view->reviewers        = $reviewers;
-        $this->view->reviewResult     = $reviewResult;
-        $this->view->repo             = $repo;
-        $this->view->repoID           = $repo->id;
-        $this->view->flow             = $flow;
-        $this->view->commitLogs       = $this->ppm->apiGetMRCommits($ppm->targetRepoID, $ppm->id, $commitPager);
-        $this->view->issues           = $issues;
-        $this->view->issueStatusMenu  = $issueStatusMenu;
-        $this->view->issueStatusLink  = $issueStatusLink;
+        $this->view->title             = empty($repo->name) ? $this->lang->ppm->common : $repo->name . ' - ' . $this->lang->ppm->common;
+        $this->view->ppm               = $ppm;
+        $this->view->reviewers         = $reviewers;
+        $this->view->reviewResult      = $reviewResult;
+        $this->view->repo              = $repo;
+        $this->view->repoID            = $repo->id;
+        $this->view->flow              = $flow;
+        $this->view->commitLogs        = $this->ppm->apiGetMRCommits($ppm->targetRepoID, $ppm->id, $commitPager);
+        $this->view->issues            = $issues;
+        $this->view->issueStatusMenu   = $issueStatusMenu;
+        $this->view->issueStatusLink   = $issueStatusLink;
         $this->view->issuePagerOptions = $issuePagerOptions;
-        $this->view->issueTotal       = $issueTotal;
-        $this->view->issueTabs        = $issueTabs;
-        $this->view->linkObjects      = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
-        $this->view->commitPager      = $commitPager;
-        $this->view->issuePager       = $issuePager;
-        $this->view->bugPager         = $bugPager;
-        $this->view->objectPager      = $objectPager;
-        $this->view->type             = $type;
-        $this->view->issueTab         = $issueTab;
-        $this->view->issueStatus      = $issueStatus;
-        $this->view->fromRevision     = helper::safe64Encode($fromRevision);
-        $this->view->toRevision       = helper::safe64Encode($toRevision);
-        $this->view->users            = $this->loadModel('user')->getPairs('noletter');
-        $this->view->oldRevision      = $ppm->targetBranch;
-        $this->view->newRevision      = $ppm->sourceBranch;
-        $this->view->defaultMergeType = $defaultMergeType;
-        $this->view->checkResult      = $this->ppmZen->getCheckResult($ppm, $reviewResult, array(), $defaultMergeType);
-        $this->view->param            = $param;
-        $this->view->rule             = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
-        $this->view->pipelines        = $this->ppm->getPipelinesByPPM($ppm);
+        $this->view->issueTotal        = $issueTotal;
+        $this->view->issueTabs         = $issueTabs;
+        $this->view->linkObjects       = $this->ppm->getRelationByBranch($repo, $ppm->sourceSHA, $ppm->mergeBaseSHA, $param, $objectPager);
+        $this->view->commitPager       = $commitPager;
+        $this->view->issuePager        = $issuePager;
+        $this->view->bugPager          = $bugPager;
+        $this->view->objectPager       = $objectPager;
+        $this->view->type              = $type;
+        $this->view->issueTab          = $issueTab;
+        $this->view->issueStatus       = $issueStatus;
+        $this->view->fromRevision      = helper::safe64Encode($fromRevision);
+        $this->view->toRevision        = helper::safe64Encode($toRevision);
+        $this->view->users             = $this->loadModel('user')->getPairs('noletter');
+        $this->view->oldRevision       = $ppm->targetBranch;
+        $this->view->newRevision       = $ppm->sourceBranch;
+        $this->view->defaultMergeType  = $defaultMergeType;
+        $this->view->checkResult       = $this->ppmZen->getCheckResult($ppm, $reviewResult, $issues, $defaultMergeType);
+        $this->view->param             = $param;
+        $this->view->rule              = $this->loadModel('repobranchrule')->getRuleByBranchName($ppm->targetRepoID, $ppm->targetBranch);
+        $this->view->pipelines         = $this->ppm->getPipelinesByPPM($ppm);
         $this->display();
     }
 

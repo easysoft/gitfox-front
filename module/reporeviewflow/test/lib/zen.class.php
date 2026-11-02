@@ -19,15 +19,4 @@ class reporeviewflowZenTest extends baseTest
         return $this->invokeArgs('buildDefinition', [$definition]);
     }
 
-    /**
-     * 测试 getIssueTypeList 方法。
-     * Test getIssueTypeList method in zen layer.
-     *
-     * @access public
-     * @return array
-     */
-    public function getIssueTypeListTest(): array
-    {
-        return $this->invokeArgs('getIssueTypeList');
-    }
 }
