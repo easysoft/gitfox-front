@@ -7,11 +7,13 @@ title=测试 ppmZen::getCheckResult();
 timeout=0
 cid=0
 
-- 返回合并检查结果对象 @1
-- 返回的冲突文件列表为数组 @1
-- 待解决的指定类型问题生成提示 @1
-- 指定类型问题提示使用问题类型文案 @1
-- 不再生成缺少类型名称的提示 @1
+- 执行$result @1
+- 执行conflictFiles) && is_array($result模块的conflictFiles方法  @1
+- 执行$result->message, '有未解决的缺陷类型的问题，请先解决。') !== false @1
+- 执行$result->message, '缺陷') !== false @1
+- 执行$result->message, '有未解决的类型的问题') === false @1
+- 执行$result->message, '性能问题') !== false @1
+- 执行$result->message, '有未解决的类型的问题') === false @1
 
 */
 
@@ -56,6 +58,9 @@ $reviewFlow->gen(1);
 
 su('admin');
 
+$lang->ppm->aiCodeReview = new stdclass();
+$lang->ppm->aiCodeReview->issueTypeList = array('performance' => '性能问题');
+
 $ppmZen = new ppmZenTest();
 $ppm    = (object)array('id' => 9101, 'repoID' => 42, 'targetRepoID' => 42, 'sourceBranch' => 'feature/demo', 'targetBranch' => 'release/main', 'reviewStatus' => 'pending');
 $issues = array((object)array('status' => 'wait', 'type' => 'defect'));
@@ -67,4 +72,12 @@ r(is_object($result)) && p() && e('1');
 r(isset($result->conflictFiles) && is_array($result->conflictFiles)) && p() && e('1');
 r(strpos($result->message, '有未解决的缺陷类型的问题，请先解决。') !== false) && p() && e('1');
 r(strpos($result->message, '缺陷') !== false) && p() && e('1');
+r(strpos($result->message, '有未解决的类型的问题') === false) && p() && e('1');
+
+$issues = array((object)array('status' => 'wait', 'category' => 'performance'));
+$flowDefinition = '{"reviewFlow":{"issues":{"addressOption":"specificMustBeSolved","mandatoryType":["performance"]}}}';
+$ppmZen->instance->dao->update(TABLE_REVIEWFLOW)->set('definition')->eq($flowDefinition)->where('id')->eq(9301)->exec();
+
+$result = $ppmZen->getCheckResultTest($ppm, 'approved', $issues);
+r(strpos($result->message, '性能问题') !== false) && p() && e('1');
 r(strpos($result->message, '有未解决的类型的问题') === false) && p() && e('1');

@@ -33,7 +33,7 @@ $lang->devops->website      = "https://www.gitfox.net";
 $lang->visionList['gitfox'] = 'GitFox界面';
 
 /* 地盘待处理下的标签。 */
-$lang->my->assignedIssue = '指派给我的问题';
+$lang->my->assignedIssue = '待我解决的问题';
 
 $lang->my->featureBar['work']['assignedissue']['assignedissue'] = $lang->my->assignedIssue;
 
