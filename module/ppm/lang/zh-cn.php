@@ -154,6 +154,7 @@ $lang->ppm->mergeStatusList['cannot_be_merged']     = '不可合并';
 $lang->ppm->mergeStatusList['cannot_merge_by_fail'] = '不可合并,检查未通过';
 
 $lang->ppm->description       = '描述';
+$lang->ppm->desc              = '描述';
 $lang->ppm->confirmDelete     = '确认删除该合并请求吗？';
 $lang->ppm->sourceProject     = '源仓库';
 $lang->ppm->sourceBranch      = '源分支';

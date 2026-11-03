@@ -154,6 +154,7 @@ $lang->ppm->mergeStatusList['cannot_be_merged']     = 'cannot be merged';
 $lang->ppm->mergeStatusList['cannot_merge_by_fail'] = 'Cannot be merged, check failed';
 
 $lang->ppm->description       = 'Description';
+$lang->ppm->desc              = 'Desc';
 $lang->ppm->confirmDelete     = 'Are you sure to delete this merge request?';
 $lang->ppm->sourceProject     = 'Source repository';
 $lang->ppm->sourceBranch      = 'Source branch';
