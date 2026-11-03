@@ -358,17 +358,20 @@ $config->group->package->browseCodeIssue = new stdclass();
 $config->group->package->browseCodeIssue->order  = 2600;
 $config->group->package->browseCodeIssue->subset = 'codereview';
 $config->group->package->browseCodeIssue->privs  = array();
-$config->group->package->browseCodeIssue->privs['repo-review'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 0, 'depend' => array(0 => 'repo-diff'), 'recommend' => array(0 => 'repo-addBug', 1 => 'repo-editBug'));
-$config->group->package->browseCodeIssue->privs['codescan-issue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'repo-maintain'), 'recommend' => array());
-$config->group->package->browseCodeIssue->privs['codescan-issueView'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 15, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array());
-$config->group->package->browseCodeIssue->privs['repo-addComment'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 20, 'depend' => array(0 => 'repo-diff'), 'recommend' => array(0 => 'repo-addBug', 1 => 'repo-editBug', 2 => 'repo-editComment', 3 => 'repo-review'));
+$config->group->package->browseCodeIssue->privs['repo-review']              = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 0, 'depend' => array(0 => 'repo-diff'), 'recommend' => array(0 => 'repo-addBug', 1 => 'repo-editBug'));
+$config->group->package->browseCodeIssue->privs['codescan-issue']           = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'repo-maintain'), 'recommend' => array());
+$config->group->package->browseCodeIssue->privs['codescan-issueView']       = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 15, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array());
+$config->group->package->browseCodeIssue->privs['codescan-manualIssueView'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 17, 'depend' => array(0 => 'repo-review'), 'recommend' => array());
+$config->group->package->browseCodeIssue->privs['repo-addComment']          = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 20, 'depend' => array(0 => 'repo-diff'), 'recommend' => array(0 => 'repo-addBug', 1 => 'repo-editBug', 2 => 'repo-editComment', 3 => 'repo-review'));
 
 $config->group->package->processScanIssues = new stdclass();
 $config->group->package->processScanIssues->order  = 2610;
 $config->group->package->processScanIssues->subset = 'codereview';
 $config->group->package->processScanIssues->privs  = array();
-$config->group->package->processScanIssues->privs['codescan-resolveIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-closeIssue'));
-$config->group->package->processScanIssues->privs['codescan-closeIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 12, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-resolveIssue'));
+$config->group->package->processScanIssues->privs['codescan-resolveIssue']       = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-closeIssue'));
+$config->group->package->processScanIssues->privs['codescan-closeIssue']         = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 12, 'depend' => array(0 => 'codescan-issue'), 'recommend' => array(0 => 'codescan-issueView', 1 => 'codescan-resolveIssue'));
+$config->group->package->processScanIssues->privs['codescan-resolveManualIssue'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 22, 'depend' => array(0 => 'repo-review', 1 => 'ppm-browse', 2 => 'ppm-view'), 'recommend' => array(0 => 'codescan-closeManualIssue'));
+$config->group->package->processScanIssues->privs['codescan-closeManualIssue']   = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 25, 'depend' => array(0 => 'repo-review', 1 => 'ppm-browse', 2 => 'ppm-view'), 'recommend' => array(0 => 'codescan-resolveManualIssue'));
 
 $config->group->package->browsePipeline = new stdclass();
 $config->group->package->browsePipeline->order  = 5;
