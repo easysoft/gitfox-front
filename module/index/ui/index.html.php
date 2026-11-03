@@ -19,7 +19,7 @@ else
     $version     = $config->version;
     $versionName = $lang->pmsName . $config->version;
     if($config->edition == 'gitfox') $versionName = $lang->gitfoxName . ' ' . $config->gitfoxVersion;
-    $upgradeBtn  = $config->systemMode != 'PLM' ? btn
+    $upgradeBtn  = $config->edition != 'gitfox' && $config->systemMode != 'PLM' ? btn
     (
         setID('bizLink'),
         on::click()->do(<<<'JS'
@@ -224,7 +224,7 @@ div
             set::text($versionName)
         ),
         $upgradeBtn,
-        panel
+        $upgradeBtn ? panel
         (
             setID('upgradeContent'),
             to::heading
@@ -241,7 +241,7 @@ div
                 setClass('p-4'),
                 $upgradeContent
             )
-        )
+        ) : null
     )
 );
 
