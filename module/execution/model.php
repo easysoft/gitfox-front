@@ -2192,6 +2192,20 @@ class executionModel extends model
                     $task->needConfirm = true;
                     $task->status      = 'changed';
                 }
+
+                if($task->mode == 'multi' && strpos('done,closed,cancel', $task->status) === false)
+                {
+                    $task->assignedTo = $this->lang->task->team;
+
+                    foreach($task->team as $teamMember)
+                    {
+                        if($this->app->user->account == $teamMember->account && $teamMember->status != 'done')
+                        {
+                            $task->assignedTo = $this->app->user->account;
+                            break;
+                        }
+                    }
+                }
             }
         }
 

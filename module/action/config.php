@@ -94,6 +94,8 @@ $config->action->objectNameFields['scanissue'] = 'title';
 
 $config->action->commonImgSize = 870;
 
+$config->action->sensitiveHistoryFields = array('password', 'password1', 'password2', 'passwordplain', 'oldpassword', 'newpassword', 'token', 'sessionid', 'apikey', 'secret', 'webhooksecret', 'privatekey', 'clientsecret');
+
 $config->action->majorList = array();
 $config->action->majorList['task']      = array('assigned', 'finished', 'activated');
 $config->action->majorList['bug']       = array('assigned', 'resolved');
