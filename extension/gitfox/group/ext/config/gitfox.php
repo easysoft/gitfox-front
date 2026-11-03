@@ -29,6 +29,22 @@ $config->group->subset->notifysetting = new stdclass();
 $config->group->subset->notifysetting->order = 1230;
 $config->group->subset->notifysetting->nav = 'admin';
 
+$config->group->subset->repobranchtype = new stdclass();
+$config->group->subset->repobranchtype->order = 1235;
+$config->group->subset->repobranchtype->nav = 'admin';
+
+$config->group->subset->variable = new stdclass();
+$config->group->subset->variable->order = 1240;
+$config->group->subset->variable->nav = 'admin';
+
+$config->group->subset->provider = new stdclass();
+$config->group->subset->provider->order = 1250;
+$config->group->subset->provider->nav = 'admin';
+
+$config->group->subset->runner = new stdclass();
+$config->group->subset->runner->order = 1260;
+$config->group->subset->runner->nav = 'admin';
+
 $config->group->subset->search = new stdclass();
 $config->group->subset->search->order = 1570;
 
@@ -87,10 +103,6 @@ $config->group->subset->systemManage = new stdclass();
 $config->group->subset->systemManage->order = 2470;
 $config->group->subset->systemManage->nav = 'system';
 
-$config->group->subset->configure = new stdclass();
-$config->group->subset->configure->order = 2900;
-$config->group->subset->configure->nav = 'repo';
-
 $config->group->package = new stdclass();
 
 $config->group->package->browseSystem = new stdclass();
@@ -148,7 +160,7 @@ $config->group->package->browseRepo->privs['repo-browse'] = array('edition' => '
 
 $config->group->package->browseBranchSettings = new stdclass();
 $config->group->package->browseBranchSettings->order  = 2425;
-$config->group->package->browseBranchSettings->subset = 'repo';
+$config->group->package->browseBranchSettings->subset = 'repobranchtype';
 $config->group->package->browseBranchSettings->privs  = array();
 $config->group->package->browseBranchSettings->privs['repobranchtype-browse'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(0 => 'repo-browse'), 'recommend' => array(0 => 'repobranchtype-create', 1 => 'repobranchtype-edit', 2 => 'repobranchtype-delete', 3 => 'repobranchtype-import'));
 
@@ -170,7 +182,7 @@ $config->group->package->manageRepo->privs['repo-delete'] = array('edition' => '
 
 $config->group->package->setBranchType = new stdclass();
 $config->group->package->setBranchType->order  = 2450;
-$config->group->package->setBranchType->subset = 'repo';
+$config->group->package->setBranchType->subset = 'repobranchtype';
 $config->group->package->setBranchType->privs  = array();
 $config->group->package->setBranchType->privs['repobranchtype-create'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'repobranchtype-browse'), 'recommend' => array(0 => 'repobranchtype-edit', 1 => 'repobranchtype-delete', 2 => 'repobranchtype-import'));
 $config->group->package->setBranchType->privs['repobranchtype-import'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 15, 'depend' => array(0 => 'repobranchtype-browse'), 'recommend' => array(0 => 'repobranchtype-create', 1 => 'repobranchtype-edit', 2 => 'repobranchtype-delete'));
@@ -244,7 +256,7 @@ $config->group->package->deleteBranchAndTag->privs['repo-deleteTag'] = array('ed
 
 $config->group->package->provider = new stdclass();
 $config->group->package->provider->order  = 2385;
-$config->group->package->provider->subset = 'configure';
+$config->group->package->provider->subset = 'provider';
 $config->group->package->provider->privs  = array();
 $config->group->package->provider->privs['provider-browse'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(), 'recommend' => array(0 => 'provider-create', 1 => 'provider-edit', 2 => 'provider-delete'));
 $config->group->package->provider->privs['provider-create'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(), 'recommend' => array(0 => 'provider-edit', 1 => 'provider-delete'));
@@ -253,13 +265,13 @@ $config->group->package->provider->privs['provider-delete'] = array('edition' =>
 
 $config->group->package->browseRunner = new stdclass();
 $config->group->package->browseRunner->order  = 2390;
-$config->group->package->browseRunner->subset = 'configure';
+$config->group->package->browseRunner->subset = 'runner';
 $config->group->package->browseRunner->privs  = array();
 $config->group->package->browseRunner->privs['runner-browse'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(), 'recommend' => array(0 => 'runner-create', 1 => 'runner-changeState', 2 => 'runner-edit', 3 => 'runner-delete'));
 
 $config->group->package->manageRunner = new stdclass();
 $config->group->package->manageRunner->order  = 2395;
-$config->group->package->manageRunner->subset = 'configure';
+$config->group->package->manageRunner->subset = 'runner';
 $config->group->package->manageRunner->privs  = array();
 $config->group->package->manageRunner->privs['runner-create'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'runner-browse'), 'recommend' => array(0 => 'runner-edit', 1 => 'runner-changeState', 2 => 'runner-delete'));
 $config->group->package->manageRunner->privs['runner-changeState'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 15, 'depend' => array(0 => 'runner-browse'), 'recommend' => array(0 => 'runner-create', 1 => 'runner-edit', 2 => 'runner-delete'));
@@ -437,6 +449,20 @@ $config->group->package->admin->order  = 5;
 $config->group->package->admin->subset = 'admin';
 $config->group->package->admin->privs  = array();
 $config->group->package->admin->privs['admin-index'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(), 'recommend' => array());
+
+$config->group->package->browseVariable = new stdclass();
+$config->group->package->browseVariable->order  = 5;
+$config->group->package->browseVariable->subset = 'variable';
+$config->group->package->browseVariable->privs  = array();
+$config->group->package->browseVariable->privs['variable-browse'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(), 'recommend' => array(0 => 'variable-create', 1 => 'variable-edit', 2 => 'variable-delete'));
+
+$config->group->package->manageVariable = new stdclass();
+$config->group->package->manageVariable->order  = 15;
+$config->group->package->manageVariable->subset = 'variable';
+$config->group->package->manageVariable->privs  = array();
+$config->group->package->manageVariable->privs['variable-create'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 5, 'depend' => array(0 => 'variable-browse'), 'recommend' => array(0 => 'variable-edit', 1 => 'variable-delete'));
+$config->group->package->manageVariable->privs['variable-edit'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 10, 'depend' => array(0 => 'variable-browse'), 'recommend' => array(0 => 'variable-create', 1 => 'variable-delete'));
+$config->group->package->manageVariable->privs['variable-delete'] = array('edition' => 'gitfox', 'vision' => 'gitfox', 'order' => 15, 'depend' => array(0 => 'variable-browse'), 'recommend' => array(0 => 'variable-create', 1 => 'variable-edit'));
 
 $config->group->package->backup = new stdclass();
 $config->group->package->backup->order  = 5;
