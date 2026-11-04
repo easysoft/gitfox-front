@@ -934,7 +934,7 @@ class programplanModel extends model
             $this->session->set('projectTaskQueryCondition', $projectTaskQuery, $this->app->tab);
             $this->session->set('projectTaskOnlyCondition', true, $this->app->tab);
 
-            $tasks = $this->loadModel('execution')->getSearchTasks($projectTaskQuery, "{$type}_asc,beginDate_asc,id_asc", $pager, 'projectTask');
+            $tasks = $this->loadModel('execution')->getSearchTasks($projectTaskQuery, "`order`_asc,{$type}_asc,beginDate_asc,id_asc", $pager, 'projectTask');
         }
         elseif(!empty($planIdList))
         {
@@ -948,7 +948,7 @@ class programplanModel extends model
                 ->beginIF($browseType != 'nowait')->andWhere('t1.status')->ne('cancel')->fi()
                 ->beginIF($browseType != 'nowait')->andWhere('t1.`closedReason`')->ne('cancel')->fi()
                 ->filterTpl('skip')
-                ->orderBy("{$type}_asc,`beginDate`_asc,id_asc")
+                ->orderBy("`order`_asc,{$type}_asc,`beginDate`_asc,id_asc")
                 ->fetchAll('id', false);
         }
 
