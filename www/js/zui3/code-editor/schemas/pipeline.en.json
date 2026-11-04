@@ -82,9 +82,9 @@
         },
         "when": {
           "type": "string",
-          "description": "Execution condition (non-empty): success(), failure(), always(), or <rule> && <expr>",
+          "description": "Execution condition (non-empty): ${{ success() }}, ${{ failure() }}, ${{ always() }}, or ${{ <rule> && (<custom condition>) }}; the custom condition must be on a single line",
           "minLength": 1,
-          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\S.*)?\\s*\\}\\}$",
+          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\(.+\\))?\\s*\\}\\}$",
           "default": "${{ success() }}"
         },
         "spec": {
@@ -176,9 +176,9 @@
         },
         "when": {
           "type": "string",
-          "description": "Execution condition (non-empty): success(), failure(), always(), or <rule> && <expr>",
+          "description": "Execution condition (non-empty): ${{ success() }}, ${{ failure() }}, ${{ always() }}, or ${{ <rule> && (<custom condition>) }}; the custom condition must be on a single line",
           "minLength": 1,
-          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\S.*)?\\s*\\}\\}$",
+          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\(.+\\))?\\s*\\}\\}$",
           "default": "${{ success() }}"
         },
         "spec": {

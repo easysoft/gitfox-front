@@ -82,9 +82,9 @@
         },
         "when": {
           "type": "string",
-          "description": "执行条件（不能为空）：${{ success() }}、${{ failure() }}、${{ always() }} 或 ${{ <规则> && <表达式> }}",
+          "description": "执行条件（不能为空）：${{ success() }}、${{ failure() }}、${{ always() }} 或 ${{ <规则> && (<自定义条件>) }}，自定义条件需为单行",
           "minLength": 1,
-          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\S.*)?\\s*\\}\\}$",
+          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\(.+\\))?\\s*\\}\\}$",
           "default": "${{ success() }}"
         },
         "spec": {
@@ -176,9 +176,9 @@
         },
         "when": {
           "type": "string",
-          "description": "执行条件（不能为空）：${{ success() }}、${{ failure() }}、${{ always() }} 或 ${{ <规则> && <表达式> }}",
+          "description": "执行条件（不能为空）：${{ success() }}、${{ failure() }}、${{ always() }} 或 ${{ <规则> && (<自定义条件>) }}，自定义条件需为单行",
           "minLength": 1,
-          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\S.*)?\\s*\\}\\}$",
+          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\(.+\\))?\\s*\\}\\}$",
           "default": "${{ success() }}"
         },
         "spec": {
