@@ -215,7 +215,7 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
         return true;
     }
 
-    /* 关闭/忽略保持勾选，提交成功后由页面刷新清空；转 Bug 等离开列表的操作直接清空。 */
+    /* 关闭/忽略需要填写原因，通过弹窗表单提交；成功后主动清空勾选并刷新列表。 */
     if(['ignore', 'close'].includes(type))
     {
         let modalUrl = url;
@@ -224,7 +224,18 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
             const separator = modalUrl.includes('?') ? '&' : '?';
             modalUrl += separator + 'issueIdList=' + encodeURIComponent(issueIdList.join(','));
         }
-        loadModal(modalUrl);
+
+        loadModal(modalUrl, null, {
+            onShown: function()
+            {
+                const $form = $(this.modalElement).find('form').first();
+                $form.one('success.zui.ajaxForm', function()
+                {
+                    dtable.$.toggleCheckRows(false);
+                    setTimeout(loadCurrentPage, 100);
+                });
+            }
+        });
         return false;
     }
 
