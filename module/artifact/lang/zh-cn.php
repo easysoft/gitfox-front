@@ -109,6 +109,6 @@ $lang->artifact->formatList['container'] = '镜像仓库';
 $lang->artifact->pushImageNotice = '如何推送镜像';
 
 $lang->artifact->pushImageTip   = array();
-$lang->artifact->pushImageTip[] = array('title' => '1. 登录仓库',                             'content' => 'docker login GITFOXURL');
+$lang->artifact->pushImageTip[] = array('title' => '1. 登录仓库', 'content' => 'docker login GITFOXURL', 'manual' => array('text' => '查看手册', 'url' => 'https://www.gitfox.net/book/open-source/72.html#3'));
 $lang->artifact->pushImageTip[] = array('title' => '2. 标记镜像(自行替换本地镜像名称与版本)', 'content' => 'docker tag image-name:tag GITFOXURL/TYPECODE/LIBCODE/{image-name:tag}');
 $lang->artifact->pushImageTip[] = array('title' => '3. 推送镜像',                             'content' => 'docker push GITFOXURL/TYPECODE/LIBCODE/{image-name:tag}');

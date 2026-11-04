@@ -110,7 +110,19 @@ if($artifact->type == 'container')
         $imageNoticeDom[] = div
         (
             setClass('mb-2'),
-            p(setClass('mb-1 font-bold'), $content['title']),
+            p
+            (
+                setClass('mb-1 font-bold'),
+                $content['title'],
+                empty($content['manual']) ? null : a
+                (
+                    setClass('ml-2 text-primary font-normal'),
+                    set::href($content['manual']['url']),
+                    set::target('_blank'),
+                    set('rel', 'noopener noreferrer'),
+                    $content['manual']['text']
+                )
+            ),
             div
             (
                 setClass('flex space-between'),
