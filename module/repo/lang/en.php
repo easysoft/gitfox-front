@@ -416,13 +416,10 @@ $lang->repo->commentNum   = " Comments";
 $lang->repo->fileTotal  = '%d files';
 $lang->repo->codeSurvey = 'Changed: <span class="add-cot">%d lines</span> of code added, <span class="delete-cot">%d lines</span> of code deleted';
 
-$lang->repo->featureBar['review']['all']          = 'All';
-$lang->repo->featureBar['review']['assigntome']   = 'AssignedToMe';
-$lang->repo->featureBar['review']['openedbyme']   = 'OpenedByMe';
-$lang->repo->featureBar['review']['resolvedbyme'] = 'ResolvedByMe';
-$lang->repo->featureBar['review']['assigntonull'] = 'Unassigned';
-$lang->repo->featureBar['review']['unresolved']   = 'Active';
-$lang->repo->featureBar['review']['unclosed']     = 'Unclosed';
+$lang->repo->featureBar['review']['all']    = 'All';
+$lang->repo->featureBar['review']['wait']   = 'Active';
+$lang->repo->featureBar['review']['solved'] = 'Solved';
+$lang->repo->featureBar['review']['closed'] = 'Closed';
 
 $lang->repo->browseSystem = 'Application List';
 
