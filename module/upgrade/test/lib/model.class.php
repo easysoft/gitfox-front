@@ -468,12 +468,14 @@ class upgradeModelTest extends baseTest
      * @access public
      * @return string
      */
-    public function checkProcessTest(string $installedVersion, string $systemMode): string
+    public function checkProcessTest(string $installedVersion, string $systemMode, string $processKey = ''): string
     {
         global $tester;
         $tester->config->installedVersion = $installedVersion;
         $tester->config->systemMode       = $systemMode;
         $process = $this->instance->checkProcess();
+        if($processKey) return isset($process[$processKey]) ? '1' : '0';
+
         $return  = '';
         foreach($process as $key => $value) $return .= "{$key}:{$value};";
         return trim($return, ';');
