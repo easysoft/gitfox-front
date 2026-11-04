@@ -17,7 +17,7 @@ $lang->variable->typeList['plain']  = 'Plain';
 $lang->variable->typeList['cipher'] = 'Cipher';
 
 $lang->variable->notice = new stdclass();
-$lang->variable->notice->confirmDelete = 'Delete after the variable is used in the pipeline, whether to confirm the deletion?';
+$lang->variable->notice->confirmDelete = 'Delete this variable? Pipelines that reference it will no longer be able to use it after deletion.';
 $lang->variable->notice->emptyProvider = 'No variables yet.';
 
 $lang->variable->placeholder = new stdclass();
