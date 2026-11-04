@@ -15,16 +15,16 @@ if($app->rawMethod == 'work')
     $badgeMap = array();
     $nameMap = array('task' =>'task', 'story' =>'story', 'bug' =>'bug', 'testcase' =>'case', 'testtask' =>'testtask');
 
-    if($isOpenedURAndSR !== 0)                       $nameMap = array_merge($nameMap, array('requirement' => 'requirement'));
+    if($config->URAndSR)                             $nameMap = array_merge($nameMap, array('requirement' => 'requirement'));
     if($config->enableER)                            $nameMap = array_merge($nameMap, array('epic' => 'epic'));
-    if($isBiz !== 0 || $isMax !== 0 || $isIPD !== 0)
+    if(in_array($config->edition, array('biz', 'max', 'ipd')))
     {
         $showMenu = array('feedback' => 'feedback', 'ticket' => 'ticket');
         if(!empty($config->enableAITeammate)) $showMenu = array('aitask' => 'aitask') + $showMenu;
         $nameMap = array_merge($nameMap, $showMenu);
     }
-    if($isMax !== 0 || $isIPD !== 0)                 $nameMap = array_merge($nameMap, array('issue' => 'issue', 'risk' => 'risk', 'reviewissue' => 'reviewissue', 'nc' => 'qa', 'myMeeting' => 'meeting'));
-    if($isIPD !== 0)                                 $nameMap = array_merge($nameMap, array('demand' => 'demand'));
+    if(in_array($config->edition, array('max', 'ipd'))) $nameMap = array_merge($nameMap, array('issue' => 'issue', 'risk' => 'risk', 'reviewissue' => 'reviewissue', 'nc' => 'qa', 'myMeeting' => 'meeting'));
+    if($config->edition == 'ipd')                      $nameMap = array_merge($nameMap, array('demand' => 'demand'));
     if($config->edition != 'open')
     {
         $flowPairs = $this->loadModel('my')->getFlowPairs();

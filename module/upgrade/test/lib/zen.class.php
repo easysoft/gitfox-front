@@ -217,9 +217,12 @@ class upgradeZenTest extends baseTest
         $oldGitfoxVersions = $this->instance->config->upgrade->gitfoxVersion;
         $oldOpenVersions   = $this->instance->lang->upgrade->fromVersions;
         $oldExecFlow       = $this->instance->config->upgrade->execFlow;
+        $hasTargetGitfoxVersion = property_exists($this->instance->config, 'gitfoxVersion');
+        $oldTargetGitfoxVersion = $hasTargetGitfoxVersion ? $this->instance->config->gitfoxVersion : null;
 
         $this->instance->config->upgrade->gitfoxVersion = $gitfoxVersions;
         $this->instance->lang->upgrade->fromVersions   = $openVersions;
+        $this->instance->config->gitfoxVersion         = '4.6';
         $this->instance->config->upgrade->execFlow['gitfox4_3'] = array('functions' => 'disableFeaturesByMode');
         $this->instance->config->upgrade->execFlow['gitfox4_4'] = array('functions' => 'disableFeaturesByMode');
         $this->instance->config->upgrade->execFlow['gitfox4_5'] = array('functions' => 'disableFeaturesByMode');
@@ -234,6 +237,8 @@ class upgradeZenTest extends baseTest
         $this->instance->config->upgrade->gitfoxVersion = $oldGitfoxVersions;
         $this->instance->lang->upgrade->fromVersions   = $oldOpenVersions;
         $this->instance->config->upgrade->execFlow       = $oldExecFlow;
+        if($hasTargetGitfoxVersion) $this->instance->config->gitfoxVersion = $oldTargetGitfoxVersion;
+        else unset($this->instance->config->gitfoxVersion);
         $this->restoreVersions($oldVersions);
         return implode(',', array_unique($versions));
     }

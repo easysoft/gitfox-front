@@ -36,22 +36,32 @@ class upgradeModelTest extends baseTest
      * @param  string     $fromVersion
      * @param  string     $toVersion
      * @param  array|null $gitfoxVersions
-     * @param  array|null $openVersions
+     * @param  array|null  $openVersions
+     * @param  string|null $targetGitfoxVersion
+     * @param  string|null $targetVersion
      * @access public
      * @return string
      */
-    public function getGitfoxVersionsToUpdateTest(string $fromVersion, string $toVersion, ?array $gitfoxVersions = null, ?array $openVersions = null): string
+    public function getGitfoxVersionsToUpdateTest(string $fromVersion, string $toVersion, ?array $gitfoxVersions = null, ?array $openVersions = null, ?string $targetGitfoxVersion = null, ?string $targetVersion = null): string
     {
-        $oldGitfoxVersions = $this->instance->config->upgrade->gitfoxVersion;
-        $oldOpenVersions   = $this->instance->lang->upgrade->fromVersions;
+        $oldGitfoxVersions       = $this->instance->config->upgrade->gitfoxVersion;
+        $oldOpenVersions         = $this->instance->lang->upgrade->fromVersions;
+        $hasTargetGitfoxVersion  = property_exists($this->instance->config, 'gitfoxVersion');
+        $oldTargetGitfoxVersion  = $hasTargetGitfoxVersion ? $this->instance->config->gitfoxVersion : null;
+        $oldTargetVersion        = $this->instance->config->version;
 
-        if($gitfoxVersions !== null) $this->instance->config->upgrade->gitfoxVersion = $gitfoxVersions;
-        if($openVersions !== null)   $this->instance->lang->upgrade->fromVersions   = $openVersions;
+        if($gitfoxVersions !== null)       $this->instance->config->upgrade->gitfoxVersion = $gitfoxVersions;
+        if($openVersions !== null)         $this->instance->lang->upgrade->fromVersions   = $openVersions;
+        if($targetGitfoxVersion !== null)  $this->instance->config->gitfoxVersion         = $targetGitfoxVersion;
+        if($targetVersion !== null)        $this->instance->config->version               = $targetVersion;
 
         $versions = $this->instance->getGitfoxVersionsToUpdate($fromVersion, $toVersion);
 
         $this->instance->config->upgrade->gitfoxVersion = $oldGitfoxVersions;
         $this->instance->lang->upgrade->fromVersions   = $oldOpenVersions;
+        $this->instance->config->version               = $oldTargetVersion;
+        if($hasTargetGitfoxVersion) $this->instance->config->gitfoxVersion = $oldTargetGitfoxVersion;
+        else unset($this->instance->config->gitfoxVersion);
         return implode(',', array_keys($versions));
     }
 
