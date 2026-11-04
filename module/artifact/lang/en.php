@@ -109,6 +109,6 @@ $lang->artifact->formatList['container'] = 'Image Repository';
 $lang->artifact->pushImageNotice = 'How to push an image';
 
 $lang->artifact->pushImageTip   = array();
-$lang->artifact->pushImageTip[] = array('title' => '1. Login to the registry',                                   'content' => 'docker login GITFOXURL');
+$lang->artifact->pushImageTip[] = array('title' => '1. Login to the registry', 'content' => 'docker login GITFOXURL', 'manual' => array('text' => 'View manual', 'url' => 'https://www.gitfox.net/book/open-source/72.html#3'));
 $lang->artifact->pushImageTip[] = array('title' => '2. Tag the image(replace the local image name and version)', 'content' => 'docker tag image-name:tag GITFOXURL/TYPECODE/LIBCODE/{image-name:tag}');
 $lang->artifact->pushImageTip[] = array('title' => '3. Push the image',                                          'content' => 'docker push GITFOXURL/TYPECODE/LIBCODE/{image-name:tag}');
