@@ -1,0 +1,227 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "流水线",
+  "description": "禅道流水线 YAML 文件的结构定义",
+  "required": ["version", "kind", "spec"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [1],
+      "description": "流水线格式版本"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["pipeline"],
+      "description": "流水线类型"
+    },
+    "spec": {
+      "$ref": "#/definitions/pipelineSpec"
+    }
+  },
+  "definitions": {
+    "pipelineSpec": {
+      "type": "object",
+      "title": "流水线配置",
+      "description": "流水线配置",
+      "required": ["stages"],
+      "properties": {
+        "options": {
+          "type": "object",
+          "title": "选项",
+          "description": "流水线选项",
+          "properties": {
+            "clone": {
+              "type": "object",
+              "title": "克隆选项",
+              "description": "代码库克隆选项",
+              "properties": {
+                "disabled": {
+                  "type": "boolean",
+                  "description": "禁用代码库克隆",
+                  "default": true
+                }
+              }
+            }
+          }
+        },
+        "stages": {
+          "type": "array",
+          "title": "阶段",
+          "description": "阶段列表",
+          "items": {
+            "$ref": "#/definitions/stage"
+          }
+        }
+      }
+    },
+    "stage": {
+      "type": "object",
+      "title": "阶段",
+      "description": "一个流水线阶段",
+      "required": ["id", "name", "when", "spec"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "阶段 ID，在流水线内唯一"
+        },
+        "name": {
+          "type": "string",
+          "description": "阶段名称"
+        },
+        "desc": {
+          "type": "string",
+          "description": "阶段描述",
+          "default": ""
+        },
+        "type": {
+          "type": "string",
+          "enum": ["ci"],
+          "description": "阶段类型",
+          "default": "ci"
+        },
+        "when": {
+          "type": "string",
+          "description": "执行条件（不能为空）：${{ success() }}、${{ failure() }}、${{ always() }} 或 ${{ <规则> && <表达式> }}",
+          "minLength": 1,
+          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\S.*)?\\s*\\}\\}$",
+          "default": "${{ success() }}"
+        },
+        "spec": {
+          "$ref": "#/definitions/stageSpec"
+        },
+        "approval": {
+          "$ref": "#/definitions/approval"
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "title": "人工审批",
+      "description": "阶段的人工审批配置",
+      "required": ["name", "approvers", "mode", "timeout"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "审批名称",
+          "minLength": 1,
+          "default": "人工审批"
+        },
+        "desc": {
+          "type": "string",
+          "description": "审批描述",
+          "default": ""
+        },
+        "approvers": {
+          "type": "string",
+          "description": "审批人账号，使用逗号分隔",
+          "pattern": "^[^,\\s]+(?:,[^,\\s]+)*$",
+          "minLength": 1
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["and", "or"],
+          "description": "审批方式：and（会签，所有人通过）或 or（或签，一人通过）",
+          "default": "and"
+        },
+        "percent": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "通过百分比，启用百分比规则时使用"
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]{0,3}h$",
+          "description": "审批超时时间（1-9999 小时），例如 24h",
+          "default": "72h"
+        }
+      }
+    },
+    "stageSpec": {
+      "type": "object",
+      "title": "阶段配置",
+      "description": "阶段配置",
+      "required": ["steps"],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "title": "步骤",
+          "description": "步骤列表",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "title": "步骤",
+      "description": "阶段中的一个步骤",
+      "required": ["id", "name", "when", "spec"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "步骤 ID，在阶段内唯一"
+        },
+        "name": {
+          "type": "string",
+          "description": "步骤名称"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["run", "plugin"],
+          "description": "步骤类型",
+          "default": "run"
+        },
+        "when": {
+          "type": "string",
+          "description": "执行条件（不能为空）：${{ success() }}、${{ failure() }}、${{ always() }} 或 ${{ <规则> && <表达式> }}",
+          "minLength": 1,
+          "pattern": "^\\$\\{\\{\\s*(?:success|failure|always)\\(\\)(?:\\s*&&\\s*\\S.*)?\\s*\\}\\}$",
+          "default": "${{ success() }}"
+        },
+        "spec": {
+          "$ref": "#/definitions/stepSpec"
+        }
+      }
+    },
+    "stepSpec": {
+      "type": "object",
+      "title": "步骤配置",
+      "description": "步骤配置，内容随步骤类型不同",
+      "properties": {
+        "container": {
+          "type": "object",
+          "title": "容器",
+          "description": "容器配置",
+          "properties": {
+            "image": {
+              "type": "string",
+              "description": "容器镜像"
+            },
+            "pull": {
+              "type": "string",
+              "enum": ["always", "if-not-exists"],
+              "description": "镜像拉取策略",
+              "default": "if-not-exists"
+            }
+          }
+        },
+        "privileged": {
+          "type": "boolean",
+          "description": "以特权模式运行容器",
+          "default": false
+        },
+        "script": {
+          "type": "array",
+          "description": "脚本命令",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
