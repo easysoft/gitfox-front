@@ -3021,11 +3021,11 @@ class repo extends control
 
         /* set query */
         $query = new stdClass();
-        $query->begin = '';
-        $query->end = '';
+        $query->begin     = '';
+        $query->end       = '';
         $query->committer = '';
-        $query->commit = !empty($search) ? $search : '';
-        $commits    = $this->repo->getCommits($repo, '', $branchID, 'dir', $pager, '', '', $query);
+        $query->commit    = !empty($search) ? $search : '';
+        $commits          = $this->repo->getCommits($repo, '', $branchID, 'dir', $pager, '', '', $query);
 
         /* packaging commits */
         $retCommits = array();
@@ -3035,7 +3035,7 @@ class repo extends control
             {
                 $shortID      = substr($item->revision, 0, 10);
                 $commitDate   = isset($item->committed_date) ? date('Y-m-d H:i:s', strtotime($item->committed_date)) : '';
-                $commitDetail = sprintf($this->lang->repo->commitDetail, "{$shortID} {$item->message}", $commitDate, $item->committer);
+                $commitDetail = sprintf($this->lang->repo->commitDetail, "{$shortID} {$item->title}", $commitDate, $item->committer);
                 array_push($retCommits, [
                     'text'  => array('html' => "<div class='tagCommit font-mono' title='{$commitDetail}'><div class='commit'>" . $shortID . "</div><div class='message'>" . $item->message . "</div></div>"),
                     'value' => $item->revision,

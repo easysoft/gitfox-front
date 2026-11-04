@@ -416,13 +416,10 @@ $lang->repo->commentNum   = " 条评论";
 $lang->repo->fileTotal  = '%d个文件';
 $lang->repo->codeSurvey = '发生改动：总共<span class="add-cot">添加%d行</span>代码，<span class="delete-cot">删除%d行</span>代码';
 
-$lang->repo->featureBar['review']['all']          = '全部';
-$lang->repo->featureBar['review']['assigntome']   = '指派给我';
-$lang->repo->featureBar['review']['openedbyme']   = '由我创建';
-$lang->repo->featureBar['review']['resolvedbyme'] = '由我解决';
-$lang->repo->featureBar['review']['assigntonull'] = '未指派';
-$lang->repo->featureBar['review']['unresolved']   = '未解决';
-$lang->repo->featureBar['review']['unclosed']     = '未关闭';
+$lang->repo->featureBar['review']['all']    = '全部';
+$lang->repo->featureBar['review']['wait']   = '激活';
+$lang->repo->featureBar['review']['solved'] = '已解决';
+$lang->repo->featureBar['review']['closed'] = '已关闭';
 
 $lang->repo->browseSystem = '应用列表';
 

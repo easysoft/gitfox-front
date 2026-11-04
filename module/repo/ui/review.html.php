@@ -59,28 +59,6 @@ foreach((array)$manualIssues as $manualIssue)
 }
 $manualRows = initTableData($manualRows, $manualCols, $this->loadModel('codescan'));
 
-// 状态筛选与代码评审问题清单中的人工审查问题保持一致。
-$statusItems = array();
-$statusList = array
-(
-    'all'       => $lang->all,
-    'wait'      => zget($lang->codescan->issueStatusList, 'wait', 'wait'),
-    'solved'    => zget($lang->codescan->issueStatusList, 'solved', 'solved'),
-    'closed'    => zget($lang->codescan->issueStatusList, 'closed', 'closed'),
-    'converted' => $lang->codescan->manualIssueConverted
-);
-foreach($statusList as $status => $statusText)
-{
-    $statusItems[] = array
-    (
-        'text'   => $statusText,
-        'active' => $browseType === $status,
-        'badge'  => $browseType === $status && $pager->recTotal != '' ? array('text' => $pager->recTotal, 'class' => 'size-sm canvas ring-0 rounded-md') : null,
-        'props'  => array('data-id' => $status, 'data-load' => 'table', 'title' => $statusText),
-        'url'    => createLink('repo', 'review', "repoID={$repoID}&browseType={$status}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1{$allRepoParam}")
-    );
-}
-
 /* 代码库筛选下拉。The repo filter dropdown. */
 $repoItems = array();
 if($showRepoFilter)
@@ -102,7 +80,8 @@ featureBar
             set::items($repoItems)
         )
     ),
-    set::items($statusItems)
+    set::current($browseType),
+    set::linkParams("repoID={$repoID}&browseType={key}&objectID={$objectID}&orderBy={$orderBy}&recTotal=0&recPerPage=20&pageID=1{$allRepoParam}")
 );
 
 dtable
