@@ -358,7 +358,7 @@ class pipelineZen extends pipeline
 
             if(empty($items)) continue;
 
-            $groups[] = array('text' => $spaceName, 'value' => (string)$spaceID, 'disabled' => true, 'items' => $items);
+            $groups[] = array('text' => $spaceName, 'disabled' => true, 'items' => $items);
         }
 
         return $groups;
