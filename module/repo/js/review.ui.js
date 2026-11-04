@@ -1,3 +1,8 @@
+/*
+ * @copyright: Copyright 2009-2026 禅道软件（青岛）有限公司(ZenTao Software (Qingdao) Co., Ltd. www.zentao.net)
+ * @license: ZPL(http://zpl.pub/page/zplv12.html) or AGPL(https://www.gnu.org/licenses/agpl-3.0.en.html)
+ * @author: mengyutong <mengyutong@chandao.com>
+ */
 // 人工审查问题列表的批量操作，与 AI 评审问题列表同一套处理流程。
 $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
 {
@@ -37,7 +42,7 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
         return true;
     }
 
-    /* 关闭/忽略保持勾选，提交成功后由页面刷新清空；转 Bug 等离开列表的操作直接清空。 */
+    /* 关闭/忽略需要填写原因，通过弹窗表单提交；成功后主动清空勾选并刷新列表。 */
     if(['ignore', 'close'].includes(type))
     {
         let modalUrl = url;
@@ -46,6 +51,18 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
             const separator = modalUrl.includes('?') ? '&' : '?';
             modalUrl += separator + 'issueIdList=' + encodeURIComponent(issueIdList.join(','));
         }
+
+        if(window.manualIssueCloseRefreshHandler) $(document).off('success.zui.ajaxForm', window.manualIssueCloseRefreshHandler);
+        window.manualIssueCloseRefreshHandler = function(event)
+        {
+            const action = String($(event.target).attr('action') || '').toLowerCase();
+            if(!action.includes('closemanualissue')) return;
+
+            $(document).off('success.zui.ajaxForm', window.manualIssueCloseRefreshHandler);
+            window.manualIssueCloseRefreshHandler = null;
+            dtable.$.toggleCheckRows(false);
+        };
+        $(document).on('success.zui.ajaxForm', window.manualIssueCloseRefreshHandler);
         loadModal(modalUrl);
         return false;
     }
