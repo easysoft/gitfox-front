@@ -52,18 +52,17 @@ $(document).off('click', '.batch-btn').on('click', '.batch-btn', function()
             modalUrl += separator + 'issueIdList=' + encodeURIComponent(issueIdList.join(','));
         }
 
-        if(window.manualIssueCloseRefreshHandler) $(document).off('success.zui.ajaxForm', window.manualIssueCloseRefreshHandler);
-        window.manualIssueCloseRefreshHandler = function(event)
-        {
-            const action = String($(event.target).attr('action') || '').toLowerCase();
-            if(!action.includes('closemanualissue')) return;
-
-            $(document).off('success.zui.ajaxForm', window.manualIssueCloseRefreshHandler);
-            window.manualIssueCloseRefreshHandler = null;
-            dtable.$.toggleCheckRows(false);
-        };
-        $(document).on('success.zui.ajaxForm', window.manualIssueCloseRefreshHandler);
-        loadModal(modalUrl);
+        loadModal(modalUrl, null, {
+            onShown: function()
+            {
+                const $form = $(this.modalElement).find('form').first();
+                $form.one('success.zui.ajaxForm', function()
+                {
+                    dtable.$.toggleCheckRows(false);
+                    setTimeout(loadCurrentPage, 100);
+                });
+            }
+        });
         return false;
     }
 
