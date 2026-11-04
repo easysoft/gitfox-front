@@ -624,9 +624,9 @@ class my extends control
      * @access public
      * @return void
      */
-    public function assignedIssue(string $browseType = 'all', int $param = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
+    public function assignedIssue(string $browseType = 'wait', int $param = 0, string $orderBy = 'id_desc', int $recTotal = 0, int $recPerPage = 20, int $pageID = 1)
     {
-        if(!in_array($browseType, array('all', 'wait', 'solved', 'closed'))) $browseType = 'all';
+        if(!in_array($browseType, array('all', 'solved', 'closed'))) $browseType = 'wait';
 
         $this->app->loadLang('block');
         $this->app->loadLang('codescan');

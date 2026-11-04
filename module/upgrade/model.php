@@ -132,10 +132,15 @@ class upgradeModel extends model
 
         if(empty($fromOpenVersion) || empty($toOpenVersion) || empty($gitfoxVersions)) return array();
 
-        foreach($gitfoxVersions as $gitfoxVersion => $openVersion)
+        $endVersion = $this->getTargetGitfoxVersion($toVersion);
+        if(empty($endVersion))
         {
-            if($this->compareUpgradeVersions($openVersion, $toOpenVersion) === 0) $endVersion = $gitfoxVersion;
+            foreach($gitfoxVersions as $gitfoxVersion => $openVersion)
+            {
+                if($this->compareUpgradeVersions($openVersion, $toOpenVersion) === 0) $endVersion = $gitfoxVersion;
+            }
         }
+        if(empty($endVersion)) $endVersion = $this->getLastGitfoxVersionInOpenRange($fromOpenVersion, $toOpenVersion, $gitfoxVersions);
         if(empty($endVersion)) return array();
 
         if($this->getEditionByVersion($fromVersion) == 'gitfox')
@@ -157,6 +162,24 @@ class upgradeModel extends model
             $versions[$gitfoxVersion] = $openVersion;
         }
         return $versions;
+    }
+
+    /**
+     * 获取目标版本对应的GitFox版本。
+     * Get the GitFox version corresponding to the target version.
+     *
+     * @param  string $toVersion
+     * @access private
+     * @return string
+     */
+    private function getTargetGitfoxVersion(string $toVersion): string
+    {
+        if($this->getEditionByVersion($toVersion) == 'gitfox') return $toVersion;
+        if($this->compareUpgradeVersions($toVersion, $this->config->version) !== 0) return '';
+        if(empty($this->config->gitfoxVersion)) return '';
+
+        $gitfoxVersion = str_replace('.', '_', $this->config->gitfoxVersion);
+        return str_starts_with($gitfoxVersion, 'gitfox') ? $gitfoxVersion : 'gitfox' . $gitfoxVersion;
     }
 
     /**
@@ -281,6 +304,28 @@ class upgradeModel extends model
             return $version;
         }
         return '';
+    }
+
+    /**
+     * 获取开源升级区间内的最后一个GitFox版本。
+     * Get the last GitFox version in an open upgrade range.
+     *
+     * @param  string $fromOpenVersion
+     * @param  string $toOpenVersion
+     * @param  array  $gitfoxVersions
+     * @access private
+     * @return string
+     */
+    private function getLastGitfoxVersionInOpenRange(string $fromOpenVersion, string $toOpenVersion, array $gitfoxVersions): string
+    {
+        $gitfoxVersion = '';
+        foreach($gitfoxVersions as $version => $mappedOpenVersion)
+        {
+            if($this->compareUpgradeVersions($mappedOpenVersion, $fromOpenVersion) < 0) continue;
+            if($this->compareUpgradeVersions($mappedOpenVersion, $toOpenVersion) >= 0) continue;
+            $gitfoxVersion = $version;
+        }
+        return $gitfoxVersion;
     }
 
     /**
