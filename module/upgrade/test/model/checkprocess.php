@@ -21,6 +21,8 @@ cid=19502
 - 测试版本 max4.3 管理模式 classic 的流程 @0
 - 测试版本 ipd1.1 管理模式 new 的流程 @0
 - 测试版本 ipd1.1 管理模式 classic 的流程 @0
+- 测试版本 gitfox4.4 管理模式 new 不触发旧附件迁移 @0
+- 测试版本 gitfox4.4 管理模式 classic 不触发旧附件迁移 @0
 - 测试版本 18.1 管理模式 new 且存在MyISAM表的流程 @changeEngine:notice
 
 **/
@@ -53,6 +55,8 @@ r($upgrade->checkProcessTest($versions[5], $systemMode[0])) && p() && e('0');   
 r($upgrade->checkProcessTest($versions[5], $systemMode[1])) && p() && e('0');                                                    // 测试版本 max4.3 管理模式 classic 的流程
 r($upgrade->checkProcessTest($versions[6], $systemMode[0])) && p() && e('0');                                                    // 测试版本 ipd1.1 管理模式 new 的流程
 r($upgrade->checkProcessTest($versions[6], $systemMode[1])) && p() && e('0');                                                    // 测试版本 ipd1.1 管理模式 classic 的流程
+r($upgrade->checkProcessTest('gitfox4.4', $systemMode[0], 'updateFile')) && p() && e('0');                                       // 测试版本 gitfox4.4 管理模式 new 不触发旧附件迁移
+r($upgrade->checkProcessTest('gitfox4.4', $systemMode[1], 'updateFile')) && p() && e('0');                                       // 测试版本 gitfox4.4 管理模式 classic 不触发旧附件迁移
 
 /* 数据库中存在 MyISAM 表时输出 changeEngine 提示。*/
 $myisamTable = $tester->config->db->prefix . 'upgrade_test_myisam';

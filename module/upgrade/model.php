@@ -2813,6 +2813,8 @@ class upgradeModel extends model
     public function checkProcess(): array
     {
         $fromVersion = $this->config->installedVersion;
+        if(strpos($fromVersion, 'gitfox') === 0) $fromVersion = $this->getOpenVersion(str_replace('.', '_', $fromVersion));
+
         $needProcess = array();
         if(strpos($fromVersion, 'ipd') !== false) return $needProcess;
         if(strpos($fromVersion, 'max') === false && strpos($fromVersion, 'biz') === false && (strpos($fromVersion, 'pro') === false ? version_compare($fromVersion, '8.3', '<') : version_compare($fromVersion, 'pro5.4', '<'))) $needProcess['updateFile'] = 'process';
