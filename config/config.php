@@ -248,7 +248,7 @@ $config->devops = new stdclass();
 $config->devops->gitfoxURL     = 'http://localhost';
 $config->devops->gitfoxPort    = 3000;
 $config->devops->gitfoxEdition = 'community';
-$config->devops->gitfoxVersion = '4.3';
+$config->devops->gitfoxVersion = '4.4';
 $config->devops->diffConfig    = array('longLineCharThreshold' => 500);
 
 /* 引用自定义的配置。 Include the custom config file. */
