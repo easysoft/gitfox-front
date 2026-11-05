@@ -325,7 +325,7 @@ class zdb
         $fp        = fopen($fileName, 'r');
         $sql       = '';
         $startTags = '^DROP TABLE|^CREATE TABLE|^INSERT INTO|^SET|^DROP VIEW|^CREATE .*VIEW';
-        $isInsert  = false;
+        $inString  = false;
         while(!feof($fp))
         {
             $line = fgets($fp);
@@ -334,12 +334,36 @@ class zdb
             $sqlStart = false;
             $sqlEnd   = false;
             $execSQL  = false;
-            if(empty($sql) and preg_match("/{$startTags}/", $line)) $sqlStart = true;
-            if(!$isInsert and $sqlStart and strpos($line, 'INSERT INTO') === 0) $isInsert = true;
+            if(empty($sql))
+            {
+                if(!preg_match("/{$startTags}/", $line)) continue;
+                $sqlStart = true;
+            }
 
-            $endTag = $isInsert ? "[^\\\]\'\);$" : ";$";
-            if(preg_match("/{$endTag}/", $line)) $sqlEnd = true;
-            if(!$sqlEnd && $isInsert && preg_match('/\,\s*null\);$/', $line)) $sqlEnd = true;
+            /* Track quoted strings so semicolons and null values in field content are not treated as SQL endings. */
+            $escaped = false;
+            for($i = 0; $i < strlen($line); $i++)
+            {
+                $char = $line[$i];
+                if(!$inString)
+                {
+                    if($char == "'") $inString = true;
+                    continue;
+                }
+
+                if($escaped)
+                {
+                    $escaped = false;
+                    continue;
+                }
+                if($char == '\\')
+                {
+                    $escaped = true;
+                    continue;
+                }
+                if($char == "'") $inString = false;
+            }
+            if(!$inString and preg_match('/;\s*$/', $line)) $sqlEnd = true;
 
             if($sqlStart && $sqlEnd)        // Only one line sql. e.g. DROP TABLE IF EXISTS `blog`;
             {
@@ -374,7 +398,7 @@ class zdb
                     $return->error .= $e->getMessage() . "\n";
                 }
                 $sql      = '';
-                $isInsert = false;
+                $inString = false;
             }
         }
         return $return;
