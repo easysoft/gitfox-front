@@ -1,81 +1,217 @@
 English | [中文](Readme_zh.md)
 
-<p align="center"><a href="https://www.zentao.pm" target="_blank" rel="noopener noreferrer"><img src="doc/img/zentao-en.png" alt="ZenTao Logo"></a></p>
+<p align="center"><a href="https://www.gitfox.net" target="_blank" rel="noopener noreferrer"><img src="doc/img/gitfox.svg" width="300" alt="GitFox Logo"></a></p>
 
 <p align="center">
-  <a href="https://www.php.net"><img src="https://img.shields.io/badge/php-%3E=5.6-brightgreen.svg?maxAge=2592000" alt="PHP Version"></a>
-  <a href="https://github.com/easysoft/zentaopms/releases/latest"><img src="https://img.shields.io/github/release/easysoft/zentaopms.svg" alt="Latest Version"></a>
-  <a href="mailto:chunsheng@easycorp.ltd"><img src="https://img.shields.io/badge/Email-chunsheng@easycorp.ltd-ea644a" alt="Email" /></a>
-  <a href="https://github.com/easysoft/zentaopms/blob/master/COPYING"><img src="https://img.shields.io/badge/License-AGPL%20or%20ZPL-blue" alt="ZenTao License"></a>
-  <a href="https://www.zentao.pm"><img src="https://img.shields.io/badge/Website-www.zentao.pm-blue" alt="ZenTao Website"></a>
+  <a href="./LICENSE.EN"><img src="https://img.shields.io/badge/License-ZPL%201.2%20%2F%20AGPL%203.0-blue" alt="GitFox License"></a>
+  <a href="https://www.gitfox.net"><img src="https://img.shields.io/badge/Website-www.gitfox.net-blue" alt="GitFox Website"></a>
 </p>
 
 # Introduction
 
-ZenTao is the first opensource project management software in China. It’s a comprehensive, all-in-one platform that covers the main PM process, from product and project management to quality management, documentation management, organization management, and office management.
+GitFox Front is the web frontend of GitFox, an all-in-one code hosting and DevOps platform. Built on the ZenTao PHP MVC framework, it provides a unified web UI for product management, project management, requirements, tasks, bugs, testing, and integrates with the GitFox backend for Git repository hosting, code review, CI/CD pipelines, artifact repositories, and code scanning.
 
-Since its establishment in 2009, ZenTao has helped tens of thousands of teams and organizations improve their project management structures. Currently, ZenTao is being used by some of the largest companies in the world, ranging from those in the sectors of finance and telecoms to manufacturing and software development. They trust ZenTao for streamlining their processes, simplifying communication between clients and employees, increasing transparency, and improving productivity and efficiency.
+This repository contains the frontend only. The GitFox backend is maintained in [gitfox-server](https://github.com/easysoft/gitfox-server).
 
-# Design Philosophy
+## Features
 
-The name ZenTao came from combining two Chinese characters, Zen(禅) and Tao(道), which have rich inspirations pertaining to culture and history. With its name referring to highly respected aspects of life, it’s only logical to convey their meaning in management by providing transparency, orderliness, and accessibility.
+- **Product and project management**: products, projects, executions, requirements (stories), tasks, bugs, test cases, builds, and releases
+- **Code hosting**: repositories, branches, tags, commits, merge requests, and webhooks
+- **Code review**: merge request review flows, branch protection rules, and code owners
+- **CI/CD**: pipeline management, runners, and scheduled jobs
+- **Artifact repository**: container images, Helm charts, raw artifacts, recycle bin, and garbage collection
+- **Code scanning**: rules, rule sets, scan plans, and scan tasks
+- **Spaces and permissions**: multiple spaces, RBAC, and SSO/token authentication
+- **GitFox integration**: user binding, issue association, and webhook integration with ZenTao
+- **Metrics and reports**: built-in dashboards, metrics, and reports
+- **Internationalization**: zh-CN, zh-TW, en, de, and fr
 
-ZenTao management concept is built on the 3 popular management methodologies: Scrum, Waterfall, and Kanban:
+## Tech Stack
 
-- The Scrum model built-in ZenTao is adaptable and flexible, which perfectly matches the rapid iterations of software development projects.
-- The Waterfall model built-in ZenTao lays emphasis on stages division and strict process control, which is ideal for projects that are well defined in advance and with fewer changes.
-- The Kanban model built-in ZenTao pays more attention to value flow and visualization, which is suitable for the team with a transparent process and efficient transmission of information.
+- PHP >= 5.6 (PHP 8.1+ recommended)
+- ZenTaoPHP MVC framework
+- ZUI and jQuery
+- MySQL / MariaDB
+- Caddy (default web server in the container image)
+- RoadRunner (background cron scheduler and consumer)
+- Docker / Docker Compose
 
-ZenTao clearly defines the concepts of product, project, and QA to help the product owners, developers, and testers coordinate with each other while maintaining separate functionalities. Through stories, tasks, and bugs, the whole teams interact and track issues and improvements to ensure the delivery of quality products.
+## Quick Start
 
-Besides, with ZenTao's feature-rich modules including data visualization, measurement, DevOps, Doc asset management, and automated testing, ZenTao offers flexible solutions to cover the entire process of software development, allows organizations to work efficiently and productivity, and helps them better control time, cost, and quality.
+### 1. Deploy with Docker Compose
 
-# Official Website
+Docker and Docker Compose are required. The example below starts three services:
 
-- [Website](https://www.zentao.pm/)
-- [Manual](https://www.zentao.pm/book/)
-- [FAQ](https://www.zentao.pm/page/faq.html)
-- [Extension](https://www.zentao.pm/extension-browse.html)
+- `zentao-db`: MySQL database
+- `zentao`: GitFox frontend (`hub.qc.oop.cc/test/gitfox-front:4.6`)
+- `gitfox`: GitFox backend
 
-# Demo
+Create a `docker-compose.yaml` file:
 
-- [ZenTao Opensource](https://demo15.zentao.pm)
-- [ZenTao Biz](https://biz.demo15.zentao.pm)
-- [ZenTao Max](https://max.demo15.zentao.pm)
+```yaml
+services:
+  zentao-db:
+    image: hub.zentao.net/app/mysql:8.0.36-debian
+    container_name: zentao-db
+    ports:
+      - '3306:3306'
+    volumes:
+      - /data/zentao-mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=pass4Zentao
+      - MYSQL_DATABASE=zentao
+    networks:
+      - zentao-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
 
-# Security Vulnerabilities
+  zentao:
+    image: hub.qc.oop.cc/test/gitfox-front:4.5
+    container_name: zentao
+    ports:
+      - '80:80'
+    volumes:
+      - /data/zentao-file:/data
+    depends_on:
+      zentao-db:
+        condition: service_healthy
+    environment:
+      - ZT_MYSQL_HOST=zentao-db
+      - ZT_MYSQL_PORT=3306
+      - ZT_MYSQL_USER=root
+      - ZT_MYSQL_PASSWORD=pass4Zentao
+      - ZT_MYSQL_DB=zentao
+      - PHP_MAX_EXECUTION_TIME=120
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_POST_MAX_SIZE=128M
+      - PHP_UPLOAD_MAX_FILESIZE=128M
+      - ZT_GITFOX_PORT=3000
+      - ZT_GITFOX_URL=3000
+      - IS_CONTAINER=true
+    networks:
+      - zentao-net
 
-If you find any vulnerability in ZenTao system please feel free to contact us at chunsheng@easycorp.ltd. We do appreciate your time and effort.
+  gitfox:
+    image: hub.zentao.net/test/gitfox-pro:4.5
+    container_name: gitfox
+    ports:
+      - '3000:3000'
+      - '3322:3322'
+    volumes:
+      - /data/zentao-file:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      zentao-db:
+        condition: service_healthy
+    networks:
+      - zentao-net
 
-# License
+networks:
+  zentao-net:
+    driver: bridge
+```
 
-ZenTao is an opensource project management software licensed on [AGPL](https://www.gnu.org/licenses/agpl-3.0.en.html) and [ZPL](http://zpl.pub/page/zplv12.html).
+Start the stack:
 
-<details>
-<summary><h1>Enhanced version<h1/></summary>
+```bash
+docker compose up -d
+```
 
-ZenTao Biz, ZenTao Max, and ZenTao Cloud are available for you if ZenTao Opensource can not meet your feature requirement.
+Then visit `http://<server-address>` to finish the initialization.
 
-> [Learn more about the comparison between ZenTao Opensource, ZenTao Biz, and ZenTao Max](https://www.zentao.pm/page/vs.html).
+Before deployment, update the following according to your environment:
 
-## ZenTao Biz
+- MySQL password, data volume paths, and image addresses
 
-ZenTao Biz has more powerful functions based on the ZenTao Open Source. It also expands horizontally based on the project management process and covers more roles.
+> The example images point to internal registries. Replace them with accessible image addresses for public deployment, and do not use the example password in production.
 
-On the one hand, ZenTao Biz provides more complete services for enterprises and its enhanced functions are more suitable for the internal process management of the companies.
+### 2. Configuration
 
-On the other hand, ZenTao Biz has more added functions such as operation and maintenance management, OA office management, feedback management, as well as document version management, and online preview. It can support the customer's related work more effectively outside the development process, and provide more comprehensive support for the project management process.
+Frontend environment variables:
 
-## ZenTao Max
+| Variable | Description |
+| --- | --- |
+| `ZT_MYSQL_HOST` | MySQL host |
+| `ZT_MYSQL_PORT` | MySQL port |
+| `ZT_MYSQL_USER` | MySQL user |
+| `ZT_MYSQL_PASSWORD` | MySQL password |
+| `ZT_MYSQL_DB` | MySQL database name |
+| `ZT_GITFOX_PORT` | GitFox backend port |
+| `ZT_GITFOX_URL` | GitFox backend URL or port |
+| `PHP_MAX_EXECUTION_TIME` | PHP maximum execution time |
+| `PHP_MEMORY_LIMIT` | PHP memory limit |
+| `PHP_POST_MAX_SIZE` | PHP maximum POST size |
+| `PHP_UPLOAD_MAX_FILESIZE` | PHP maximum upload file size |
+| `IS_CONTAINER` | Set to `true` when running in a container |
 
-ZenTao Max, the most advanced ZenTao version, allows users to easily monitor and track the entire process of project management. It also helps improve the robustness and maturity of enterprises to greatly increase the probability of project success.
+### 3. Build from Source
 
-The features such as process control, process definition, project measurement, issue management, risk management, quality assurance, and project reporting are strong enhanced in ZenTao Max. It's also supported the implementation of CMMI standards, help enterprises pass CMMI assessment.
+Requirements: PHP >= 5.6 (PHP 8.1+ recommended), MySQL/MariaDB, and Caddy or Apache.
 
-## ZenTao Cloud
+```bash
+make common   # assemble the runnable source tree into zentaopms/
+make pms      # build the distribution zip package
+make ci       # build the full CI package
+```
 
-> Learn more about [ZenTao Cloud](https://www.zentao.pm/page/saas-pricing.html).
+Build frontend assets:
 
-ZenTao Cloud provides a flexible solution for users who prefer the SaaS service and running businesses anywhere and anytime. It's easy to use and super convenient in that it only needs one click to activate an account. Besides, ZenTao Cloud requires no maintenance and will keep updating automatically. With HTTPS agreement, your data will keep safe and no worry about information disclosure. Even better, data on ZenTao Cloud will backup automatically and users can download the backup file at any time.
+```bash
+php misc/minifyfront.php
+```
 
-</details>
+Run the CLI tool:
+
+```bash
+php bin/ztcli
+```
+
+### 4. Development and Testing
+
+```bash
+cd test
+php spider.php
+```
+
+Project layout:
+
+- `framework/`: core framework classes
+- `module/`: business modules
+- `lib/`: third-party libraries and utilities
+- `config/`: global configuration
+- `db/`: database schemas and migrations
+- `www/`: web entry point and public assets
+- `bin/`: CLI tools
+- `api/`: API definitions
+- `roadrunner/`: background workers
+- `test/`: testing framework and cases
+
+## Container Images
+
+| Component | Image |
+| --- | --- |
+| Frontend | `hub.qc.oop.cc/test/gitfox-front:4.5` |
+| Backend | `hub.zentao.net/test/gitfox-pro:4.5` (example) |
+| Database | `hub.zentao.net/app/mysql:8.0.36-debian` |
+
+> The backend and database images above are examples and point to internal registries. Replace them with the versions and addresses available in your environment.
+
+## License
+
+This project is dual-licensed under **ZPL 1.2** and **AGPL 3.0**. You may choose either license. See [LICENSE.EN](./LICENSE.EN) and [GITFOX_LICENSE](./GITFOX_LICENSE) for details.
+
+Copyright 2009-2026 Qucheng Geek Software (Qingdao) Co., Ltd. (www.gitfox.net)
+
+## Contributing
+
+Issues and Pull Requests are welcome.
+
+## Links
+
+- Website: [https://www.gitfox.net](https://www.gitfox.net)
+- Manual: [https://gitfox.net/book/open-source/40.html](https://gitfox.net/book/open-source/40.html)
+- Backend project: [https://github.com/easysoft/gitfox-server](https://github.com/easysoft/gitfox-server)
